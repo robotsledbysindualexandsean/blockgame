@@ -504,7 +504,6 @@ namespace BlockGame.Components.World
                     }
                 }
             }
-            Debug.WriteLine(lightEmittingBlocks.Count);
 
         }
 
