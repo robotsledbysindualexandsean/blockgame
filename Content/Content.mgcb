@@ -10,7 +10,7 @@
 
 #-------------------------------- References --------------------------------#
 
-/reference:C:\Users\Sindusara Munasinghe\.nuget\packages\lovebirb.monogame.skinnedmeshimporter\1.0.4\lib\netstandard2.0\SkinnedMeshImporter.dll
+/reference:References\SkinnedMeshImporter.dll
 
 #---------------------------------- Content ---------------------------------#
 
