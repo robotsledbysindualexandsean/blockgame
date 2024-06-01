@@ -110,15 +110,14 @@ namespace BlockGame.Components.Entity
                     continue;
                 }
 
-                List<BoundingBox> boxes = chunk.blockColliders;
-                List<Vector3> normals = chunk.blockNormals;
+                List<Face> faces = chunk.visibleFaces;
 
-                for(int i = 0; i < boxes.Count; i++)
+                for(int i = 0; i < faces.Count; i++)
                 {
-                    if (viewRay.Intersects(boxes[i]) != null)
+                    if (viewRay.Intersects(faces[i].hitbox) != null)
                     {
-                        rayHitBoxes.Add(boxes[i]);
-                        rayHitBoxesNormals.Add(normals[i]);
+                        rayHitBoxes.Add(faces[i].hitbox);
+                        rayHitBoxesNormals.Add(faces[i].blockNormal);
 
                     }
                 }
@@ -137,8 +136,7 @@ namespace BlockGame.Components.Entity
                 }
 
                 chunk.drawHitboxes = true;
-                List<BoundingBox> boxes = chunk.blockColliders;
-                List<Vector3> normals = chunk.blockNormals;
+                List<Face> faces = chunk.visibleFaces;
 
                 if (Game1.debug)
                 {
@@ -146,49 +144,49 @@ namespace BlockGame.Components.Entity
                 }
 
                 //For each block, check if the hitbox is intersecting it AND if it is within it's range. Update the velocity based on normal data
-                for(int i = 0; i < boxes.Count; i++)
+                for(int i = 0; i < faces.Count; i++)
                 {
                     //If the angle between the velocity and normal (i.e if the entity is going aginst the normal completley), then stop. If not, let continue.
-                    if (predictedHitbox.Contains(boxes[i]) == ContainmentType.Intersects && currentHitbox.Contains(boxes[i]) != ContainmentType.Intersects)
+                    if (predictedHitbox.Contains(faces[i].hitbox) == ContainmentType.Intersects && currentHitbox.Contains(faces[i].hitbox) != ContainmentType.Intersects)
                     {
-                        if (normals[i].Equals(new Vector3(0,0,1)) )
+                        if (faces[i].blockNormal.Equals(new Vector3(0,0,1)) )
                         {
-                            if(velocity.Z < 0 && currentHitbox.Min.Z > boxes[i].Max.Z)
+                            if(velocity.Z < 0 && currentHitbox.Min.Z > faces[i].hitbox.Max.Z)
                             {
                                 velocity.Z = 0;
                             }
                         }
-                        if (normals[i].Equals(new Vector3(0, 0, -1)))
+                        if (faces[i].blockNormal.Equals(new Vector3(0, 0, -1)))
                         {
-                            if(velocity.Z > 0 && currentHitbox.Max.Z < boxes[i].Min.Z)
+                            if(velocity.Z > 0 && currentHitbox.Max.Z < faces[i].hitbox.Min.Z)
                             {
                                 velocity.Z = 0;
                             }
                         }
-                        if (normals[i].Equals(new Vector3(0, 1, 0)))
+                        if (faces[i].blockNormal.Equals(new Vector3(0, 1, 0)))
                         {
-                            if (velocity.Y < 0 && currentHitbox.Min.Y > boxes[i].Max.Y)
+                            if (velocity.Y < 0 && currentHitbox.Min.Y > faces[i].hitbox.Max.Y)
                             {
                                 velocity.Y = 0;
                             }
                         }
-                        if(normals[i].Equals(new Vector3(0, -1, 0)))
+                        if(faces[i].blockNormal.Equals(new Vector3(0, -1, 0)))
                         {
-                            if(velocity.Y > 0 && currentHitbox.Max.Y < boxes[i].Min.Y)
+                            if(velocity.Y > 0 && currentHitbox.Max.Y < faces[i].hitbox.Min.Y)
                             {
                                 velocity.Y = 0;
                             }
                         }
-                        if (normals[i].Equals(new Vector3(1, 0, 0)))
+                        if (faces[i].blockNormal.Equals(new Vector3(1, 0, 0)))
                         {
-                            if(velocity.X < 0 && currentHitbox.Min.X > boxes[i].Max.X)
+                            if(velocity.X < 0 && currentHitbox.Min.X > faces[i].hitbox.Max.X)
                             {
                                 velocity.X = 0;
                             } 
                         }
-                        if(normals[i].Equals(new Vector3(-1, 0, 0)))
+                        if(faces[i].blockNormal.Equals(new Vector3(-1, 0, 0)))
                         {
-                            if(velocity.X > 0 && currentHitbox.Max.X < boxes[i].Min.X)
+                            if(velocity.X > 0 && currentHitbox.Max.X < faces[i].hitbox.Min.X)
                             {
                                 velocity.X = 0;
                             }

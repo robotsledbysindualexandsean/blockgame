@@ -29,7 +29,9 @@ namespace BlockGame.Components.World
         //Block stores Objects, when the chunk is loaded
 /*        private Block[, ,] blocks = new Block[chunkLength, chunkHeight, chunkWidth];
 */        //BlockIDS stores the ids, when the chunk is unloaded
-        private string[,,] blockIDs = new string[chunkLength, chunkHeight, chunkWidth];
+        //index 0 [0] == block ID
+        //index 1 [1] == lighting value
+        private ushort[,,][] blockIDs = new ushort[chunkLength, chunkHeight, chunkWidth][];
 
         //Bunch of bufferrs and graphic vars
         private GraphicsDevice graphics;
@@ -42,7 +44,6 @@ namespace BlockGame.Components.World
         public bool chunkLoaded = false;
         private bool rebuildNextFrame = false;
         private int framesSinceLastRebuild = 10000;
-
 
         private DataManager dataManager;
 
@@ -58,9 +59,8 @@ namespace BlockGame.Components.World
         }
 
         //Each chunk stores its block's colliders (hitboxes) and normals. This is only iterared for visible blocks.
-        public List<BoundingBox> blockColliders;
+        public List<Face> visibleFaces;
         public bool drawHitboxes = false;
-        public List<Vector3> blockNormals;
 
         public Chunk(WorldManager world, Vector3 chunkPos, GraphicsDevice graphics, DataManager dataManager)
         {
@@ -83,7 +83,7 @@ namespace BlockGame.Components.World
                 {
                     for(int z = 0 ; z < chunkWidth; z++)
                     {
-                        blockIDs[x, y, z] = "0000";
+                        blockIDs[x, y, z] = new ushort[2];
                     }
                 }
             }
@@ -107,7 +107,7 @@ namespace BlockGame.Components.World
                     {
                         /*                        Color colorDueToNoise = new Color(Convert.ToByte(Math.Clamp(127.5f - world.PerlinNoise[(int)pos.X, (int)pos.Z] * 127.5, 0, Convert.ToByte(255))), Convert.ToByte(127.5f), Convert.ToByte(127.5f));*/
 /*                        blocks[x, y, z] = new Block(new Vector3((chunkPos.X) * 16 + x, y, (chunkPos.Z) * 16 + z), graphics);
-*/                        blockIDs[x, y, z] = "0001";
+*/                        blockIDs[x, y, z][0] = 1;
                     }
                 }
             }
@@ -124,7 +124,7 @@ namespace BlockGame.Components.World
                     //build column up to the perlin noise
                     for (int y = 1; y < chunkHeight-3; y++)
                     {
-                        blockIDs[x, y, z] = "0002";
+                        blockIDs[x, y, z][0] = 2;
                     }
                 }
             }
@@ -175,6 +175,76 @@ namespace BlockGame.Components.World
             }
         }
 
+        public void BuildVisibleFaces()
+        {
+            //Generate a List of all the blocks that are empty
+            List<Vector3> emptyBlocks = new List<Vector3>();
+
+            for (int y = 0; y < chunkHeight; y++)
+            {
+                for (int x = 0; x < chunkLength; x++)
+                {
+                    for (int z = 0; z < chunkWidth; z++)
+                    {
+                        if (blockIDs[x, y, z][0] == 0)
+                        {
+                            emptyBlocks.Add(new Vector3(chunkPos.X * 16 + x, y, chunkPos.Z * 16 + z)); //Converting to world coords
+                        }
+                    }
+                }
+            }
+
+            visibleFaces = new List<Face>();
+
+            foreach (Vector3 block in emptyBlocks)
+            {
+                //Z+1
+                if (world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z + 1)) != 0)
+                {
+                    visibleFaces.Add(new Face(new Vector3(block.X, block.Y, block.Z + 1),
+                        new BoundingBox(new Vector3(block.X - Block.blockSize / 2, block.Y - Block.blockSize / 2, block.Z + 1 - Block.blockSize / 2), new Vector3(block.X + Block.blockSize / 2, block.Y + Block.blockSize / 2, block.Z + 1 + Block.blockSize / 2)),
+                        new Vector3(0,0,-1)));
+                }
+                //Z-1
+                if (world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z - 1)) != 0)
+                {
+                    visibleFaces.Add(new Face(new Vector3(block.X, block.Y, block.Z - 1),
+                         new BoundingBox(new Vector3(block.X - Block.blockSize / 2, block.Y - Block.blockSize / 2, block.Z - 1 - Block.blockSize / 2), new Vector3(block.X + Block.blockSize / 2, block.Y + Block.blockSize / 2, block.Z - 1 + Block.blockSize / 2)),
+                         new Vector3(0, 0, +1)));
+
+                }
+                //x+1
+                if (world.GetBlockAtWorldIndex(new Vector3(block.X + 1, block.Y, block.Z)) != 0)
+                {
+                    visibleFaces.Add(new Face(new Vector3(block.X+1, block.Y, block.Z),
+                        new BoundingBox(new Vector3(block.X - Block.blockSize / 2 + 1, block.Y - Block.blockSize / 2, block.Z - Block.blockSize / 2), new Vector3(block.X + 1 + Block.blockSize / 2, block.Y + Block.blockSize / 2, block.Z + Block.blockSize / 2)),
+                        new Vector3(-1, 0, 0)));
+                }
+                //x-1
+                if (world.GetBlockAtWorldIndex(new Vector3(block.X - 1, block.Y, block.Z)) != 0)
+                {
+                    visibleFaces.Add(new Face(new Vector3(block.X-1, block.Y, block.Z),
+                        new BoundingBox(new Vector3(block.X - 1 - Block.blockSize / 2, block.Y - Block.blockSize / 2, block.Z - Block.blockSize / 2), new Vector3(block.X -1 + Block.blockSize / 2, block.Y + Block.blockSize / 2, block.Z + Block.blockSize / 2)),
+                        new Vector3(1, 0, 0)));
+                }
+                //y+1
+                if (world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y + 1, block.Z)) != 0)
+                {
+                    visibleFaces.Add(new Face(new Vector3(block.X, block.Y+1, block.Z),
+                        new BoundingBox(new Vector3(block.X - Block.blockSize / 2, block.Y - Block.blockSize / 2 + 1, block.Z - Block.blockSize / 2), new Vector3(block.X + Block.blockSize / 2, block.Y + Block.blockSize / 2 + 1, block.Z + Block.blockSize / 2)),
+                        new Vector3(0, -1, 0)));
+
+                }
+                //y-1
+
+                if (world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y - 1, block.Z)) != 0)
+                {
+                    visibleFaces.Add(new Face(new Vector3(block.X, block.Y-1, block.Z),
+                        new BoundingBox(new Vector3(block.X - Block.blockSize / 2, block.Y -1  - Block.blockSize / 2, block.Z  - Block.blockSize / 2), new Vector3(block.X + Block.blockSize / 2, block.Y - 1 + Block.blockSize / 2, block.Z  + Block.blockSize / 2)),
+                        new Vector3(0, 1, 0)));
+                }
+            }
+        }
 
         //Builds the vertex buffer for the chunk using all visible blocks.
         public void BuildVertexBuffer()
@@ -184,74 +254,51 @@ namespace BlockGame.Components.World
             List<VertexPositionColorTexture> vertexList = new List<VertexPositionColorTexture>();
             List<VertexPositionColor> lineList = new List<VertexPositionColor>();
 
-            //Generate a List of all the blocks that are empty
-            List<Vector3> emptyBlocks = new List<Vector3>();
-
-            for (int y = 0; y < chunkHeight; y++)
-            {
-                for (int x = 0; x < chunkLength; x++)
-                {
-                    for (int z = 0; z < chunkWidth; z++)
-                    { 
-                        if (blockIDs[x, y, z].Substring(0,4).Equals("0000"))
-                        {
-                            emptyBlocks.Add(new Vector3(chunkPos.X * 16 + x, y, chunkPos.Z * 16 + z)); //Converting to world coords
-                        }
-                    }
-                }
-            }
-
             //Check sides of the empty block, render those faces if there is a block
-            foreach (Vector3 block in emptyBlocks)
+            foreach (Face face in visibleFaces)
             {
                 //Z+1
-                if (!world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z + 1)).Equals("0000"))
+                if (face.blockNormal.Equals(new Vector3(0,0,-1)))
                 {
                     //Gen color
-                    string blockID = world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z + 1));
-                    Color color = new Color(Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)), Convert.ToByte(127.5f), Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)));
-
-                    Block.AddNegZVerticiesPos(new Vector3(block.X * Block.blockSize, block.Y * Block.blockSize, (block.Z + 1) * Block.blockSize), vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
+                    
+                    Block.AddNegZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID.ToString()].atlasPos);
                 }
                 //Z-1
-                if (!world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z - 1)).Equals("0000"))
+                if (face.blockNormal.Equals(new Vector3(0, 0, 1)))
                 {
-                    string blockID = world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z - 1));
-                    Color color = new Color(Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)), Convert.ToByte(127.5f), Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)));
-                    Block.AddPosZVerticiesPos(new Vector3(block.X * Block.blockSize, block.Y * Block.blockSize, (block.Z - 1) * Block.blockSize), vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
+                    Block.AddPosZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID.ToString()].atlasPos);
 
                 }
                 //x+1
-                if (!world.GetBlockAtWorldIndex(new Vector3(block.X + 1, block.Y, block.Z)).Equals("0000"))
+                if (face.blockNormal.Equals(new Vector3(-1, 0, 0)))
                 {
-                    string blockID = world.GetBlockAtWorldIndex(new Vector3(block.X+1, block.Y, block.Z));
-                    Color color = new Color(Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)), Convert.ToByte(127.5f), Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)));
-                    Block.AddNegXVerticiesPos(new Vector3((block.X + 1) * Block.blockSize, block.Y * Block.blockSize, block.Z * Block.blockSize), vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID].atlasPos);                    Game1.BlockCount++;
+                    ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
+                    Block.AddNegXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID.ToString()].atlasPos);                    Game1.BlockCount++;
 
                 }
                 //x-1
-                if (!world.GetBlockAtWorldIndex(new Vector3(block.X - 1, block.Y, block.Z)).Equals("0000"))
+                if (face.blockNormal.Equals(new Vector3(1, 0, 0)))
                 {
-                    string blockID = world.GetBlockAtWorldIndex(new Vector3(block.X-1, block.Y, block.Z));
-                    Color color = new Color(Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)), Convert.ToByte(127.5f), Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)));
-                    Block.AddPosXVerticiesPos(new Vector3((block.X - 1) * Block.blockSize, block.Y * Block.blockSize, block.Z * Block.blockSize), vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
+                    Block.AddPosXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID.ToString()].atlasPos);
 
                 }
                 //y+1
-                if (!world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y + 1, block.Z)).Equals("0000"))
+                if (face.blockNormal.Equals(new Vector3(0, -1, 0)))
                 {
-                    string blockID = world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y+1, block.Z));
-                    Color color = new Color(Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)), Convert.ToByte(127.5f), Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)));
-                    Block.AddNegYVerticiesPos(new Vector3((block.X) * Block.blockSize, (block.Y + 1) * Block.blockSize, block.Z * Block.blockSize), vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
+                    Block.AddNegYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID.ToString()].atlasPos);
 
                 }
                 //y-1
 
-                if (!world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y - 1, block.Z)).Equals("0000"))
+                if (face.blockNormal.Equals(new Vector3(0, 1, 0)))
                 {
-                    string blockID = world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y-1, block.Z));
-                    Color color = new Color(Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)), Convert.ToByte(127.5f), Convert.ToByte(Math.Clamp(block.Y * 2, 0, 255)));
-                    Block.AddPosYVerticiesPos(new Vector3(block.X * Block.blockSize, (block.Y - 1) * Block.blockSize, block.Z * Block.blockSize), vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
+                    Block.AddPosYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, Color.White, Color.Black, dataManager.blockData[blockID.ToString()].atlasPos);
 
                 }
             }
@@ -278,44 +325,44 @@ namespace BlockGame.Components.World
         {
             List<VertexPositionColor> debugList = new List<VertexPositionColor>();
 
-            foreach (BoundingBox hitbox in blockColliders)
+            foreach (Face face in visibleFaces)
             {
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Min.Y, face.hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Min.Y, face.hitbox.Min.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Min.Y, face.hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Max.Y, face.hitbox.Min.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Min.Y, face.hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Min.Y, face.hitbox.Max.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Max.Y, face.hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Max.Y, face.hitbox.Max.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Max.Y, face.hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Min.Y, face.hitbox.Max.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Max.Y, face.hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Max.Y, face.hitbox.Min.Z), Color.Red));
 
                 //
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Min.Y, face.hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Min.Y, face.hitbox.Max.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Min.Y, face.hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Min.Y, face.hitbox.Max.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Max.Y, face.hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Max.Y, face.hitbox.Min.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Max.Y, face.hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Max.Y, face.hitbox.Min.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Min.Y, face.hitbox.Max.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Min.X, face.hitbox.Max.Y, face.hitbox.Max.Z), Color.Red));
 
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-                debugList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Min.Y, face.hitbox.Min.Z), Color.Red));
+                debugList.Add(new VertexPositionColor(new Vector3(face.hitbox.Max.X, face.hitbox.Max.Y, face.hitbox.Min.Z), Color.Red));
             }
 
             if (debugList.Count > 0)
@@ -325,28 +372,28 @@ namespace BlockGame.Components.World
             }
         }
 
-        public string GetBlock(int[] posRelativeToChunk)
+        public ushort GetBlock(int[] posRelativeToChunk)
         {
-            return blockIDs[posRelativeToChunk[0], posRelativeToChunk[1], posRelativeToChunk[2]].Substring(0,4);
+            return blockIDs[posRelativeToChunk[0], posRelativeToChunk[1], posRelativeToChunk[2]][0];
         }
 
         //Rebuild the chunk (used for when the chunk is updated)
         public void RebuildChunk()
         {
+            BuildVisibleFaces();
+            UpdateLighting();
             BuildVertexBuffer();
-            blockColliders = GetVisibleFacesColliders();
-            blockNormals = GetVisibleFaceNormals();
             CreateDebugVBOList();
         }
 
-        public void SetBlock(Vector3 posRelativeToChunk, string block)
+        public void SetBlock(Vector3 posRelativeToChunk, ushort block)
         {
             if((int)posRelativeToChunk.X >= chunkLength || (int)posRelativeToChunk.Z >= chunkWidth || posRelativeToChunk.Y >= chunkHeight || posRelativeToChunk.X < 0 || posRelativeToChunk.Y < 0 || posRelativeToChunk.Z < 0)
             {
                 return;
             }
-            
-            blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z] = block + blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z].Substring(4);
+
+            blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z][0] = block;
             
             //When placing a block, the chunk will reload within the next few frames. It also reloads the chunk NEXT to it, should the block be broken on the edge of the chunk.
             rebuildNextFrame = true;
@@ -393,7 +440,7 @@ namespace BlockGame.Components.World
                 {
                     for (int z = 0; z < chunkWidth; z++)
                     {
-                        blockIDs[x, y, z] = "0000";
+                        blockIDs[x, y, z][0] = 0;
                     }
                 }
             }
@@ -434,11 +481,35 @@ namespace BlockGame.Components.World
 
         public void LoadChunk()
         {
+            BuildVisibleFaces();
+            UpdateLighting();
             BuildVertexBuffer();
+            CreateDebugVBOList();
+        }
+
+        private void UpdateLighting()
+        {
+            List<Vector3> lightEmittingBlocks = new List<Vector3>();
+
+            for(int y = 0; y < Chunk.chunkHeight; y++)
+            {
+                for(int x = 0; x < Chunk.chunkLength; x++)
+                {
+                    for(int z = 0; z < Chunk.chunkWidth; z++)
+                    {
+                        if(world.GetBlockAtWorldIndex(new Vector3(x + chunkPos.X * chunkLength, y, z + chunkPos.Z * chunkWidth)) != 0 && dataManager.blockData[world.GetBlockAtWorldIndex(new Vector3(x + chunkPos.X * chunkLength, y, z + chunkPos.Z * chunkWidth)).ToString()].lightEmittingFactor > 0)
+                        {
+                            lightEmittingBlocks.Add(new Vector3(x,y,z));
+                        }
+                    }
+                }
+            }
+            Debug.WriteLine(lightEmittingBlocks.Count);
+
         }
 
 
-        //Updates the chunks list of hitboxes for all blocks. uses same metholog of only displaying visible blocks.
+/*        //Updates the chunks list of hitboxes for all blocks. uses same metholog of only displaying visible blocks.
         public List<BoundingBox> GetVisibleFacesColliders()
         {
             List<BoundingBox>boxes = new List<BoundingBox>();
@@ -559,7 +630,7 @@ namespace BlockGame.Components.World
 
 
             return normals;
-        }
+        }*/
 
     }
 }

@@ -62,13 +62,6 @@ namespace BlockGame.Components.World
             //Add Dungeon, this cuts into the blocks
             GenerateDungeon();
 
-            //Generate colliders
-            //Once all chunks loaded, generate their hitbox shit
-            foreach (Chunk chunk in chunks)
-            {
-                chunk.blockColliders = chunk.GetVisibleFacesColliders();
-                chunk.blockNormals = chunk.GetVisibleFaceNormals();
-            }
         }
 
 
@@ -99,7 +92,7 @@ namespace BlockGame.Components.World
                             }
 
                             //Set block to empty
-                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), "0000");
+                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), 0);
                         }
                         //Floor
                         int[] chunk1 = WorldPositionToChunkIndex(new Vector3(x, Chunk.chunkHeight / 2 - roomHeight / 2 - 1, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
@@ -110,7 +103,7 @@ namespace BlockGame.Components.World
                         }
 
                         //Set block to empty
-                        chunks[chunk1[0], chunk1[1]].SetBlock(new Vector3(chunk1[2], chunk1[4], chunk1[3]), "0001");
+                        chunks[chunk1[0], chunk1[1]].SetBlock(new Vector3(chunk1[2], chunk1[4], chunk1[3]), 1);
                     }
                     else if (dungeonMap[x, z] == 3)
                     {
@@ -125,7 +118,7 @@ namespace BlockGame.Components.World
                             }
 
                             //Set block to empty
-                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), "0000");
+                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), 0);
                         }
                     }
                     else if (dungeonMap[x, z] == 4)
@@ -141,7 +134,7 @@ namespace BlockGame.Components.World
                             }
 
                             //Set block to empty
-                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), "0000");
+                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), 0);
                         }
                     }
                 }
@@ -249,20 +242,20 @@ namespace BlockGame.Components.World
             return chunks[(int)index.X, (int)index.Y];
         }
 
-        public string GetBlockAtWorldIndex(Vector3 worldpos)
+        public ushort GetBlockAtWorldIndex(Vector3 worldpos)
         {
             int[] chunkIndex = WorldPositionToChunkIndex(worldpos);
 
             //greater than size of array
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[3]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[4]) >= Chunk.chunkHeight)
             {
-                return "0000";
+                return 0;
             }
 
             //les than 0
             if (chunkIndex[0] < 0 || chunkIndex[1] < 0 || chunkIndex[2] < 0 || chunkIndex[3] < 0 || chunkIndex[4] < 0)
             {
-                return "0000";
+                return 0;
             }
 
             return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(new int[] { chunkIndex[2], chunkIndex[4], chunkIndex[3] });

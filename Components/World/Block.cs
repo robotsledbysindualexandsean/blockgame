@@ -13,14 +13,17 @@ namespace BlockGame.Components.World
     {
         public static float blockSize = 1;
 
-        private static Vector2 blockCount = new Vector2(2, 1);
+        private static Vector2 blockCount = new Vector2(3, 1);
         private static Vector2 sizeOfOneBlock = new Vector2(1, 1) / blockCount;
 
         public Vector2 atlasPos;
 
-        public Block(Vector2 atlasPos)
+        public int lightEmittingFactor;
+
+        public Block(Vector2 atlasPos, int lef)
         {
             this.atlasPos = atlasPos;
+            this.lightEmittingFactor = lef;
         }
 
         public static void AddPosZVerticiesPos(Vector3 position, List<VertexPositionColorTexture> vertexList, List<VertexPositionColor> lineList, Color color, Color lineColor, Vector2 atlasPos)

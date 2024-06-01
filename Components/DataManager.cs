@@ -43,9 +43,10 @@ namespace BlockGame.Components
 
         public void LoadBlockData()
         {
-            blockData.Add("0000", null); //Air
-            blockData.Add("0001", new Block(new Vector2(0,0))); //Wood
-            blockData.Add("0002", new Block(new Vector2(1,0))); //stone
+            blockData.Add("0", null); //Air
+            blockData.Add("1", new Block(new Vector2(0,0), 0)); //Wood
+            blockData.Add("2", new Block(new Vector2(1, 0), 0)); //stone
+            blockData.Add("3", new Block(new Vector2(2, 0), 9)); //stone
         }
 
         public void LoadItemData()
