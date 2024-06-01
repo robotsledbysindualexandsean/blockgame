@@ -378,7 +378,7 @@ namespace BlockGame.Components.World
         }
 
         //Rebuild the chunk (used for when the chunk is updated)
-        public void RebuildChunk()
+        public void BuildChunk()
         {
             BuildVisibleFaces();
             UpdateLighting();
@@ -459,7 +459,7 @@ namespace BlockGame.Components.World
             //Rebuild the chunk if need be
             if (rebuildNextFrame && framesSinceLastRebuild > 5)
             {
-                RebuildChunk();
+                BuildChunk();
                 rebuildNextFrame = false;
                 framesSinceLastRebuild = 0;
             }
@@ -477,14 +477,6 @@ namespace BlockGame.Components.World
 
                 chunkLoaded = false;
             }
-        }
-
-        public void LoadChunk()
-        {
-            BuildVisibleFaces();
-            UpdateLighting();
-            BuildVertexBuffer();
-            CreateDebugVBOList();
         }
 
         private void UpdateLighting()

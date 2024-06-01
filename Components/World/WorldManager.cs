@@ -186,7 +186,7 @@ namespace BlockGame.Components.World
             //this is to buffer loading!
             if(chunksToLoad.Count > 0)
             {
-                chunksToLoad.ElementAt(0).LoadChunk();
+                chunksToLoad.ElementAt(0).BuildChunk();
                 chunksToLoad.RemoveAt(0);
             }
 
@@ -334,7 +334,7 @@ namespace BlockGame.Components.World
 
                     if (chunks[(int)position.X + x, (int)position.Y + z] != null && chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded == false)
                     {
-                        chunks[(int)position.X + x, (int)position.Y + z].LoadChunk();
+                        chunks[(int)position.X + x, (int)position.Y + z].BuildChunk();
                         chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded = true;
 
                     }
