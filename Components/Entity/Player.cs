@@ -224,7 +224,7 @@ namespace BlockGame.Components.Entity
 
                     int[] data = WorldManager.WorldPositionToChunkIndex(block + rayHitBoxesNormals[closest]);
 
-                    world.GetChunk(new Vector2(data[0], data[1])).SetBlock(new Vector3(data[2], data[4], data[3]), 3);
+                    world.GetChunk(new Vector2(data[0], data[1])).SetBlock(new Vector3(data[2], data[4], data[3]), 5);
                 }
 
             }

@@ -33,6 +33,8 @@ namespace BlockGame.Components.World
         private DataManager dataManager;
         public int[,] dungeonMap;
 
+        private Random rnd = new Random();
+
         public float[,] PerlinNoise
         {
             get { return perlinNoise; }
@@ -78,7 +80,6 @@ namespace BlockGame.Components.World
             {
                 for(int z = 0; z < (chunksGenerated-2)*Chunk.chunkWidth; z++)
                 {
-                    //If a floor or a door, make empty
                     if (dungeonMap[x,z] == 1)
                     {
                         for(int y = Chunk.chunkHeight/2-roomHeight/2; y < Chunk.chunkHeight/2+roomHeight/2; y++)
@@ -102,12 +103,29 @@ namespace BlockGame.Components.World
                             continue;
                         }
 
-                        //Set block to empty
-                        chunks[chunk1[0], chunk1[1]].SetBlock(new Vector3(chunk1[2], chunk1[4], chunk1[3]), 1);
+                        //Generate random stone texture for floor
+                        chunks[chunk1[0], chunk1[1]].SetBlock(new Vector3(chunk1[2], chunk1[4], chunk1[3]), (ushort)rnd.Next(3,5));
+                    }
+                    //Wall
+                    if (dungeonMap[x, z] == 2)
+                    {
+                        for (int y = Chunk.chunkHeight / 2 - roomHeight / 2 ; y < Chunk.chunkHeight / 2 + roomHeight / 2; y++)
+                        {
+                            //Getting the chunk index / block info using the world position. Remember our 2D array map is from 0->length however, and blocks positions are from -length->length, therefore shift
+                            int[] chunk = WorldPositionToChunkIndex(new Vector3(x, y, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
+
+                            if (chunk[0] >= chunksGenerated || chunk[1] >= chunksGenerated)
+                            {
+                                continue;
+                            }
+
+                            //Set block to empty
+                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), (ushort)rnd.Next(1, 3));
+                        }
                     }
                     else if (dungeonMap[x, z] == 3)
                     {
-                        for (int y = Chunk.chunkHeight / 2 - roomHeight / 2; y < Chunk.chunkHeight / 2 - roomHeight / 2 + 3; y++)
+                        for (int y = Chunk.chunkHeight / 2 - roomHeight / 2; y < Chunk.chunkHeight / 2 - roomHeight / 2 + 5; y++)
                         {
                             //Getting the chunk index / block info using the world position. Remember our 2D array map is from 0->length however, and blocks positions are from -length->length, therefore shift
                             int[] chunk = WorldPositionToChunkIndex(new Vector3(x, y, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
@@ -119,6 +137,21 @@ namespace BlockGame.Components.World
 
                             //Set block to empty
                             chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), 0);
+                        }
+
+                        //Door on top
+                        for (int y = Chunk.chunkHeight / 2 - roomHeight / 2 + 5; y < Chunk.chunkHeight / 2 + roomHeight / 2; y++)
+                        {
+                            //Getting the chunk index / block info using the world position. Remember our 2D array map is from 0->length however, and blocks positions are from -length->length, therefore shift
+                            int[] chunk = WorldPositionToChunkIndex(new Vector3(x, y, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
+
+                            if (chunk[0] >= chunksGenerated || chunk[1] >= chunksGenerated)
+                            {
+                                continue;
+                            }
+
+                            //Set block to empty
+                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[4], chunk[3]), 2);
                         }
                     }
                     else if (dungeonMap[x, z] == 4)

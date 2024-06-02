@@ -13,7 +13,7 @@ namespace BlockGame.Components.World
     {
         public static float blockSize = 1;
 
-        private static Vector2 blockCount = new Vector2(3, 1);
+        private static Vector2 blockCount = new Vector2(2, 3);
         private static Vector2 sizeOfOneBlock = new Vector2(1, 1) / blockCount;
 
         public Vector2 atlasPos;

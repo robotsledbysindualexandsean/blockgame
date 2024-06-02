@@ -107,7 +107,7 @@ namespace BlockGame.Components.World
                     {
                         /*                        Color colorDueToNoise = new Color(Convert.ToByte(Math.Clamp(127.5f - world.PerlinNoise[(int)pos.X, (int)pos.Z] * 127.5, 0, Convert.ToByte(255))), Convert.ToByte(127.5f), Convert.ToByte(127.5f));*/
 /*                        blocks[x, y, z] = new Block(new Vector3((chunkPos.X) * 16 + x, y, (chunkPos.Z) * 16 + z), graphics);
-*/                        blockIDs[x, y, z][0] = 1;
+*/                        blockIDs[x, y, z][0] = 3;
                     }
                 }
             }
@@ -124,7 +124,7 @@ namespace BlockGame.Components.World
                     //build column up to the perlin noise
                     for (int y = 1; y < chunkHeight-3; y++)
                     {
-                        blockIDs[x, y, z][0] = 2;
+                        blockIDs[x, y, z][0] = 3;
                     }
                 }
             }
