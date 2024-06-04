@@ -200,7 +200,7 @@ namespace BlockGame.Components.Entity
 
                     int[] data = WorldManager.WorldPositionToChunkIndex(block);
 
-                    world.GetChunk(new Vector2(data[0], data[1])).SetBlock(new Vector3(data[2], data[4], data[3]), 0);
+                    world.SetBlockAtWorldIndex(block, 0);
                 }
 
             }
@@ -222,9 +222,7 @@ namespace BlockGame.Components.Entity
                 {
                     Vector3 block = rayHitBoxes[closest].Max - new Vector3(Block.blockSize / 2, Block.blockSize / 2, Block.blockSize / 2);
 
-                    int[] data = WorldManager.WorldPositionToChunkIndex(block + rayHitBoxesNormals[closest]);
-
-                    world.GetChunk(new Vector2(data[0], data[1])).SetBlock(new Vector3(data[2], data[4], data[3]), 5);
+                    world.SetBlockAtWorldIndex(block + rayHitBoxesNormals[closest], 5);
                 }
 
             }

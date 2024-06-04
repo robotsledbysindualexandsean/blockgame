@@ -294,6 +294,25 @@ namespace BlockGame.Components.World
             return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(new int[] { chunkIndex[2], chunkIndex[4], chunkIndex[3] });
         }
 
+        public void SetBlockAtWorldIndex(Vector3 worldPos, ushort blockId)
+        {
+            int[] chunkIndex = WorldPositionToChunkIndex(worldPos);
+
+            //greater than size of array
+            if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[3]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[4]) >= Chunk.chunkHeight)
+            {
+                return;
+            }
+
+            //les than 0
+            if (chunkIndex[0] < 0 || chunkIndex[1] < 0 || chunkIndex[2] < 0 || chunkIndex[3] < 0 || chunkIndex[4] < 0)
+            {
+                return;
+            }
+
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(new Vector3(chunkIndex[2], chunkIndex[4], chunkIndex[3] ), blockId);
+        }
+
         public Vector2 WorldPositionToChunk(Vector3 worldPos)
         {
             worldPos += new Vector3(16 * chunksGenerated / 2, 0, 16 * chunksGenerated / 2);
