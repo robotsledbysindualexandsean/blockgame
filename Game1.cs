@@ -158,8 +158,8 @@ namespace BlockGame
 
             if ((1 / gameTime.ElapsedGameTime.TotalSeconds) < 55)
             {
-                Debug.WriteLine((1 / gameTime.ElapsedGameTime.TotalSeconds));
-                Debug.WriteLine("Blocks" + Game1.BlockCount.ToString());
+                //Debug.WriteLine((1 / gameTime.ElapsedGameTime.TotalSeconds));
+                //Debug.WriteLine("Blocks" + Game1.BlockCount.ToString());
             }
 
             _spriteBatch.DrawString(debugFont, "Chunks: " + Game1.ChunkCount, new Vector2(0, 15), Color.White);

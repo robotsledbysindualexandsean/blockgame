@@ -61,9 +61,9 @@ namespace BlockGame.Components
             new Block(this, 0, 0); //Air
             new Block(this, 1, new Vector2(0, 1), 0, 1); //Torn Wood
             new Block(this, 2, new Vector2(1, 1), 0, 1); //Wood
-            new Block(this, 3, new Vector2(0, 0), 1, 1); //cobblestone
+            new Block(this, 3, new Vector2(0, 0), 0, 1); //cobblestone
             new Block(this, 4, new Vector2(1, 0), 0, 1); //stone
-            new Block(this, 5, new Vector2(0, 2), 10, 1); //glowstone
+            new Block(this, 5, new Vector2(0, 2), 9, 1); //glowstone
 
         }
 

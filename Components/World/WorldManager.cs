@@ -369,6 +369,7 @@ namespace BlockGame.Components.World
             }
 
             chunks[chunkIndex[0], chunkIndex[1]].SetBlock(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4] ), blockId);
+            UpdateLighting();
         }
 
         public void SetBlockLightLevelAtWorldIndex(Vector3 worldPos, ushort newLight)
@@ -527,48 +528,66 @@ namespace BlockGame.Components.World
         {
             foreach (Vector3 source in dataManager.lightEmittingPos)
             {
-                ushort newLight = (ushort)(GetBlockLightLevelAtWorldIndex(source) - 1);
+                ushort curLight = GetBlockLightLevelAtWorldIndex(source);
                 Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+                List<Vector3> newSrcs = new List<Vector3>();
+                List<Vector3> visited = new List<Vector3>();
+                visited.Add(source);
 
                 foreach (Vector3 target in targets)
                 {
-                    if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < newLight)
+                    if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < curLight)
                     {
-                        SetBlockLightLevelAtWorldIndex(target, newLight);
-                        SecondaryLightFill(target);
+                        SetBlockLightLevelAtWorldIndex(target, (ushort)(curLight - 1));
+                        newSrcs.Add(target);
+                        visited.Add(target);
                     }
                 }
+
+                SecondaryLightFill(newSrcs, visited);
             }
         }
 
-        public void SecondaryLightFill(Vector3 source)
+        public void SecondaryLightFill(List<Vector3> sources, List<Vector3> visited)
         {
-            ushort newLight = (ushort)(GetBlockLightLevelAtWorldIndex(source) - 1);
+            List<Vector3> newSrcs = new List<Vector3>();
 
-            if (newLight > 0)
+            foreach (Vector3 source in sources)
             {
-                Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+                ushort curLight = GetBlockLightLevelAtWorldIndex(source);
 
-                foreach (Vector3 target in targets)
+                if (curLight > 1)
                 {
-                    if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < newLight)
+                    Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+
+                    foreach (Vector3 target in targets)
                     {
-                        SetBlockLightLevelAtWorldIndex(target, newLight);
-                        SecondaryLightFill(target);
+                        if (!visited.Contains(target) && GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < curLight)
+                        {
+                            SetBlockLightLevelAtWorldIndex(target, (ushort)(curLight - 1));
+                            newSrcs.Add(target);
+                            visited.Add(target);
+                        }
                     }
                 }
+            }
+
+            if (newSrcs.Count > 0)
+            {
+                SecondaryLightFill(newSrcs, visited);
             }
         }
 
         public void DestroyLightSource(Vector3 source)
         {
+            ushort curLight = GetBlockLightLevelAtWorldIndex(source);
             SetBlockLightLevelAtWorldIndex(source, 0);
             dataManager.lightEmittingPos.Remove(source);
             Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
 
             foreach (Vector3 target in targets)
             {
-                if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) > 0)
+                if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < curLight)
                 {
                     SecondaryDarkFill(target);
                 }
@@ -577,12 +596,13 @@ namespace BlockGame.Components.World
 
         public void SecondaryDarkFill(Vector3 source)
         {
+            ushort curLight = GetBlockLightLevelAtWorldIndex(source);
             SetBlockLightLevelAtWorldIndex(source, 0);
             Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
 
             foreach (Vector3 target in targets)
             {
-                if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) > 0)
+                if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < curLight)
                 {
                     SecondaryDarkFill(target);
                 }

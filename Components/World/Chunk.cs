@@ -410,7 +410,6 @@ namespace BlockGame.Components.World
         public void BuildChunk()
         {
             BuildVisibleFaces();
-            world.UpdateLighting();
             BuildVertexBuffer();
             CreateDebugVBOList();
         }
@@ -509,25 +508,5 @@ namespace BlockGame.Components.World
                 chunkLoaded = false;
             }
         }
-        private void UpdateLighting()
-        {
-            List<Vector3> lightEmittingBlocks = new List<Vector3>();
-
-            for(int y = 0; y < Chunk.chunkHeight; y++)
-            {
-                for(int x = 0; x < Chunk.chunkLength; x++)
-                {
-                    for(int z = 0; z < Chunk.chunkWidth; z++)
-                    {
-                        if(world.GetBlockAtWorldIndex(new Vector3(x + chunkPos.X * chunkLength, y, z + chunkPos.Z * chunkWidth)) != 0 && dataManager.blockData[world.GetBlockAtWorldIndex(new Vector3(x + chunkPos.X * chunkLength, y, z + chunkPos.Z * chunkWidth))].lightEmittingFactor > 0)
-                        {
-                            lightEmittingBlocks.Add(new Vector3(x,y,z));
-                        }
-                    }
-                }
-            }
-
-        }
-
     }
 }

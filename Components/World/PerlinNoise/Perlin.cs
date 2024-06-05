@@ -41,7 +41,7 @@ namespace BlockGame.Components.World.PerlinNoise
         {
             //Copying permutation twice into perlin noise
             RandomizeArray(permutation);
-            Debug.WriteLine(permutation[0]);
+            //Debug.WriteLine(permutation[0]);
             permutation2 = new int[512];
             
             for( int i = 0; i < 512; i++)
