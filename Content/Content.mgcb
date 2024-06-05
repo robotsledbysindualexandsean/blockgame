@@ -33,6 +33,18 @@
 /processorParam:TextureFormat=Compressed
 /build:Debug.spritefont
 
+#begin friend_diffuse.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:friend_diffuse.png
+
 #begin itematlas.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -63,6 +75,13 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:MaleTexture.png
+
+#begin MrFriendlyKindaFinished3.fbx
+/importer:SkinnedMeshImporter
+/processor:SkinnedMeshProcessor
+/processorParam:KeyframeDecimalPlaceRounding=5
+/processorParam:SkipUVs=False
+/build:MrFriendlyKindaFinished3.fbx
 
 #begin uiatlas.png
 /importer:TextureImporter

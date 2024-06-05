@@ -24,7 +24,12 @@ namespace BlockGame.Components.Entity
         private Vector2 lastPlayerChunk;
 
         //Inventory
-        private Inventory inventory = new Inventory(5, 9);
+        private Inventory inventory;
+
+        //Inventory getter
+        public Inventory Inventory { get { return inventory; } }
+
+        public int highlightedHotbarSlot;
 
         public override Vector3 Rotation
         {
@@ -47,10 +52,25 @@ namespace BlockGame.Components.Entity
         private MouseState previousMouseState;
         private float sensitivity = 4f;
 
-        public Player(GraphicsDevice _graphics, Vector3 position, Vector3 rotation, WorldManager world) : base(position, rotation, world)
+        //Breaking block cooldown
+        int clickTimer = 0;
+
+        //Closest things:
+        private Face closestFace;
+
+        public Face ClosestFace
+        {
+            get { return closestFace; }
+        }
+
+        public Player(GraphicsDevice _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager)
         {
             graphics = _graphics;
             camera = new Camera(_graphics, position, rotation);
+
+            //Setting up inventory
+            inventory = new Inventory(7,2, dataManager);
+            highlightedHotbarSlot = 0;
 
             //Set Camera position and rotation
             this.rotation = rotation;
@@ -82,14 +102,39 @@ namespace BlockGame.Components.Entity
         public override void Update(GameTime gameTime)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds; //time s9ince last frame (i think)
-            KeyboardState keyboardState = Keyboard.GetState();
-            currentMouseState = Mouse.GetState();
+
+            //Update click timer
+            clickTimer -= 1;
+
+            //Keyboard input stuff
+            KeyboardInput(deltaTime);
 
             //Getting currentChunk (before movement) in Vector2, array format
             playerChunkPos = WorldManager.WorldPositionToChunkIndex(position);
             Vector2 lastPlayerChunk = new Vector2(playerChunkPos[0], playerChunkPos[1]);
 
-            //Movement
+            //Moving the camera with the mouse
+            CameraMovement(deltaTime);
+
+            //Update hitboxes
+            RaySight();
+
+            //Mouse inputs (like block breaking)
+            MouseInput(deltaTime);
+
+            base.Update(gameTime);
+
+        }
+
+        /// <summary>
+        /// Handles keyboard inputs
+        /// </summary>
+        /// <param name="deltaTime"></param>
+        private void KeyboardInput(float deltaTime)
+        {
+            KeyboardState keyboardState = Keyboard.GetState();
+
+            //Getting movement vector3
             Vector3 dir = Vector3.Zero;
 
             if (keyboardState.IsKeyDown(Keys.W))
@@ -109,14 +154,16 @@ namespace BlockGame.Components.Entity
                 dir.X = -1;
             }
 
-            if(Keyboard.HasBeenPressed(Keys.F3))
+            //Turning debug on and off
+            if (Keyboard.HasBeenPressed(Keys.F3))
             {
                 Game1.debug = !Game1.debug;
                 dir.Y = 0;
                 velocity.Y = 0;
                 dynamic_velocity.Y = 0;
             }
-            
+
+            //IF debug, then fly, if not, then jump
             if (Game1.debug)
             {
                 if (keyboardState.IsKeyDown(Keys.Space))
@@ -136,6 +183,7 @@ namespace BlockGame.Components.Entity
                 }
             }
 
+            //Adding direction and speed to fixed movement velocity
             if (dir != Vector3.Zero)
             {
                 //normalize vector (so dont move faster diagonally)
@@ -146,11 +194,21 @@ namespace BlockGame.Components.Entity
             }
 
             fixed_rotation_based_velocity = GetFixedMovementVector(dir);
+        }
+
+        /// <summary>
+        /// Handles camera movement and rotation due to the mouse
+        /// </summary>
+        /// <param name="deltaTime"></param>
+        private void CameraMovement(float deltaTime)
+        {
+            currentMouseState = Mouse.GetState();
 
             //Mouse movement
             float deltaX;
             float deltaY;
 
+            //Building rotation buffer for camera movement
             if (currentMouseState != previousMouseState)
             {
                 deltaX = currentMouseState.X - graphics.Viewport.Width / 2;
@@ -177,65 +235,96 @@ namespace BlockGame.Components.Entity
             Mouse.SetPosition(graphics.Viewport.Width / 2, graphics.Viewport.Height / 2);
 
             previousMouseState = currentMouseState;
+        }
 
-            //Update ray
-            RaySight();
-
-            //Block breaking
-            if (currentMouseState.LeftButton == ButtonState.Pressed)
+        /// <summary>
+        /// Handles mouse inputs
+        /// </summary>
+        /// <param name="deltaTime"></param>
+        private void MouseInput(float deltaTime)
+        {
+            //If not on cooldown and left click, then do left click
+            if (currentMouseState.LeftButton == ButtonState.Pressed && clickTimer <= 0)
             {
-                int closest = 0;
-                
-                for(int i = 0; i < rayHitBoxes.Count; i++)
-                {
-                    if(Vector3.Distance(position, rayHitBoxes[i].Max) < Vector3.Distance(position, rayHitBoxes[closest].Max))
-                    {
-                        closest = i;
-                    }
-                }
-
-                if (closest >= 0 && closest < rayHitBoxes.Count && Vector3.Distance(position, rayHitBoxes[closest].Max) < 10)
-                {
-                    Vector3 block = rayHitBoxes[closest].Max - new Vector3(Block.blockSize / 2, Block.blockSize / 2, Block.blockSize / 2);
-
-                    int[] data = WorldManager.WorldPositionToChunkIndex(block);
-
-                    world.SetBlockAtWorldIndex(block, 0);
-                }
-
+                LeftClick();
             }
 
-            //Block placing
-            if (currentMouseState.RightButton == ButtonState.Pressed)
+            //If not on cooldown and right click, then do right click
+            if (currentMouseState.RightButton == ButtonState.Pressed && clickTimer <= 0 )
             {
-                int closest = 0;
+                RightClick();
+            }
+        }
 
-                for (int i = 0; i < rayHitBoxes.Count; i++)
+        private void LeftClick()
+        {
+            //Get the closest face to the player
+            closestFace = rayFaces[0];
+
+            for (int i = 0; i < rayFaces.Count; i++)
+            {
+                if (Vector3.Distance(position, rayFaces[i].hitbox.Max) < Vector3.Distance(position, closestFace.hitbox.Max))
                 {
-                    if (Vector3.Distance(position, rayHitBoxes[i].Max) < Vector3.Distance(position, rayHitBoxes[closest].Max))
-                    {
-                        closest = i;
-                    }
+                    closestFace = rayFaces[i];
                 }
-
-                if (closest >= 0 && closest < rayHitBoxes.Count && Vector3.Distance(position, rayHitBoxes[closest].Max) < 10)
-                {
-                    Vector3 block = rayHitBoxes[closest].Max - new Vector3(Block.blockSize / 2, Block.blockSize / 2, Block.blockSize / 2);
-
-                    world.SetBlockAtWorldIndex(block + rayHitBoxesNormals[closest], 5);
-                }
-
             }
 
+<<<<<<< Updated upstream
             base.Update(gameTime);
+=======
+            //If a valid closest and is within reach, then...
+            if (Vector3.Distance(position, closestFace.hitbox.Max) < 10)
+            {
+
+                //add cooldown
+                clickTimer = 10;
+
+                //Do whaterver should happen when block is left clicked (usually nothing)
+                dataManager.blockData[world.GetBlockAtWorldIndex(closestFace.blockPosition)].OnLeftClick(inventory, world, closestFace.blockPosition);
+
+                //Do whatever should happen when the item is right clicked
+                inventory.LeftClickItemSlot(new Vector2(highlightedHotbarSlot, inventory.GetHeight() - 1), world, this);
+            }
+        }
+
+        private void RightClick()
+        {
+            //Get the closest face to the player
+            closestFace = rayFaces[0];
+
+            for (int i = 0; i < rayFaces.Count; i++)
+            {
+                if (Vector3.Distance(position, rayFaces[i].hitbox.Max) < Vector3.Distance(position, closestFace.hitbox.Max))
+                {
+                    closestFace = rayFaces[i];
+                }
+            }
+
+            //If a valid closest and is within reach, then...
+            if (Vector3.Distance(position, closestFace.hitbox.Max) < 10)
+            {
+                //Add cooldown
+                clickTimer = 10;
+
+                //Do whaterver should happen when block is right clicked (usually nothing)
+                dataManager.blockData[world.GetBlockAtWorldIndex(closestFace.blockPosition)].OnRightClick(inventory, world, closestFace.blockPosition);
+
+                //Do whatever should happen when the item is right clicked
+                inventory.RightClickItemSlot(new Vector2(highlightedHotbarSlot, inventory.GetHeight() - 1), world, this);
+            }
+>>>>>>> Stashed changes
         }
 
         public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch)
         {
-            inventory.DrawBottomBar(new Vector2(30, 600), spriteBatch);
+            inventory.DrawBottomBar(new Vector2(_graphics.PreferredBackBufferWidth / 2, 800), spriteBatch);
             base.Draw(_graphics, basicEffect, camera, spriteBatch);
         }
 
+
+        /// <summary>
+        /// Post update function, which is used to see if the players chunk has changed chunks after updating. This is used to load new chunks
+        /// </summary>
         public override void PostUpdate()
         {
             //After movement, seeing if chunk changed

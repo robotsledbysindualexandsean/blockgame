@@ -24,6 +24,7 @@ namespace BlockGame.Components.World.Dungeon
 
         }
 
+        //Places a room at the given door location
         public void PlaceRoom(int[,] map, Room room, Vector2 index, Vector2 enteringDirection)
         {
             roomsGenereated++;
@@ -31,11 +32,13 @@ namespace BlockGame.Components.World.Dungeon
             int roomColumns = room.layout.GetLength(1);
             int roomRows = room.layout.GetLength(0);
 
+            //Checks if the room it's trying to place overlaps any of the old rooms. If so, end this call.
             if (CheckOverlap(map, room.layout, index))
             {
                 return;
             }
 
+            //Add the new room to the map
             for (int row = 0; row < roomRows; row++)
             {
                 for (int column = 0; column < roomColumns; column++)
@@ -44,9 +47,12 @@ namespace BlockGame.Components.World.Dungeon
                 }
             }
 
+            //Now, the method will recursively keep placing rooms based on the doors of this room, until all rooms are placed.
+
             //To bottom
             if (room.downDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(0, 1)))
             {
+                //gets a random room which matches this direction
                 Room newRoom = Room.upRooms[rnd.Next(0, Room.upRooms.Length)];
                 PlaceRoom(map, newRoom, room.downDoor + index - new Vector2(newRoom.upDoor.X, -1), new Vector2(0, -1));
             }
@@ -71,7 +77,13 @@ namespace BlockGame.Components.World.Dungeon
 
 
         }
-
+        /// <summary>
+        /// Function which checks the overlap between a placeable room and the current map
+        /// </summary>
+        /// <param name="map"></param>
+        /// <param name="room"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
         private bool CheckOverlap(int[,] map, int[,] room, Vector2 index)
         {
             int[,] tempMap = map.Clone() as int[,];
@@ -86,7 +98,7 @@ namespace BlockGame.Components.World.Dungeon
             {
                 for (int x = 0; x < roomColumns; x++)
                 {
-
+                    //Checking if there is already a placed block here
                     if (x < 0 || y + (int)index.Y >= tempMap.GetLength(0) || x + (int)index.X < 0)
                     {
                         return true;
@@ -122,6 +134,12 @@ namespace BlockGame.Components.World.Dungeon
             return false;
         }
 
+        /// <summary>
+        /// Generates base empty map
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
         public int[,] GenerateEmpty(int width, int height)
         {
             int[,] map = new int[width, height];

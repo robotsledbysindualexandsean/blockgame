@@ -7,15 +7,21 @@ using System.Threading.Tasks;
 
 namespace BlockGame.Components.World.Dungeon
 {
+    /// <summary>
+    /// A room stores its block data (2D), and where all the doors of the room are.
+    /// This class also holds a lot of static data which just stores all the rooms and Room objects
+    /// </summary>
     internal class Room
     {
         public int[,] layout;
 
+        //Door positions (top left)
         public Vector2 upDoor;
         public Vector2 downDoor;
         public Vector2 rightDoor;
         public Vector2 leftDoor;
 
+        //All the rooms (static)
         public static int[][,] rooms = new int[][,]
         {
             //basic square 31x31
@@ -43,6 +49,7 @@ namespace BlockGame.Components.World.Dungeon
         };
 
         //Top, bottom, right, left
+        //All the room objects
         public static Room[] roomObjs =
         {
             new Room(rooms[0], new Vector2(14,0), new Vector2(14,30), new Vector2(30,13), new Vector2(0,13)),
@@ -64,7 +71,7 @@ namespace BlockGame.Components.World.Dungeon
         };
 
 
-        //Door direction
+        //Array holding which rooms have which doors. Used when generating dungeons.
         public static Room[] upRooms = {
             roomObjs[0],
             roomObjs[2],

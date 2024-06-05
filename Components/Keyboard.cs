@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 
 namespace BlockGame.Components
 {
+    /// <summary>
+    /// This is a method I found online which essentially is a better version of XNA's Keyboard class.
+    /// Importantly, IsPressed checks if the key is currently being pressed, HasBeenPressed checks if it was pressed once
+    /// Source: https://community.monogame.net/t/one-shot-key-press/11669
+    /// </summary>
+
     public class Keyboard
     {
         static KeyboardState currentKeyState;

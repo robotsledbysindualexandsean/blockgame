@@ -13,6 +13,10 @@ using System.Diagnostics;
 
 namespace BlockGame.Components.World.PerlinNoise
 {
+
+    /// <summary>
+    /// Old 2D perlin noise geneartor. Deprecated but useful to keep.
+    /// </summary>
     internal static class Perlin
     {
         //Random values 0-255 inclusives

@@ -23,15 +23,14 @@ namespace BlockGame.Components.Entity
 
         //Storing World variable
         public WorldManager world;
+        public DataManager dataManager;
 
         public float speed = 5f;
-
 
         //Collision Variables
         private BoundingBox hitbox;
         private Ray viewRay;
-        protected List<BoundingBox> rayHitBoxes;
-        protected List<Vector3> rayHitBoxesNormals;
+        protected List<Face> rayFaces;
         private Vector3 direction;
         private Vector3 forward = new Vector3(0,0,1);
 
@@ -51,11 +50,14 @@ namespace BlockGame.Components.Entity
             get { return position; }
         }
 
-        public Entity(Vector3 position, Vector3 rotation, WorldManager world)
+        public Entity(Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager)
         {
             this.position = position;
             this.rotation = rotation;
             this.world = world;
+            this.dataManager = dataManager;
+
+            //Setting up inital hitbox and ray
             hitbox = new BoundingBox(new Vector3(position.X - 0.25f, position.Y - 1.25f, position.Z - 0.25f), new Vector3(position.X + 0.25f, position.Y+0.25f, position.Z + 0.25f));
             viewRay = new Ray(position, rotation);
         }
@@ -65,14 +67,14 @@ namespace BlockGame.Components.Entity
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds; 
 
 
-            //Gravity
+            //Enforce gravity
             if (dynamic_velocity.Y >= -0.1 && Game1.debug == false)
             {
                 dynamic_velocity.Y -= 0.2f * deltaTime;
             }
 
 
-            //Velocity is made of two components, dynamic (applied forces) and fixed (movement)
+            //Velocity is made of two components, dynamic (applied forces) and fixed (movement). These are added together once both are calculated.
             velocity = dynamic_velocity + fixed_rotation_based_velocity;
 
             //Apply the velocity to a temporary hitbox and then check the collisions on that. This will stop movement that goes into a block collider.
@@ -93,17 +95,16 @@ namespace BlockGame.Components.Entity
             Matrix yawPitchRoll = Matrix.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
             direction = Vector3.Transform(forward, yawPitchRoll);
 
-            //Cast a ray onto the nearby chunks
+            //Cast a ray in the entities direction
             viewRay = new Ray(position, direction);
             Chunk[,] chunks = world.GetChunksNearby(position, 1);
 
-            rayHitBoxes = new List<BoundingBox>();
-            rayHitBoxesNormals = new List<Vector3>();
+            //List of faces hit by the entitys look ray
+            rayFaces = new List<Face>();
 
-            //If the ray hits a block in the chunks, add that bounding box and normal to the lists.
+            //If the ray hits a block in the chunks, add that face to the list of faces
             foreach (Chunk chunk in chunks)
             {
-                bool edit = false;
 
                 if (chunk == null)
                 {
@@ -116,15 +117,19 @@ namespace BlockGame.Components.Entity
                 {
                     if (viewRay.Intersects(faces[i].hitbox) != null)
                     {
-                        rayHitBoxes.Add(faces[i].hitbox);
-                        rayHitBoxesNormals.Add(faces[i].blockNormal);
+                        rayFaces.Add(faces[i]);
 
                     }
                 }
             }
         }
 
-        //Method which checks collisions with blocks, and then stop movement if it hits a block.
+        /// <summary>
+        /// Method which checks collisions with blocks, and then stop movement if it hits a block.
+        /// Takes the current hitbox of the entity as well as the predicted hitbox once movement is applied.
+        /// </summary>
+        /// <param name="currentHitbox"></param>
+        /// <param name="predictedHitbox"></param>
         public void CollideBlocks(BoundingBox currentHitbox, BoundingBox predictedHitbox) {
             Chunk[,] chunks = world.GetChunksNearby(position, 1);
 
@@ -143,14 +148,15 @@ namespace BlockGame.Components.Entity
                     continue;
                 }
 
-                //For each block, check if the hitbox is intersecting it AND if it is within it's range. Update the velocity based on normal data
+                //For each block, check if the hitbox is intersecting it AND if it is within it's range (i.e is accurately above the block and hitting a top). Update the velocity based on normal data
                 for(int i = 0; i < faces.Count; i++)
                 {
-                    //If the angle between the velocity and normal (i.e if the entity is going aginst the normal completley), then stop. If not, let continue.
                     if (predictedHitbox.Contains(faces[i].hitbox) == ContainmentType.Intersects && currentHitbox.Contains(faces[i].hitbox) != ContainmentType.Intersects)
                     {
+                        //If the faces normal is in this direction, then reset the velocity in that direction
                         if (faces[i].blockNormal.Equals(new Vector3(0,0,1)) )
                         {
+                            //Reset velocity to 0 in that direction
                             if(velocity.Z < 0 && currentHitbox.Min.Z > faces[i].hitbox.Max.Z)
                             {
                                 velocity.Z = 0;
@@ -158,13 +164,15 @@ namespace BlockGame.Components.Entity
                         }
                         if (faces[i].blockNormal.Equals(new Vector3(0, 0, -1)))
                         {
-                            if(velocity.Z > 0 && currentHitbox.Max.Z < faces[i].hitbox.Min.Z)
+                            //Reset velocity to 0 in that direction
+                            if (velocity.Z > 0 && currentHitbox.Max.Z < faces[i].hitbox.Min.Z)
                             {
                                 velocity.Z = 0;
                             }
                         }
                         if (faces[i].blockNormal.Equals(new Vector3(0, 1, 0)))
                         {
+                            //Reset velocity to 0 in that direction
                             if (velocity.Y < 0 && currentHitbox.Min.Y > faces[i].hitbox.Max.Y)
                             {
                                 velocity.Y = 0;
@@ -172,21 +180,24 @@ namespace BlockGame.Components.Entity
                         }
                         if(faces[i].blockNormal.Equals(new Vector3(0, -1, 0)))
                         {
-                            if(velocity.Y > 0 && currentHitbox.Max.Y < faces[i].hitbox.Min.Y)
+                            //Reset velocity to 0 in that direction
+                            if (velocity.Y > 0 && currentHitbox.Max.Y < faces[i].hitbox.Min.Y)
                             {
                                 velocity.Y = 0;
                             }
                         }
                         if (faces[i].blockNormal.Equals(new Vector3(1, 0, 0)))
                         {
-                            if(velocity.X < 0 && currentHitbox.Min.X > faces[i].hitbox.Max.X)
+                            //Reset velocity to 0 in that direction
+                            if (velocity.X < 0 && currentHitbox.Min.X > faces[i].hitbox.Max.X)
                             {
                                 velocity.X = 0;
                             } 
                         }
                         if(faces[i].blockNormal.Equals(new Vector3(-1, 0, 0)))
                         {
-                            if(velocity.X > 0 && currentHitbox.Max.X < faces[i].hitbox.Min.X)
+                            //Reset velocity to 0 in that direction
+                            if (velocity.X > 0 && currentHitbox.Max.X < faces[i].hitbox.Min.X)
                             {
                                 velocity.X = 0;
                             }
@@ -279,6 +290,7 @@ namespace BlockGame.Components.Entity
             vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
             vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
 
+            //Building vertex buffer for it and drawing every frame (since movmenet every frame basically)
             VertexBuffer vertexBuffer;
 
             if (vertexList.Count > 0)

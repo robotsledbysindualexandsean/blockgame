@@ -60,7 +60,7 @@ namespace BlockGame.Components
             //Setup Projection Matrix
             Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, _graphics.Viewport.AspectRatio, 0.05f, 1000f);
 
-            //Furstum
+            //Create the Frustum. This is used for culling.
             boundingFrustum = new BoundingFrustum(Matrix.Multiply(View, Projection));
 
             //Set Camera position and rotation
@@ -74,8 +74,7 @@ namespace BlockGame.Components
             Rotation = rot;
         }
 
-        //Update the LookAtVector
-        //To be fair this is a lot of math which is beyond me, which is ok! Just know that, when a pos/rot is changed, our look at vector must change, which involves matrix shit
+        //Updates the cameras matricies depending on its current rotation.
         public void UpdateLookAt()
         {
             //Build rotation matrix
@@ -91,6 +90,12 @@ namespace BlockGame.Components
             boundingFrustum = new BoundingFrustum(Matrix.Multiply(View, Projection));
         }
 
+        /// <summary>
+        /// Method takes in hitboxes and determines if they are within the camera's frustum.
+        /// This is mostly used for chunk furstum culling, in which chunks which are not in the frustum are not culled.
+        /// </summary>
+        /// <param name="box"></param>
+        /// <returns>True if in frustum, false if not.</returns>
         public bool InFrustum(BoundingBox box)
         {
             if (boundingFrustum.Contains(box) == ContainmentType.Contains || boundingFrustum.Contains(box) == ContainmentType.Intersects)

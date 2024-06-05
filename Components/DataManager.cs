@@ -14,13 +14,22 @@ using BlockGame.Components.Items;
 
 namespace BlockGame.Components
 {
+    /// <summary>
+    /// The Data Manager loads content at the start of the game and contains hashmaps for blocks, items, etc.
+    /// All game data is sourced from these hashmaps.
+    /// </summary>
     internal class DataManager
     {
+        //Atlases for textures
         public static Texture2D blockAtlas;
         public static Texture2D itemAtlas;
         public static Texture2D uiAtlas;
 
+<<<<<<< Updated upstream
         //Blocks
+=======
+        //Hashmaps
+>>>>>>> Stashed changes
         public Dictionary<ushort, Block> blockData = new Dictionary<ushort, Block>();
         public Dictionary<ushort, Item> itemData = new Dictionary<ushort, Item>();
 
@@ -31,6 +40,10 @@ namespace BlockGame.Components
 
         }
 
+        /// <summary>
+        /// Loading all the atlases.
+        /// </summary>
+        /// <param name="content"></param>
         public void LoadContent(ContentManager content)
         {
             //Load block
@@ -43,19 +56,35 @@ namespace BlockGame.Components
             uiAtlas = content.Load<Texture2D>("uiatlas");
         }
 
+        /// <summary>
+        /// Loading the block hashmap.
+        /// </summary>
         public void LoadBlockData()
         {
+<<<<<<< Updated upstream
             new Block(this, 0, 0); //Air
             new Block(this, 1, new Vector2(0, 1), 0); //Torn Wood
             new Block(this, 2, new Vector2(1, 1), 0); //Wood
             new Block(this, 3, new Vector2(0, 0), 1); //cobblestone
             new Block(this, 4, new Vector2(1, 0), 0); //stone
             new Block(this, 5, new Vector2(0, 2), 10); //glowstone
+=======
+            blockData.Add(0, null); //Air
+            blockData.Add(1, new Block(new Vector2(0, 1), 0, 1)); //Torn Wood
+            blockData.Add(2, new Block(new Vector2(1, 1), 0, 1)); //Wood
+            blockData.Add(3, new Block(new Vector2(0, 0), 0, 1)); //cobblestone
+            blockData.Add(4, new Block(new Vector2(1, 0), 0, 1)); //stone
+            blockData.Add(5, new Block(new Vector2(0, 2), 9, 1)); //glowstone
+>>>>>>> Stashed changes
         }
 
+        /// <summary>
+        /// Loading the item hashmap.
+        /// </summary>
         public void LoadItemData()
         {
-
+            itemData.Add(0, new Item(1)); // Nothing
+            itemData.Add(1, new BlockItem(1, new Rectangle(0,0,16,16), 10));
         }
     }
 }

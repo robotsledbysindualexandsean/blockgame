@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using BlockGame.Components.Items;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -11,15 +12,34 @@ namespace BlockGame.Components.World
 {
     internal class Block
     {
+        //Size of one block on the atlas (this is redudant but just so its not hardcoded)
         public static float blockSize = 1;
+<<<<<<< Updated upstream
+=======
+
+        //How many blocks x blocks the atlas it
+>>>>>>> Stashed changes
         private static Vector2 blockCount = new Vector2(2, 3);
+
+        //Size of one block in terms of UV coordinates
         private static Vector2 sizeOfOneBlock = new Vector2(1, 1) / blockCount;
 
+        //What position the blocks texture is on the atlas
         public Vector2 atlasPos;
         public ushort lightEmittingFactor;
         public ushort blockID;
 
+<<<<<<< Updated upstream
         public Block(DataManager data, ushort blockID, ushort lef)
+=======
+        //How much light blocks emit
+        public int lightEmittingFactor;
+
+        //what item this block drops
+        public ushort drop;
+
+        public Block(Vector2 atlasPos, int lef, ushort drop)
+>>>>>>> Stashed changes
         {
             data.blockData.Add(blockID, this);
             this.blockID = blockID;
@@ -37,6 +57,7 @@ namespace BlockGame.Components.World
             this.blockID = blockID;
             this.atlasPos = atlasPos;
             this.lightEmittingFactor = lef;
+<<<<<<< Updated upstream
 
             if (lef > 0)
             {
@@ -47,8 +68,42 @@ namespace BlockGame.Components.World
         public bool IsLightSource()
         {
             return lightEmittingFactor > 0; 
+=======
+            this.drop = drop;
+>>>>>>> Stashed changes
         }
 
+        /// <summary>
+        /// On the blocks left click, what happens?
+        /// </summary>
+        /// <param name="inventory"></param>
+        /// <param name="world"></param>
+        public void OnLeftClick(Inventory inventory, WorldManager world, Vector3 blockPosition)
+        {
+
+        }
+
+        /// <summary>
+        /// On the blocks right click, what happens?
+        /// </summary>
+        /// <param name="inventory"></param>
+        /// <param name="world"></param>
+        public void OnRightClick(Inventory inventory, WorldManager world, Vector3 blockPosition)
+        {
+
+        }
+
+
+
+        /// <summary>
+        /// Below are static methods for adding face verticies to the vertex list
+        /// </summary>
+        /// <param name="position">3D position in the world</param>
+        /// <param name="vertexList">The list the verticies should be added to</param>
+        /// <param name="lineList">The list the lines of the faces should be added to (deprecated debug)</param>
+        /// <param name="color">The color tint (lighting)</param>
+        /// <param name="lineColor">Color of deprecated lines</param>
+        /// <param name="atlasPos">The position of the texture on the atlas</param>
         public static void AddPosZVerticiesPos(Vector3 position, List<VertexPositionColorTexture> vertexList, List<VertexPositionColor> lineList, Color color, Color lineColor, Vector2 atlasPos)
         {
             //XY Plane Z+1

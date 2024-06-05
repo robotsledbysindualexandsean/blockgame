@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using BlockGame.Components.Items;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace BlockGame.Components.World
 {
+    /// <summary>
+    /// A face object which stores important data used for collisions, rendering etc.
+    /// Tells the hitbox, the normal of the block, and the position.
+    /// This is only used for visible faces.
+    /// </summary>
     internal class Face
     {
         public BoundingBox hitbox;
