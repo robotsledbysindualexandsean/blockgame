@@ -14,11 +14,8 @@ namespace BlockGame.Components.World
     {
         //Size of one block on the atlas (this is redudant but just so its not hardcoded)
         public static float blockSize = 1;
-<<<<<<< Updated upstream
-=======
 
         //How many blocks x blocks the atlas it
->>>>>>> Stashed changes
         private static Vector2 blockCount = new Vector2(2, 3);
 
         //Size of one block in terms of UV coordinates
@@ -29,35 +26,27 @@ namespace BlockGame.Components.World
         public ushort lightEmittingFactor;
         public ushort blockID;
 
-<<<<<<< Updated upstream
-        public Block(DataManager data, ushort blockID, ushort lef)
-=======
-        //How much light blocks emit
-        public int lightEmittingFactor;
-
         //what item this block drops
         public ushort drop;
 
-        public Block(Vector2 atlasPos, int lef, ushort drop)
->>>>>>> Stashed changes
+
+
+        public Block(DataManager data, ushort blockID, ushort lef)
+        {
+            data.blockData.Add(blockID, this);
+            this.blockID = blockID;
+            this.lightEmittingFactor = lef;
+        }
+
+
+        public Block(DataManager data, ushort blockID, Vector2 atlasPos, ushort lef, ushort drop)
         {
             data.blockData.Add(blockID, this);
             this.blockID = blockID;
             this.lightEmittingFactor = lef;
 
-            if (lef > 0)
-            {
-                data.lightEmittingIDs.Add(blockID);
-            }
-        }
-
-        public Block(DataManager data, ushort blockID, Vector2 atlasPos, ushort lef)
-        {
-            data.blockData.Add(blockID, this);  
-            this.blockID = blockID;
+            this.drop = drop;
             this.atlasPos = atlasPos;
-            this.lightEmittingFactor = lef;
-<<<<<<< Updated upstream
 
             if (lef > 0)
             {
@@ -68,9 +57,6 @@ namespace BlockGame.Components.World
         public bool IsLightSource()
         {
             return lightEmittingFactor > 0; 
-=======
-            this.drop = drop;
->>>>>>> Stashed changes
         }
 
         /// <summary>

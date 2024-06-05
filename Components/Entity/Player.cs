@@ -258,6 +258,11 @@ namespace BlockGame.Components.Entity
 
         private void LeftClick()
         {
+            if (rayFaces.Count <= 0)
+            {
+                return;
+            }
+
             //Get the closest face to the player
             closestFace = rayFaces[0];
 
@@ -269,9 +274,6 @@ namespace BlockGame.Components.Entity
                 }
             }
 
-<<<<<<< Updated upstream
-            base.Update(gameTime);
-=======
             //If a valid closest and is within reach, then...
             if (Vector3.Distance(position, closestFace.hitbox.Max) < 10)
             {
@@ -289,6 +291,11 @@ namespace BlockGame.Components.Entity
 
         private void RightClick()
         {
+            if(rayFaces.Count <= 0)
+            {
+                return;
+            }
+
             //Get the closest face to the player
             closestFace = rayFaces[0];
 
@@ -312,7 +319,7 @@ namespace BlockGame.Components.Entity
                 //Do whatever should happen when the item is right clicked
                 inventory.RightClickItemSlot(new Vector2(highlightedHotbarSlot, inventory.GetHeight() - 1), world, this);
             }
->>>>>>> Stashed changes
+
         }
 
         public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch)

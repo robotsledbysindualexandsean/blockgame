@@ -25,7 +25,7 @@ namespace BlockGame.Components.Items
         public override void OnRightClick(WorldManager world, DataManager dataManager, Player player)
         {
             ///Place a block on the closest blocks normal
-            world.SetBlockAtWorldIndex(player.ClosestFace.blockPosition + player.ClosestFace.blockNormal, 1);
+            world.SetBlockAtWorldIndex(player.ClosestFace.blockPosition + player.ClosestFace.blockNormal, 5);
 
             //Remove that block from the players inventory
             player.Inventory.RemoveItem(new Vector2(player.highlightedHotbarSlot, player.Inventory.GetHeight()-1), itemID);

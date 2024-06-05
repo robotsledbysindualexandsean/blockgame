@@ -316,14 +316,12 @@ namespace BlockGame.Components.World
 
             return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]));
         }
-
-<<<<<<< Updated upstream
         public ushort GetBlockLightLevelAtWorldIndex(Vector3 worldpos)
         {
             int[] chunkIndex = WorldPositionToChunkIndex(worldpos);
 
             //greater than size of array
-            if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[3]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[4]) >= Chunk.chunkHeight)
+            if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
             {
                 return 0;
             }
@@ -334,18 +332,16 @@ namespace BlockGame.Components.World
                 return 0;
             }
 
-            Vector3 posRelativeToChunk = new Vector3(chunkIndex[2], chunkIndex[4], chunkIndex[3]);
+            Vector3 posRelativeToChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
 
             return chunks[chunkIndex[0], chunkIndex[1]].GetBlockLightLevel(posRelativeToChunk);
         }
 
-=======
         /// <summary>
         /// Sets the block to the given ID when given a world position
         /// </summary>
         /// <param name="worldPos"></param>
         /// <param name="blockId"></param>
->>>>>>> Stashed changes
         public void SetBlockAtWorldIndex(Vector3 worldPos, ushort blockId)
         {
             int[] chunkIndex = WorldPositionToChunkIndex(worldPos);
@@ -362,7 +358,6 @@ namespace BlockGame.Components.World
                 return;
             }
 
-<<<<<<< Updated upstream
             if (dataManager.lightEmittingIDs.Contains(blockId)) // If this block ID emits light...
             {
                 dataManager.lightEmittingPos.Add(worldPos); // Add to list of all light emitting block locations.
@@ -373,7 +368,7 @@ namespace BlockGame.Components.World
                 DestroyLightSource(worldPos);
             }
 
-            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(new Vector3(chunkIndex[2], chunkIndex[4], chunkIndex[3] ), blockId);
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4] ), blockId);
         }
 
         public void SetBlockLightLevelAtWorldIndex(Vector3 worldPos, ushort newLight)
@@ -381,7 +376,7 @@ namespace BlockGame.Components.World
             int[] chunkIndex = WorldPositionToChunkIndex(worldPos);
 
             //greater than size of array
-            if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[3]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[4]) >= Chunk.chunkHeight)
+            if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
             {
                 return;
             }
@@ -392,19 +387,15 @@ namespace BlockGame.Components.World
                 return;
             }
 
-            chunks[chunkIndex[0], chunkIndex[1]].SetBlockLightLevel(new Vector3(chunkIndex[2], chunkIndex[4], chunkIndex[3]), newLight);
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlockLightLevel(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]), newLight);
         }
 
-=======
-            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4] ), blockId);
-        }
 
         /// <summary>
         /// Returns what chunk a specific 3D world position is in. Giving in array terms (not chunk world position)
         /// </summary>
         /// <param name="worldPos"></param>
         /// <returns></returns>
->>>>>>> Stashed changes
         public Vector2 WorldPositionToChunk(Vector3 worldPos)
         {
             worldPos += new Vector3(16 * chunksGenerated / 2, 0, 16 * chunksGenerated / 2);

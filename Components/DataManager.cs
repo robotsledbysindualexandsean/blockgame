@@ -25,11 +25,7 @@ namespace BlockGame.Components
         public static Texture2D itemAtlas;
         public static Texture2D uiAtlas;
 
-<<<<<<< Updated upstream
-        //Blocks
-=======
         //Hashmaps
->>>>>>> Stashed changes
         public Dictionary<ushort, Block> blockData = new Dictionary<ushort, Block>();
         public Dictionary<ushort, Item> itemData = new Dictionary<ushort, Item>();
 
@@ -61,21 +57,14 @@ namespace BlockGame.Components
         /// </summary>
         public void LoadBlockData()
         {
-<<<<<<< Updated upstream
+            //DataManager data, ushort blockID, Vector2 atlasPos, ushort lef, ushort drop, 
             new Block(this, 0, 0); //Air
-            new Block(this, 1, new Vector2(0, 1), 0); //Torn Wood
-            new Block(this, 2, new Vector2(1, 1), 0); //Wood
-            new Block(this, 3, new Vector2(0, 0), 1); //cobblestone
-            new Block(this, 4, new Vector2(1, 0), 0); //stone
-            new Block(this, 5, new Vector2(0, 2), 10); //glowstone
-=======
-            blockData.Add(0, null); //Air
-            blockData.Add(1, new Block(new Vector2(0, 1), 0, 1)); //Torn Wood
-            blockData.Add(2, new Block(new Vector2(1, 1), 0, 1)); //Wood
-            blockData.Add(3, new Block(new Vector2(0, 0), 0, 1)); //cobblestone
-            blockData.Add(4, new Block(new Vector2(1, 0), 0, 1)); //stone
-            blockData.Add(5, new Block(new Vector2(0, 2), 9, 1)); //glowstone
->>>>>>> Stashed changes
+            new Block(this, 1, new Vector2(0, 1), 0, 1); //Torn Wood
+            new Block(this, 2, new Vector2(1, 1), 0, 1); //Wood
+            new Block(this, 3, new Vector2(0, 0), 1, 1); //cobblestone
+            new Block(this, 4, new Vector2(1, 0), 0, 1); //stone
+            new Block(this, 5, new Vector2(0, 2), 10, 1); //glowstone
+
         }
 
         /// <summary>
@@ -84,7 +73,7 @@ namespace BlockGame.Components
         public void LoadItemData()
         {
             itemData.Add(0, new Item(1)); // Nothing
-            itemData.Add(1, new BlockItem(1, new Rectangle(0,0,16,16), 10));
+            itemData.Add(1, new BlockItem(1, new Rectangle(0,0,16,16), 999));
         }
     }
 }
