@@ -12,18 +12,41 @@ namespace BlockGame.Components.World
     internal class Block
     {
         public static float blockSize = 1;
-
         private static Vector2 blockCount = new Vector2(2, 3);
         private static Vector2 sizeOfOneBlock = new Vector2(1, 1) / blockCount;
 
         public Vector2 atlasPos;
+        public ushort lightEmittingFactor;
+        public ushort blockID;
 
-        public int lightEmittingFactor;
-
-        public Block(Vector2 atlasPos, int lef)
+        public Block(DataManager data, ushort blockID, ushort lef)
         {
+            data.blockData.Add(blockID, this);
+            this.blockID = blockID;
+            this.lightEmittingFactor = lef;
+
+            if (lef > 0)
+            {
+                data.lightEmittingIDs.Add(blockID);
+            }
+        }
+
+        public Block(DataManager data, ushort blockID, Vector2 atlasPos, ushort lef)
+        {
+            data.blockData.Add(blockID, this);  
+            this.blockID = blockID;
             this.atlasPos = atlasPos;
             this.lightEmittingFactor = lef;
+
+            if (lef > 0)
+            {
+                data.lightEmittingIDs.Add(blockID);
+            }
+        }
+
+        public bool IsLightSource()
+        {
+            return lightEmittingFactor > 0; 
         }
 
         public static void AddPosZVerticiesPos(Vector3 position, List<VertexPositionColorTexture> vertexList, List<VertexPositionColor> lineList, Color color, Color lineColor, Vector2 atlasPos)

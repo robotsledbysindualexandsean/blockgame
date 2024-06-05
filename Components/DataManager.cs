@@ -21,9 +21,11 @@ namespace BlockGame.Components
         public static Texture2D uiAtlas;
 
         //Blocks
-        public Dictionary<string, Block> blockData = new Dictionary<string, Block>();
-        public Dictionary<string, Item> itemData = new Dictionary<string, Item>();
+        public Dictionary<ushort, Block> blockData = new Dictionary<ushort, Block>();
+        public Dictionary<ushort, Item> itemData = new Dictionary<ushort, Item>();
 
+        public List<ushort> lightEmittingIDs = new List<ushort>();
+        public List<Vector3> lightEmittingPos = new List<Vector3>();
 
         public DataManager() {
 
@@ -43,12 +45,12 @@ namespace BlockGame.Components
 
         public void LoadBlockData()
         {
-            blockData.Add("0", null); //Air
-            blockData.Add("1", new Block(new Vector2(0, 1), 0)); //Torn Wood
-            blockData.Add("2", new Block(new Vector2(1, 1), 0)); //Wood
-            blockData.Add("3", new Block(new Vector2(0, 0), 0)); //cobblestone
-            blockData.Add("4", new Block(new Vector2(1, 0), 0)); //stone
-            blockData.Add("5", new Block(new Vector2(0, 2), 9)); //glowstone
+            new Block(this, 0, 0); //Air
+            new Block(this, 1, new Vector2(0, 1), 0); //Torn Wood
+            new Block(this, 2, new Vector2(1, 1), 0); //Wood
+            new Block(this, 3, new Vector2(0, 0), 1); //cobblestone
+            new Block(this, 4, new Vector2(1, 0), 0); //stone
+            new Block(this, 5, new Vector2(0, 2), 10); //glowstone
         }
 
         public void LoadItemData()

@@ -103,7 +103,6 @@ namespace BlockGame
             //Update the World
             world.Update(player);
 
-
             base.Update(gameTime);
         }
 

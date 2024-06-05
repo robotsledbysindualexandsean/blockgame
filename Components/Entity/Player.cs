@@ -228,9 +228,6 @@ namespace BlockGame.Components.Entity
             }
 
             base.Update(gameTime);
-
-
-
         }
 
         public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch)

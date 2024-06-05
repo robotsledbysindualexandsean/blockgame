@@ -30,7 +30,7 @@ namespace BlockGame.Components.World
 
         //Dungeon Manager and array storing it's output
         private DungeonManager dungeonManager = new DungeonManager();
-        private DataManager dataManager;
+        public DataManager dataManager;
         public int[,] dungeonMap;
 
         private Random rnd = new Random();
@@ -294,6 +294,27 @@ namespace BlockGame.Components.World
             return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(new int[] { chunkIndex[2], chunkIndex[4], chunkIndex[3] });
         }
 
+        public ushort GetBlockLightLevelAtWorldIndex(Vector3 worldpos)
+        {
+            int[] chunkIndex = WorldPositionToChunkIndex(worldpos);
+
+            //greater than size of array
+            if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[3]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[4]) >= Chunk.chunkHeight)
+            {
+                return 0;
+            }
+
+            //les than 0
+            if (chunkIndex[0] < 0 || chunkIndex[1] < 0 || chunkIndex[2] < 0 || chunkIndex[3] < 0 || chunkIndex[4] < 0)
+            {
+                return 0;
+            }
+
+            Vector3 posRelativeToChunk = new Vector3(chunkIndex[2], chunkIndex[4], chunkIndex[3]);
+
+            return chunks[chunkIndex[0], chunkIndex[1]].GetBlockLightLevel(posRelativeToChunk);
+        }
+
         public void SetBlockAtWorldIndex(Vector3 worldPos, ushort blockId)
         {
             int[] chunkIndex = WorldPositionToChunkIndex(worldPos);
@@ -310,7 +331,36 @@ namespace BlockGame.Components.World
                 return;
             }
 
+            if (dataManager.lightEmittingIDs.Contains(blockId)) // If this block ID emits light...
+            {
+                dataManager.lightEmittingPos.Add(worldPos); // Add to list of all light emitting block locations.
+            }
+
+            if (dataManager.blockData[GetBlockAtWorldIndex(worldPos)].IsLightSource())
+            {
+                DestroyLightSource(worldPos);
+            }
+
             chunks[chunkIndex[0], chunkIndex[1]].SetBlock(new Vector3(chunkIndex[2], chunkIndex[4], chunkIndex[3] ), blockId);
+        }
+
+        public void SetBlockLightLevelAtWorldIndex(Vector3 worldPos, ushort newLight)
+        {
+            int[] chunkIndex = WorldPositionToChunkIndex(worldPos);
+
+            //greater than size of array
+            if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[3]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[4]) >= Chunk.chunkHeight)
+            {
+                return;
+            }
+
+            //les than 0
+            if (chunkIndex[0] < 0 || chunkIndex[1] < 0 || chunkIndex[2] < 0 || chunkIndex[3] < 0 || chunkIndex[4] < 0)
+            {
+                return;
+            }
+
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlockLightLevel(new Vector3(chunkIndex[2], chunkIndex[4], chunkIndex[3]), newLight);
         }
 
         public Vector2 WorldPositionToChunk(Vector3 worldPos)
@@ -420,6 +470,72 @@ namespace BlockGame.Components.World
             }
 
             return array;
+        }
+
+        public void UpdateLighting()
+        {
+            foreach (Vector3 source in dataManager.lightEmittingPos)
+            {
+                ushort newLight = (ushort)(GetBlockLightLevelAtWorldIndex(source) - 1);
+                Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+
+                foreach (Vector3 target in targets)
+                {
+                    if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < newLight)
+                    {
+                        SetBlockLightLevelAtWorldIndex(target, newLight);
+                        SecondaryLightFill(target);
+                    }
+                }
+            }
+        }
+
+        public void SecondaryLightFill(Vector3 source)
+        {
+            ushort newLight = (ushort)(GetBlockLightLevelAtWorldIndex(source) - 1);
+
+            if (newLight > 0)
+            {
+                Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+
+                foreach (Vector3 target in targets)
+                {
+                    if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < newLight)
+                    {
+                        SetBlockLightLevelAtWorldIndex(target, newLight);
+                        SecondaryLightFill(target);
+                    }
+                }
+            }
+        }
+
+        public void DestroyLightSource(Vector3 source)
+        {
+            SetBlockLightLevelAtWorldIndex(source, 0);
+            dataManager.lightEmittingPos.Remove(source);
+            Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+
+            foreach (Vector3 target in targets)
+            {
+                if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) > 0)
+                {
+                    SecondaryDarkFill(target);
+                }
+            }
+        }
+
+        public void SecondaryDarkFill(Vector3 source)
+        {
+            SetBlockLightLevelAtWorldIndex(source, 0);
+            Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+
+            foreach (Vector3 target in targets)
+            {
+                if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) > 0)
+                {
+                    SecondaryDarkFill(target);
+                }
+            }
         }
     }
 }
