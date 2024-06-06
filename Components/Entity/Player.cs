@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using BlockGame.Components.World;
 using System.Diagnostics;
 using BlockGame.Components.Items;
+using Microsoft.Xna.Framework.Content;
 
 namespace BlockGame.Components.Entity
 {
@@ -25,11 +26,15 @@ namespace BlockGame.Components.Entity
 
         //Inventory
         private Inventory inventory;
+        public int highlightedHotbarSlot;
+
+        //Scroll bar (hotbar)
+        int scrollTimer = 0;
+        int scrollCooldown = 3;
 
         //Inventory getter
         public Inventory Inventory { get { return inventory; } }
 
-        public int highlightedHotbarSlot;
 
         public override Vector3 Rotation
         {
@@ -113,6 +118,9 @@ namespace BlockGame.Components.Entity
             playerChunkPos = WorldManager.WorldPositionToChunkIndex(position);
             Vector2 lastPlayerChunk = new Vector2(playerChunkPos[0], playerChunkPos[1]);
 
+            //Update mouse state
+            currentMouseState = Mouse.GetState();
+
             //Moving the camera with the mouse
             CameraMovement(deltaTime);
 
@@ -121,6 +129,8 @@ namespace BlockGame.Components.Entity
 
             //Mouse inputs (like block breaking)
             MouseInput(deltaTime);
+
+            previousMouseState = currentMouseState;
 
             base.Update(gameTime);
 
@@ -202,8 +212,6 @@ namespace BlockGame.Components.Entity
         /// <param name="deltaTime"></param>
         private void CameraMovement(float deltaTime)
         {
-            currentMouseState = Mouse.GetState();
-
             //Mouse movement
             float deltaX;
             float deltaY;
@@ -234,7 +242,6 @@ namespace BlockGame.Components.Entity
             //Reset mouse to middle of screen
             Mouse.SetPosition(graphics.Viewport.Width / 2, graphics.Viewport.Height / 2);
 
-            previousMouseState = currentMouseState;
         }
 
         /// <summary>
@@ -253,6 +260,39 @@ namespace BlockGame.Components.Entity
             if (currentMouseState.RightButton == ButtonState.Pressed && clickTimer <= 0 )
             {
                 RightClick();
+            }
+
+            //Scroll hotbar
+            //Update timer
+            scrollTimer++;
+
+            //If scroll down, move slot down
+            if(scrollTimer > scrollCooldown && previousMouseState.ScrollWheelValue < currentMouseState.ScrollWheelValue)
+            {
+                //If slot is already 0, go back to the top
+                if(highlightedHotbarSlot == 0)
+                {
+                    highlightedHotbarSlot = inventory.GetWidth() - 1;
+                }
+                else
+                {
+                    highlightedHotbarSlot--;
+                }
+                scrollTimer = 0;
+            }
+            //If scroll up, move slot up
+            else if (scrollTimer > scrollCooldown && previousMouseState.ScrollWheelValue > currentMouseState.ScrollWheelValue)
+            {
+                //If slot is already 0, go back to the top
+                if (highlightedHotbarSlot == inventory.GetWidth() - 1)
+                {
+                    highlightedHotbarSlot = 0;
+                }
+                else
+                {
+                    highlightedHotbarSlot++;
+                }
+                scrollTimer = 0;
             }
         }
 
@@ -324,7 +364,7 @@ namespace BlockGame.Components.Entity
 
         public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch)
         {
-            inventory.DrawBottomBar(new Vector2(_graphics.PreferredBackBufferWidth / 2, 800), spriteBatch);
+            inventory.DrawBottomBar(new Vector2(_graphics.PreferredBackBufferWidth / 2, _graphics.PreferredBackBufferHeight - 50), spriteBatch, highlightedHotbarSlot);
             base.Draw(_graphics, basicEffect, camera, spriteBatch);
         }
 

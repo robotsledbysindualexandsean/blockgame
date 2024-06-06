@@ -72,8 +72,8 @@ namespace BlockGame.Components
         /// </summary>
         public void LoadItemData()
         {
-            itemData.Add(0, new Item(1)); // Nothing
-            itemData.Add(1, new BlockItem(1, new Rectangle(0,0,16,16), 999));
+            new Item(this, 0); // Nothing
+            new BlockItem(this, 1, new Rectangle(1,1,16,16), 10);
         }
     }
 }

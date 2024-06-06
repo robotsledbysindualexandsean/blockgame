@@ -12,12 +12,12 @@ namespace BlockGame.Components.Items
     internal class BlockItem : Item
     {
         //Items that are stored in item id hashmap, storing their id, where theyre texture is on the atlas, and theyre max count.
-        public BlockItem(ushort itemID, Rectangle atlasRect, int maxCount) : base(itemID, atlasRect, maxCount)
+        public BlockItem(DataManager data, ushort itemID, Rectangle atlasRect, int maxCount) : base(data, itemID, atlasRect, maxCount)
         {
 
         }
 
-        public BlockItem(ushort itemID) : base(itemID)
+        public BlockItem(DataManager data, ushort itemID) : base(data, itemID)
         {
 
         }

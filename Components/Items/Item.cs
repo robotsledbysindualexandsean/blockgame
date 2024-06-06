@@ -18,21 +18,23 @@ namespace BlockGame.Components.Items
         public int maxCount;
 
         //Items that are stored in item id hashmap, storing their id, where theyre texture is on the atlas, and theyre max count.
-        public Item(ushort itemID, Rectangle atlasRect, int maxCount)
+        public Item(DataManager data, ushort itemID, Rectangle atlasRect, int maxCount)
         {
+            data.itemData.Add(itemID, this);
             this.atlasRect = atlasRect;
             this.maxCount = maxCount;
             this.itemID = itemID;
         }
 
-        public Item(ushort itemID)
+        public Item(DataManager data, ushort itemID)
         {
+            data.itemData.Add(itemID, this);
             this.itemID = itemID;
         }
 
-        public void Draw(SpriteBatch spriteBatch, Vector2 origin, int scale)
+        public void Draw(SpriteBatch spriteBatch, Vector2 origin, float scale)
         {
-            spriteBatch.Draw(DataManager.itemAtlas, new Rectangle((int)origin.X - atlasRect.Width / 2 * scale, (int)origin.Y - atlasRect.Height / 2 * scale, atlasRect.Width * scale, atlasRect.Height * scale), atlasRect, Color.White);
+            spriteBatch.Draw(DataManager.itemAtlas, new Rectangle((int)(origin.X - atlasRect.Width / 2 * scale), (int)(origin.Y - atlasRect.Height / 2 * scale), (int)(atlasRect.Width * scale), (int)(atlasRect.Height * scale)), atlasRect, Color.White);
         }
 
         /// <summary>
@@ -47,6 +49,8 @@ namespace BlockGame.Components.Items
 
         /// <summary>
         /// What the item does on right click
+        /// This is HERE and not in BLOCK.cs because ultimately, this wont just break the block it will damage it instead, and only give the item when the
+        /// block is broken.
         /// </summary>
         /// <param name="world"></param>
         /// <param name="player"></param>

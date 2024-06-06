@@ -81,6 +81,9 @@ namespace BlockGame.Components.World
             //Getting 2D map
             dungeonMap = dungeonManager.GenerateDungeon((chunksGenerated - 2) * 16, (chunksGenerated - 2) * 16);
             
+            //Offset for dungeon map array and the actual world block pos
+            Vector3 arrayOffset = new Vector3(chunksGenerated * Chunk.chunkLength / 2, 0, chunksGenerated * Chunk.chunkWidth / 2);
+
             //Looping through each index in the 2D map, then depending on what it is, changing that column in the world
             for(int x = 0; x < (chunksGenerated-2)*Chunk.chunkLength; x++)
             {
@@ -92,28 +95,12 @@ namespace BlockGame.Components.World
                         //Starting from the middle of the chunk, set roomHeight/2 upwards and downwards to air
                         for(int y = Chunk.chunkHeight/2-roomHeight/2; y < Chunk.chunkHeight/2+roomHeight/2; y++)
                         {
-                            //Getting the chunk index / block info using the world position. Remember our 2D array map is from 0->length however, and blocks positions are from -length->length, therefore shift
-                            int[] chunk = WorldPositionToChunkIndex(new Vector3(x, y, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
-
-                            if (chunk[0] >= chunksGenerated || chunk[1] >= chunksGenerated)
-                            {
-                                continue;
-                            }
-
                             //Set block to empty
-                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[3], chunk[4]), 0);
-                        }
-
-                        //Set the blocks at the bottom to be the floor block (stone)
-                        int[] chunk1 = WorldPositionToChunkIndex(new Vector3(x, Chunk.chunkHeight / 2 - roomHeight / 2 - 1, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
-
-                        if (chunk1[0] >= chunksGenerated || chunk1[1] >= chunksGenerated)
-                        {
-                            continue;
+                            SetBlockAtWorldIndex(new Vector3(x,y,z) - arrayOffset, 0);
                         }
 
                         //Generate random stone texture for floor
-                        chunks[chunk1[0], chunk1[1]].SetBlock(new Vector3(chunk1[2], chunk1[3], chunk1[4]), (ushort)rnd.Next(3,5));
+                        SetBlockAtWorldIndex(new Vector3(x, Chunk.chunkHeight / 2 - roomHeight / 2 - 1, z) - arrayOffset, (ushort)rnd.Next(3,5));
                     }
 
                     //If the index is a wall, then set the blocks in the room to be the wall block (wood)
@@ -121,16 +108,8 @@ namespace BlockGame.Components.World
                     {
                         for (int y = Chunk.chunkHeight / 2 - roomHeight / 2 ; y < Chunk.chunkHeight / 2 + roomHeight / 2; y++)
                         {
-                            //Getting the chunk index / block info using the world position. Remember our 2D array map is from 0->length however, and blocks positions are from -length->length, therefore shift
-                            int[] chunk = WorldPositionToChunkIndex(new Vector3(x, y, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
-
-                            if (chunk[0] >= chunksGenerated || chunk[1] >= chunksGenerated)
-                            {
-                                continue;
-                            }
-
                             //Set block to be wall (wood)
-                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[3], chunk[4]), (ushort)rnd.Next(1, 3));
+                            SetBlockAtWorldIndex(new Vector3(x,y,z) - arrayOffset, (ushort)rnd.Next(1, 3));
                         }
                     }
                     //If index is a door, then cut 3 blocks upwards from the floor.
@@ -138,31 +117,15 @@ namespace BlockGame.Components.World
                     {
                         for (int y = Chunk.chunkHeight / 2 - roomHeight / 2; y < Chunk.chunkHeight / 2 - roomHeight / 2 + 5; y++)
                         {
-                            //Getting the chunk index / block info using the world position. Remember our 2D array map is from 0->length however, and blocks positions are from -length->length, therefore shift
-                            int[] chunk = WorldPositionToChunkIndex(new Vector3(x, y, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
-
-                            if (chunk[0] >= chunksGenerated || chunk[1] >= chunksGenerated)
-                            {
-                                continue;
-                            }
-
                             //Set block to empty
-                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[3], chunk[4]), 0);
+                            SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, 0);
                         }
 
                         //Set the blocks ABOVE the door to be the wall block (wood)
                         for (int y = Chunk.chunkHeight / 2 - roomHeight / 2 + 5; y < Chunk.chunkHeight / 2 + roomHeight / 2; y++)
                         {
-                            //Getting the chunk index / block info using the world position. Remember our 2D array map is from 0->length however, and blocks positions are from -length->length, therefore shift
-                            int[] chunk = WorldPositionToChunkIndex(new Vector3(x, y, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
-
-                            if (chunk[0] >= chunksGenerated || chunk[1] >= chunksGenerated)
-                            {
-                                continue;
-                            }
-
                             //Set block to wall block (wood)
-                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[3], chunk[4]), 2);
+                            SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, 2);
                         }
                     }
                     //If the index is VOID, then from the rooms floor to the bottom of the chunk, make empty.
@@ -170,16 +133,8 @@ namespace BlockGame.Components.World
                     {
                         for (int y = 0; y < Chunk.chunkHeight / 2 + roomHeight / 2; y++)
                         {
-                            //Getting the chunk index / block info using the world position. Remember our 2D array map is from 0->length however, and blocks positions are from -length->length, therefore shift
-                            int[] chunk = WorldPositionToChunkIndex(new Vector3(x, y, z) - new Vector3(WorldManager.chunksGenerated / 2 * 16, 0, WorldManager.chunksGenerated / 2 * 16));
-
-                            if (chunk[0] >= chunksGenerated || chunk[1] >= chunksGenerated)
-                            {
-                                continue;
-                            }
-
                             //Set block to empty
-                            chunks[chunk[0], chunk[1]].SetBlock(new Vector3(chunk[2], chunk[3], chunk[4]), 0);
+                            SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, 0);
                         }
                     }
                 }
@@ -285,11 +240,11 @@ namespace BlockGame.Components.World
             {
                 return null;
             }
-            if(index.Y >= chunksGenerated || index.Y >= chunksGenerated)
+            if(index.X >= chunksGenerated || index.Y >= chunksGenerated)
             {
                 return null;
             }
-            
+
             return chunks[(int)index.X, (int)index.Y];
         }
 

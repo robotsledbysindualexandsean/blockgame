@@ -89,15 +89,20 @@ namespace BlockGame.Components.Items
         //Draw the inventory hotbar (used for player)
         //This isn't a UI component since I think it will literally only be used here so its redudant to make its own object.
         //Also it will have no interactivity (not clickable)
-        public void DrawBottomBar(Vector2 origin, SpriteBatch spriteBatch)
+        public void DrawBottomBar(Vector2 origin, SpriteBatch spriteBatch, int highlightedSlot)
         {
             //Draw actual hotbar
-            Texture2D hotbarTexture = DataManager.uiAtlas;
-            int scale = 3;
-            spriteBatch.Draw(hotbarTexture, new Rectangle((int)origin.X - hotbarTexture.Width / 2 * scale, (int)origin.Y - hotbarTexture.Height /2 * scale, hotbarTexture.Width * scale, hotbarTexture.Height * scale), Color.White);
-            
+            //Where on the atlas the hotbar is
+            Rectangle atlasRect = new Rectangle(1, 1, 218, 26);
+            float scale = 2;
+            spriteBatch.Draw(DataManager.uiAtlas, new Rectangle((int)(origin.X - atlasRect.Width / 2 * scale), (int)(origin.Y - atlasRect.Height /2 * scale), (int)(atlasRect.Width * scale), (int)(atlasRect.Height * scale)), atlasRect, Color.White);
+
+            //Where the first center of slot is, and the distance between each one
+            Vector2 startingPos = new Vector2(13, 13) * scale; //First item is at 12,12 on the sprite
+            int distanceBetweenSlots = (int)(32 * scale); //Each slot is 33 pixels away
+
             //Draw items
-            for(int x = 0; x < slots.GetLength(0); x++)
+            for (int x = 0; x < slots.GetLength(0); x++)
             {
                 if (slots[x, slots.GetLength(1) - 1][0] != 0)
                 {
@@ -105,13 +110,21 @@ namespace BlockGame.Components.Items
                     int itemTextureWidth = dataManager.itemData[slots[x, slots.GetLength(1) - 1][0]].atlasRect.Width;
 
                     //Draw
-                    dataManager.itemData[slots[x, slots.GetLength(1) - 1][0]].Draw(spriteBatch, new Vector2(origin.X - hotbarTexture.Width / 2 * scale + itemTextureWidth * x * scale, origin.Y), scale) ;
+                    dataManager.itemData[slots[x, slots.GetLength(1) - 1][0]].Draw(spriteBatch, new Vector2(origin.X - atlasRect.Width / 2 * scale + (int)startingPos.X + distanceBetweenSlots* x, origin.Y), scale) ;
                     
                     //Item count
-                    spriteBatch.DrawString(Game1.debugFont, slots[x, slots.GetLength(1) - 1][1].ToString(), new Vector2(origin.X - hotbarTexture.Width / 2 * scale + itemTextureWidth * x * scale, origin.Y + 30), Color.White);
+                    spriteBatch.DrawString(Game1.debugFont, slots[x, slots.GetLength(1) - 1][1].ToString(), new Vector2(origin.X - atlasRect.Width / 2 * scale + (int)startingPos.X + distanceBetweenSlots * x - 5, origin.Y + 30), Color.White);
                 }
                 
             }
+
+            //Draw highlighted slot
+            Rectangle highlightAtlasPos = new Rectangle(1, 28, 28, 28);
+
+            //Center of the highlighted slot
+            Vector2 centerHighlight = new Vector2(origin.X - atlasRect.Width / 2 * scale + (int)startingPos.X + distanceBetweenSlots * highlightedSlot, origin.Y);
+
+            spriteBatch.Draw(DataManager.uiAtlas, new Rectangle((int)(centerHighlight.X - highlightAtlasPos.Width / 2 * scale), (int)(centerHighlight.Y - highlightAtlasPos.Height / 2 * scale ), (int)(highlightAtlasPos.Width * scale), (int)(highlightAtlasPos.Height * scale)), highlightAtlasPos, Color.White);
         }
 
         public void RightClickItemSlot(Vector2 itemSlot, WorldManager world, Player player)
@@ -127,6 +140,11 @@ namespace BlockGame.Components.Items
         public int GetHeight()
         {
             return slots.GetLength(1);
+        }
+
+        public int GetWidth()
+        {
+            return slots.GetLength(0);
         }
     }
 }
