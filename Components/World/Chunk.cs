@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime;
-using BlockGame.Components.Entity;
+using BlockGame.Components.Entities;
 using System.Xml.Schema;
 using Microsoft.Xna.Framework.Input;
 
@@ -34,7 +34,7 @@ namespace BlockGame.Components.World
         private ushort[,,][] blockIDs = new ushort[chunkLength, chunkHeight, chunkWidth][];
 
         //Bunch of bufferrs and graphic vars
-        private GraphicsDevice graphics;
+        private GraphicsDeviceManager graphics;
         private VertexBuffer vertexBuffer;
         private VertexBuffer lineBuffer;
         private VertexBuffer debugBuffer;
@@ -67,7 +67,7 @@ namespace BlockGame.Components.World
         public List<Face> visibleFaces;
         public bool drawHitboxes = false;
 
-        public Chunk(WorldManager world, Vector3 chunkPos, GraphicsDevice graphics, DataManager dataManager)
+        public Chunk(WorldManager world, Vector3 chunkPos, GraphicsDeviceManager graphics, DataManager dataManager)
         {
             this.world = world;
             this.chunkPos = chunkPos;
@@ -132,13 +132,13 @@ namespace BlockGame.Components.World
                 //Loop through and draw each vertex
                 foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
                 {
-                    graphics.SetVertexBuffer(vertexBuffer);
+                    graphics.GraphicsDevice.SetVertexBuffer(vertexBuffer);
 
                     //Setting the texture to be the block atlas.
                     basicEffect.Texture = DataManager.blockAtlas; /*dataManager.blockData[key].texture;*/
                     pass.Apply();
 
-                    graphics.DrawPrimitives(PrimitiveType.TriangleList, 0, vertexBuffer.VertexCount / 3); //count is vertex / 3 since each triangle has 3 vertices
+                    graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, vertexBuffer.VertexCount / 3); //count is vertex / 3 since each triangle has 3 vertices
 
                 }
 
@@ -149,8 +149,8 @@ namespace BlockGame.Components.World
                     foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
                     {
                         pass.Apply();
-                        graphics.SetVertexBuffer(debugBuffer);
-                        graphics.DrawPrimitives(PrimitiveType.LineList, 0, debugBuffer.VertexCount / 2);
+                        graphics.GraphicsDevice.SetVertexBuffer(debugBuffer);
+                        graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.LineList, 0, debugBuffer.VertexCount / 2);
                     }
                 }
             }
@@ -241,6 +241,8 @@ namespace BlockGame.Components.World
             List<VertexPositionColorTexture> vertexList = new List<VertexPositionColorTexture>();
             List<VertexPositionColor> lineList = new List<VertexPositionColor>();
 
+            int defaultLightHue = 200;
+
             //Check sides of the empty block, render those faces if there is a block
             foreach (Face face in visibleFaces)
             {
@@ -251,7 +253,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition - Vector3.UnitZ;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddNegZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
                 }
@@ -261,7 +263,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition + Vector3.UnitZ;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddPosZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -273,7 +275,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition - Vector3.UnitX;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddNegXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos); Game1.BlockCount++;
 
@@ -285,7 +287,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition + Vector3.UnitX;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddPosXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -296,7 +298,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition - Vector3.UnitY;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddNegYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -309,7 +311,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition + Vector3.UnitY;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddPosYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -319,7 +321,7 @@ namespace BlockGame.Components.World
             //Create main vertex buffer
             if (vertexList.Count > 0)
             {
-                vertexBuffer = new VertexBuffer(graphics, typeof(VertexPositionColorTexture), vertexList.Count, BufferUsage.WriteOnly);
+                vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionColorTexture), vertexList.Count, BufferUsage.WriteOnly);
                 vertexBuffer.SetData(vertexList.ToArray());
             }
 
@@ -381,7 +383,7 @@ namespace BlockGame.Components.World
 
             if (debugList.Count > 0)
             {
-                debugBuffer = new VertexBuffer(graphics, typeof(VertexPositionColor), debugList.Count, BufferUsage.WriteOnly);
+                debugBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionColor), debugList.Count, BufferUsage.WriteOnly);
                 debugBuffer.SetData(debugList.ToArray());
             }
         }

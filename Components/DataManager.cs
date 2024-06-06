@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using BlockGame.Components.Items;
+using BlockGame.Components.Entities;
 
 namespace BlockGame.Components
 {
@@ -73,7 +74,8 @@ namespace BlockGame.Components
         public void LoadItemData()
         {
             new Item(this, 0); // Nothing
-            new BlockItem(this, 1, new Rectangle(1,1,16,16), 10);
+            new BlockItem(this, 1, new Rectangle(1, 1, 16, 16), 10, Game1._graphics);
+            new BombItem(this, 2, new Rectangle(1, 1, 16, 16), 5, Game1._graphics);
         }
     }
 }

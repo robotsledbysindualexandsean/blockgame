@@ -1,4 +1,4 @@
-﻿using BlockGame.Components.Entity;
+﻿using BlockGame.Components.Entities;
 using BlockGame.Components.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,14 +16,16 @@ namespace BlockGame.Components.Items
         protected ushort itemID;
         public Rectangle atlasRect;
         public int maxCount;
+        protected GraphicsDeviceManager graphics;
 
         //Items that are stored in item id hashmap, storing their id, where theyre texture is on the atlas, and theyre max count.
-        public Item(DataManager data, ushort itemID, Rectangle atlasRect, int maxCount)
+        public Item(DataManager data, ushort itemID, Rectangle atlasRect, int maxCount, GraphicsDeviceManager graphics)
         {
             data.itemData.Add(itemID, this);
             this.atlasRect = atlasRect;
             this.maxCount = maxCount;
             this.itemID = itemID;
+            this.graphics = graphics;
         }
 
         public Item(DataManager data, ushort itemID)
@@ -42,7 +44,7 @@ namespace BlockGame.Components.Items
         /// </summary>
         /// <param name="world"></param>
         /// <param name="player">T</param>
-        public virtual void OnRightClick(WorldManager world, DataManager dataManager, Player player)
+        public virtual void OnRightClick(WorldManager world, DataManager dataManager, Player player, Entity user)
         {
 
         }
@@ -54,7 +56,7 @@ namespace BlockGame.Components.Items
         /// </summary>
         /// <param name="world"></param>
         /// <param name="player"></param>
-        public void OnLeftClick(WorldManager world, DataManager dataManager, Player player)
+        public virtual void OnLeftClick(WorldManager world, DataManager dataManager, Player player, Entity user)
         {
             //Add the drop to the players inventory
             player.Inventory.AddItem(dataManager.blockData[world.GetBlockAtWorldIndex(player.ClosestFace.blockPosition)].drop);

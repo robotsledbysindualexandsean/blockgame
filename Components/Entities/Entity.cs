@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlockGame.Components.Entity
+namespace BlockGame.Components.Entities
 {
     internal class Entity
     {
@@ -20,6 +20,7 @@ namespace BlockGame.Components.Entity
         public Vector3 fixed_rotation_based_velocity;
         public Vector3 dynamic_velocity;
         public Vector3 velocity;
+        private Vector3 dimensions;
 
         //Storing World variable
         public WorldManager world;
@@ -28,12 +29,23 @@ namespace BlockGame.Components.Entity
         public float speed = 5f;
 
         //Collision Variables
-        private BoundingBox hitbox;
+        protected BoundingBox hitbox;
         private Ray viewRay;
-        protected List<Face> rayFaces;
+        public List<Face> rayFaces = new List<Face>();
         private Vector3 direction;
         private Vector3 forward = new Vector3(0,0,1);
+        protected Vector3 rayOriginPosition; //Where the ray is shot from (this is because position =/= camera for player)
 
+        //Is this affected by gravity?
+        protected bool enforceGravity = true;
+
+        //Closest things:
+        protected Face closestFace;
+
+        public Face ClosestFace
+        {
+            get { return closestFace; }
+        }
 
         public virtual Vector3 Rotation
         {
@@ -50,29 +62,28 @@ namespace BlockGame.Components.Entity
             get { return position; }
         }
 
-        public Entity(Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager)
+        public Entity(Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager, Vector3 dimensions)
         {
             this.position = position;
             this.rotation = rotation;
             this.world = world;
             this.dataManager = dataManager;
+            this.dimensions = dimensions;
 
             //Setting up inital hitbox and ray
-            hitbox = new BoundingBox(new Vector3(position.X - 0.25f, position.Y - 1.25f, position.Z - 0.25f), new Vector3(position.X + 0.25f, position.Y+0.25f, position.Z + 0.25f));
+            hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y /2, position.Z - dimensions.Z /2), new Vector3(position.X + dimensions.X / 2, position.Y+dimensions.Y / 2, position.Z + dimensions.Z / 2));
             viewRay = new Ray(position, rotation);
         }
 
         public virtual void Update(GameTime gameTime)
         {
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds; 
-
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             //Enforce gravity
-            if (dynamic_velocity.Y >= -0.1 && Game1.debug == false)
+            if (dynamic_velocity.Y >= -0.1 && enforceGravity)
             {
                 dynamic_velocity.Y -= 0.2f * deltaTime;
             }
-
 
             //Velocity is made of two components, dynamic (applied forces) and fixed (movement). These are added together once both are calculated.
             velocity = dynamic_velocity + fixed_rotation_based_velocity;
@@ -83,9 +94,28 @@ namespace BlockGame.Components.Entity
 
             //Move using velocity
             MoveTo(velocity + position, Rotation);
-            hitbox = new BoundingBox(new Vector3(position.X - 0.25f, position.Y - 1.25f, position.Z - 0.25f), new Vector3(position.X + 0.25f, position.Y + 0.25f, position.Z + 0.25f));
+            hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y / 2, position.Z - dimensions.Z / 2), new Vector3(position.X + dimensions.X / 2, position.Y + dimensions.Y / 2, position.Z + dimensions.Z / 2));
 
             PostUpdate();
+        }
+
+        protected void CalculateClosestFace()
+        {
+            if (rayFaces.Count <= 0)
+            {
+                return;
+            }
+
+            //Get the closest face to the player
+            closestFace = rayFaces[0];
+
+            for (int i = 0; i < rayFaces.Count; i++)
+            {
+                if (Vector3.Distance(position, rayFaces[i].hitbox.Max) < Vector3.Distance(position, closestFace.hitbox.Max))
+                {
+                    closestFace = rayFaces[i];
+                }
+            }
         }
 
         //Method which updates the entities seen hitboxes of the ray. Todo: Make this return the list, rather than just updating a made variable.
@@ -96,7 +126,7 @@ namespace BlockGame.Components.Entity
             direction = Vector3.Transform(forward, yawPitchRoll);
 
             //Cast a ray in the entities direction
-            viewRay = new Ray(position, direction);
+            viewRay = new Ray(rayOriginPosition, direction);
             Chunk[,] chunks = world.GetChunksNearby(position, 1);
 
             //List of faces hit by the entitys look ray
@@ -143,7 +173,7 @@ namespace BlockGame.Components.Entity
                 chunk.drawHitboxes = true;
                 List<Face> faces = chunk.visibleFaces;
 
-                if (Game1.debug)
+                if (Game1.debug && this.GetType() == typeof(Player))
                 {
                     continue;
                 }
@@ -338,6 +368,7 @@ namespace BlockGame.Components.Entity
         public virtual void MoveTo(Vector3 pos, Vector3 rot)
         {
             position = pos;
+            rayOriginPosition = pos;
             rotation = rot;
         }
 

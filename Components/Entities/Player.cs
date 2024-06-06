@@ -11,13 +11,20 @@ using System.Diagnostics;
 using BlockGame.Components.Items;
 using Microsoft.Xna.Framework.Content;
 
-namespace BlockGame.Components.Entity
+namespace BlockGame.Components.Entities
 {
     internal class Player : Entity
     {
         //Attributes
-        private GraphicsDevice graphics;
+        private GraphicsDeviceManager graphics;
         private Camera camera;
+
+        //Offset of camera from players origin
+        private Vector3 cameraOffset = new Vector3(0, 0.75f, 0);
+
+        //dimensions
+        private static Vector3 playerDimensions = new Vector3(0.5f, 1.5f, 0.5f);
+
         public static int renderDistance = 16; //this is diameter, not raidus! :)
 
         //Variables storing the players chunk and its chunk last frame. Why one is an int[] and one is a Vector2 is something to fix.
@@ -60,18 +67,10 @@ namespace BlockGame.Components.Entity
         //Breaking block cooldown
         int clickTimer = 0;
 
-        //Closest things:
-        private Face closestFace;
-
-        public Face ClosestFace
-        {
-            get { return closestFace; }
-        }
-
-        public Player(GraphicsDevice _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager)
+        public Player(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager, playerDimensions)
         {
             graphics = _graphics;
-            camera = new Camera(_graphics, position, rotation);
+            camera = new Camera(_graphics, position + cameraOffset, rotation);
 
             //Setting up inventory
             inventory = new Inventory(7,2, dataManager);
@@ -88,6 +87,8 @@ namespace BlockGame.Components.Entity
             //Load all the chunks around the player instantly on creation
             world.LoadChunksInstantly(new Vector2(chunkPos[0], chunkPos[1]), renderDistance);
 
+            //debug items
+            inventory.AddItem(2);
         }
 
 
@@ -101,7 +102,8 @@ namespace BlockGame.Components.Entity
         {
             position = pos;
             rotation = rot;
-            camera.MoveTo(pos, rot);
+            camera.MoveTo(pos + cameraOffset, rot);
+            rayOriginPosition = pos + cameraOffset;
         }
 
         public override void Update(GameTime gameTime)
@@ -124,8 +126,11 @@ namespace BlockGame.Components.Entity
             //Moving the camera with the mouse
             CameraMovement(deltaTime);
 
-            //Update hitboxes
+            //Update Ray view
             RaySight();
+
+            //Calcualte the closest face to the entity
+            CalculateClosestFace();
 
             //Mouse inputs (like block breaking)
             MouseInput(deltaTime);
@@ -168,6 +173,7 @@ namespace BlockGame.Components.Entity
             if (Keyboard.HasBeenPressed(Keys.F3))
             {
                 Game1.debug = !Game1.debug;
+                enforceGravity = !enforceGravity;
                 dir.Y = 0;
                 velocity.Y = 0;
                 dynamic_velocity.Y = 0;
@@ -219,8 +225,8 @@ namespace BlockGame.Components.Entity
             //Building rotation buffer for camera movement
             if (currentMouseState != previousMouseState)
             {
-                deltaX = currentMouseState.X - graphics.Viewport.Width / 2;
-                deltaY = currentMouseState.Y - graphics.Viewport.Height / 2;
+                deltaX = currentMouseState.X - graphics.GraphicsDevice.Viewport.Width / 2;
+                deltaY = currentMouseState.Y - graphics.GraphicsDevice.Viewport.Height / 2;
 
                 mouseRotationBuffer.X -= 0.01f * deltaX * deltaTime * sensitivity;
                 mouseRotationBuffer.Y -= 0.01f * deltaY * deltaTime * sensitivity;
@@ -240,7 +246,7 @@ namespace BlockGame.Components.Entity
             Rotation = new Vector3(-MathHelper.Clamp(mouseRotationBuffer.Y, MathHelper.ToRadians(-75.0f), MathHelper.ToRadians(75.0f)), MathHelper.WrapAngle(mouseRotationBuffer.X), 0);
 
             //Reset mouse to middle of screen
-            Mouse.SetPosition(graphics.Viewport.Width / 2, graphics.Viewport.Height / 2);
+            Mouse.SetPosition(graphics.GraphicsDevice.Viewport.Width / 2, graphics.GraphicsDevice.Viewport.Height / 2);
 
         }
 
@@ -298,23 +304,7 @@ namespace BlockGame.Components.Entity
 
         private void LeftClick()
         {
-            if (rayFaces.Count <= 0)
-            {
-                return;
-            }
-
-            //Get the closest face to the player
-            closestFace = rayFaces[0];
-
-            for (int i = 0; i < rayFaces.Count; i++)
-            {
-                if (Vector3.Distance(position, rayFaces[i].hitbox.Max) < Vector3.Distance(position, closestFace.hitbox.Max))
-                {
-                    closestFace = rayFaces[i];
-                }
-            }
-
-            //If a valid closest and is within reach, then...
+            //If a valid closest block is within reach, then...
             if (Vector3.Distance(position, closestFace.hitbox.Max) < 10)
             {
 
@@ -324,29 +314,14 @@ namespace BlockGame.Components.Entity
                 //Do whaterver should happen when block is left clicked (usually nothing)
                 dataManager.blockData[world.GetBlockAtWorldIndex(closestFace.blockPosition)].OnLeftClick(inventory, world, closestFace.blockPosition);
 
-                //Do whatever should happen when the item is right clicked
-                inventory.LeftClickItemSlot(new Vector2(highlightedHotbarSlot, inventory.GetHeight() - 1), world, this);
             }
+
+            //Do whatever should happen when the item is right clicked
+            inventory.LeftClickItemSlot(new Vector2(highlightedHotbarSlot, inventory.GetHeight() - 1), world, this, this);
         }
 
         private void RightClick()
         {
-            if(rayFaces.Count <= 0)
-            {
-                return;
-            }
-
-            //Get the closest face to the player
-            closestFace = rayFaces[0];
-
-            for (int i = 0; i < rayFaces.Count; i++)
-            {
-                if (Vector3.Distance(position, rayFaces[i].hitbox.Max) < Vector3.Distance(position, closestFace.hitbox.Max))
-                {
-                    closestFace = rayFaces[i];
-                }
-            }
-
             //If a valid closest and is within reach, then...
             if (Vector3.Distance(position, closestFace.hitbox.Max) < 10)
             {
@@ -355,10 +330,10 @@ namespace BlockGame.Components.Entity
 
                 //Do whaterver should happen when block is right clicked (usually nothing)
                 dataManager.blockData[world.GetBlockAtWorldIndex(closestFace.blockPosition)].OnRightClick(inventory, world, closestFace.blockPosition);
-
-                //Do whatever should happen when the item is right clicked
-                inventory.RightClickItemSlot(new Vector2(highlightedHotbarSlot, inventory.GetHeight() - 1), world, this);
             }
+
+            //Do whatever should happen when the item is right clicked
+            inventory.RightClickItemSlot(new Vector2(highlightedHotbarSlot, inventory.GetHeight() - 1), world, this, this);
 
         }
 

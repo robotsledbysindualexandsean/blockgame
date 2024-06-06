@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using BlockGame.Components;
-using BlockGame.Components.Entity;
+using BlockGame.Components.Entities;
 using BlockGame.Components.World;
 using System;
 using System.Collections.Generic;
@@ -17,13 +17,12 @@ namespace BlockGame
     public class Game1 : Game
     {
         //Graphics
-        private GraphicsDeviceManager _graphics; //GraphicsDevice, used to get properties of the PC when rendering 2D and 3D
+        public static GraphicsDeviceManager _graphics; //GraphicsDevice, used to get properties of the PC when rendering 2D and 3D
         private SpriteBatch _spriteBatch; //2D rendering object
         private BasicEffect basicEffect; //3D rendering object
         private SkinnedEffect skinEffect; //3D skinned Mesh rendering object (Basiceffect for 3D animated models)
 
         //Important Objects
-        private Player player;
         private WorldManager world;
         private DataManager dataManager = new DataManager();
         public static Random rnd = new Random();
@@ -66,8 +65,7 @@ namespace BlockGame
             dataManager.LoadItemData();
 
             //Create the world and player
-            world = new WorldManager(_graphics.GraphicsDevice, dataManager);
-            player = new Player(_graphics.GraphicsDevice, new Vector3(0f, 25, 0f), Vector3.Zero, world, dataManager);
+            world = new WorldManager(_graphics, dataManager);
 
             //3D animation testing debug
             characterModel = Content.Load<SkinnedModel>("MrFriendlyKindaFinished3");
@@ -105,11 +103,8 @@ namespace BlockGame
             //Animation debug update
             anim.Update(gameTime);
 
-            //Update Entities
-            player.Update(gameTime);
-
             //Update the World
-            world.Update(player);
+            world.Update(gameTime);
 
             base.Update(gameTime);
         }
@@ -128,16 +123,13 @@ namespace BlockGame
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             //Render the world (chunks and blocks)
-            world.Draw(player.Camera, basicEffect);
-
-            //Render the player
-            player.Draw(_graphics, basicEffect, player.Camera, _spriteBatch);
+            world.Draw(basicEffect, _spriteBatch);
 
             //Everything below is debug stuff
 
             skinEffect.World = Matrix.CreateTranslation(0, 20 / 1, 0) * Matrix.CreateScale(1f, 1f, 1f);
-            skinEffect.View = player.Camera.View;
-            skinEffect.Projection = player.Camera.Projection;
+            skinEffect.View = world.player.Camera.View;
+            skinEffect.Projection = world.player.Camera.Projection;
             skinEffect.EnableDefaultLighting();
 
 
@@ -165,7 +157,7 @@ namespace BlockGame
             _spriteBatch.DrawString(debugFont, "Chunks: " + Game1.ChunkCount, new Vector2(0, 15), Color.White);
             _spriteBatch.DrawString(debugFont, "Rebuilds: " + Game1.RebuildCalls, new Vector2(0, 30), Color.White);
             _spriteBatch.DrawString(debugFont, "Triangles Drawn: " + Game1.TriangleCount, new Vector2(0, 45), Color.White);
-            Vector3 temp = player.Position / Block.blockSize;
+            Vector3 temp = world.player.Position / Block.blockSize;
             temp.Floor();
             _spriteBatch.DrawString(debugFont, "Position: " + (temp).ToString(), new Vector2(0, 60), Color.White);
             _spriteBatch.DrawString(debugFont, "Chunks Rendered: " + (ChunksRendered).ToString(), new Vector2(0, 75), Color.White);

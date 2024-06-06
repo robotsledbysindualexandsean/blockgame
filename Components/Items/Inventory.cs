@@ -1,4 +1,4 @@
-﻿using BlockGame.Components.Entity;
+﻿using BlockGame.Components.Entities;
 using BlockGame.Components.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -73,6 +73,11 @@ namespace BlockGame.Components.Items
             }
         }
 
+        /// <summary>
+        /// Removes item from inventory slot
+        /// </summary>
+        /// <param name="slot"></param>
+        /// <param name="amount"></param>
         public void RemoveItem(Vector2 slot, ushort amount)
         {
             if (slots[(int)slot.X, (int)slot.Y][1] <= amount)
@@ -127,14 +132,16 @@ namespace BlockGame.Components.Items
             spriteBatch.Draw(DataManager.uiAtlas, new Rectangle((int)(centerHighlight.X - highlightAtlasPos.Width / 2 * scale), (int)(centerHighlight.Y - highlightAtlasPos.Height / 2 * scale ), (int)(highlightAtlasPos.Width * scale), (int)(highlightAtlasPos.Height * scale)), highlightAtlasPos, Color.White);
         }
 
-        public void RightClickItemSlot(Vector2 itemSlot, WorldManager world, Player player)
+        public void RightClickItemSlot(Vector2 itemSlot, WorldManager world, Player player, Entity user)
         {
-            dataManager.itemData[slots[(int)itemSlot.X, (int)itemSlot.Y][0]].OnRightClick(world, dataManager,player);
+            //Do item right click
+            dataManager.itemData[slots[(int)itemSlot.X, (int)itemSlot.Y][0]].OnRightClick(world, dataManager,player, user);
         }
 
-        public void LeftClickItemSlot(Vector2 itemSlot, WorldManager world, Player player)
+        public void LeftClickItemSlot(Vector2 itemSlot, WorldManager world, Player player, Entity user)
         {
-            dataManager.itemData[slots[(int)itemSlot.X, (int)itemSlot.Y][0]].OnLeftClick(world, dataManager, player);
+            //Do item left click
+            dataManager.itemData[slots[(int)itemSlot.X, (int)itemSlot.Y][0]].OnLeftClick(world, dataManager, player, user);
         }
 
         public int GetHeight()

@@ -17,7 +17,7 @@ namespace BlockGame.Components
         private Vector3 cameraPosition;
         private Vector3 cameraRotation;
         private Vector3 cameraLookAt;
-        private GraphicsDevice graphics;
+        private GraphicsDeviceManager graphics;
         private BoundingFrustum boundingFrustum;
 
         //Properties
@@ -53,12 +53,12 @@ namespace BlockGame.Components
             }
         }
 
-        public Camera(GraphicsDevice _graphics, Vector3 position, Vector3 rotation)
+        public Camera(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation)
         {
             graphics = _graphics;
 
             //Setup Projection Matrix
-            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, _graphics.Viewport.AspectRatio, 0.05f, 1000f);
+            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, _graphics.GraphicsDevice.Viewport.AspectRatio, 0.05f, 1000f);
 
             //Create the Frustum. This is used for culling.
             boundingFrustum = new BoundingFrustum(Matrix.Multiply(View, Projection));

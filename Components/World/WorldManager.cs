@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using BlockGame.Components.Entity;
+using BlockGame.Components.Entities;
 using BlockGame.Components.World.Dungeon;
 using BlockGame.Components.World.PerlinNoise;
 using System;
@@ -23,7 +23,7 @@ namespace BlockGame.Components.World
         private Chunk[,] chunks = new Chunk[chunksGenerated, chunksGenerated];
 
         //Refernece to graphics device
-        private GraphicsDevice graphics;
+        private GraphicsDeviceManager graphics;
 
         //An old and deprecated array which stored perlin noise output.
         private float[,] perlinNoise;
@@ -38,6 +38,14 @@ namespace BlockGame.Components.World
         private DungeonManager dungeonManager = new DungeonManager();
         public DataManager dataManager;
         public int[,] dungeonMap;
+
+        /// <summary>
+        /// List of entities in the world
+        /// </summary>
+        public List<Entity> entities = new List<Entity>();
+
+        //Player reference as well
+        public Player player;
 
         private Random rnd = new Random();
 
@@ -56,7 +64,7 @@ namespace BlockGame.Components.World
             get { return chunksGenerated * chunksGenerated; }
         }
 
-        public WorldManager(GraphicsDevice graphics, DataManager dataManager)
+        public WorldManager(GraphicsDeviceManager graphics, DataManager dataManager)
         {
             this.graphics = graphics;
             this.dataManager = dataManager;
@@ -70,6 +78,9 @@ namespace BlockGame.Components.World
             //Add Dungeon, this cuts into the blocks
             GenerateDungeon();
 
+            //Set up player
+            player = new Player(graphics, new Vector3(0f, 25, 0f), Vector3.Zero, this, dataManager);
+            entities.Add(player);
         }
 
 
@@ -181,7 +192,7 @@ namespace BlockGame.Components.World
             }
         }
 
-        public void Update(Player player)
+        public void Update(GameTime gameTime)
         {
             //Load all the chunks which are queued to load.
             if(chunksToLoad.Count > 0)
@@ -196,20 +207,32 @@ namespace BlockGame.Components.World
                 chunk.Update(player);
             }
 
+            //Update all entities
+            foreach(Entity entity in entities.ToList())
+            {
+                entity.Update(gameTime);
+            }
+
         }
 
-        public void Draw(Camera camera, BasicEffect basicEffect)
+        public void Draw(BasicEffect basicEffect, SpriteBatch spriteBatch)
         {
             int counter = 0;
             foreach (Chunk chunk in chunks)
             {
-                if(chunk != null && camera.InFrustum(chunk.ChunkBox))
+                if(chunk != null && player.Camera.InFrustum(chunk.ChunkBox))
                 {
-                    chunk.Draw(camera, basicEffect);
+                    chunk.Draw(player.Camera, basicEffect);
                     counter++;
                 }
             }
             Game1.ChunksRendered = counter;
+
+            //Draw entities
+            foreach (Entity entity in entities)
+            {
+                entity.Draw(graphics, basicEffect, player.Camera, spriteBatch);
+            }
         }
 
         //First 2 are chunk X,Z, then block X,Y,Z in chunk Index
@@ -562,6 +585,16 @@ namespace BlockGame.Components.World
                     SecondaryDarkFill(target);
                 }
             }
+        }
+
+        public void CreateEntity(Entity entity)
+        {
+            entities.Add(entity);
+        }
+
+        public void DestroyEntity(Entity entity)
+        {
+            entities.Remove(entity);
         }
     }
 }
