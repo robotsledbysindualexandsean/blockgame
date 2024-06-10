@@ -41,7 +41,7 @@ namespace BlockGame.Components.Items
             
         }
 
-        public void AddItem(ushort itemID)
+        public void AddItem(ushort itemID, ushort amount)
         {
             //Check if the item is in the inventory already. If so, then add it to that slot (if possible)
             //Loop from bottom bar to top, left to right
@@ -52,7 +52,7 @@ namespace BlockGame.Components.Items
                     //If the item is found in the inventory under max count, add another count
                     if (slots[x, y][0] == itemID && slots[x,y][1] < dataManager.itemData[itemID].maxCount)
                     {
-                        slots[x, y][1]++;
+                        slots[x, y][1] += amount;
                         return;
                     }
                 }
@@ -66,7 +66,7 @@ namespace BlockGame.Components.Items
                     if (slots[x, y][0] == 0)
                     {
                         slots[x, y][0] = itemID;
-                        slots[x, y][1]++;
+                        slots[x, y][1] += amount;
                         return;
                     }
                 }

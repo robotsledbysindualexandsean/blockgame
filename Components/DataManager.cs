@@ -74,7 +74,7 @@ namespace BlockGame.Components
         public void LoadItemData()
         {
             new Item(this, 0); // Nothing
-            new BlockItem(this, 1, new Rectangle(1, 1, 16, 16), 10, Game1._graphics);
+            new BlockItem(this, 1, new Rectangle(1, 1, 16, 16), 999, Game1._graphics);
             new BombItem(this, 2, new Rectangle(1, 1, 16, 16), 5, Game1._graphics);
         }
     }

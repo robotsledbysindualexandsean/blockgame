@@ -16,6 +16,7 @@ namespace BlockGame.Components.Entities
     {
         //Transforms
         public Vector3 position;
+        protected Vector3 lastPosition;
         public Vector3 rotation;
         public Vector3 fixed_rotation_based_velocity;
         public Vector3 dynamic_velocity;
@@ -29,7 +30,7 @@ namespace BlockGame.Components.Entities
         public float speed = 5f;
 
         //Collision Variables
-        protected BoundingBox hitbox;
+        public BoundingBox hitbox;
         private Ray viewRay;
         public List<Face> rayFaces = new List<Face>();
         private Vector3 direction;
@@ -41,6 +42,14 @@ namespace BlockGame.Components.Entities
 
         //Closest things:
         protected Face closestFace;
+
+        //Standing Block
+        // Stores a reference to what block is being stood on. So that when the only velocity is gravity, collision is not checked if still stnading on that block.
+        private Face standingBlock;
+
+        //Debug
+        private List<VertexPositionColor> vertexList = new List<VertexPositionColor>(); //debug hitbox list
+        private VertexBuffer vertexBuffer;
 
         public Face ClosestFace
         {
@@ -78,6 +87,7 @@ namespace BlockGame.Components.Entities
         public virtual void Update(GameTime gameTime)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            lastPosition = position;
 
             //Enforce gravity
             if (dynamic_velocity.Y >= -0.1 && enforceGravity)
@@ -88,17 +98,39 @@ namespace BlockGame.Components.Entities
             //Velocity is made of two components, dynamic (applied forces) and fixed (movement). These are added together once both are calculated.
             velocity = dynamic_velocity + fixed_rotation_based_velocity;
 
-            //Apply the velocity to a temporary hitbox and then check the collisions on that. This will stop movement that goes into a block collider.
+            //Check if the entity is still colliding with theyre standing block. If so, then just quickly reset that to 0 to avoid collision checks.
             BoundingBox tempHitbox = new BoundingBox(new Vector3(hitbox.Min.X + velocity.X, hitbox.Min.Y + velocity.Y, hitbox.Min.Z + velocity.Z), new Vector3(hitbox.Max.X + velocity.X, hitbox.Max.Y + velocity.Y, hitbox.Max.Z + velocity.Z));
-            CollideBlocks(hitbox, tempHitbox);
+            if (standingBlock != null && tempHitbox.Intersects(standingBlock.hitbox))
+            {
+                velocity.Y = 0;
+            }
 
-            //Move using velocity
-            MoveTo(velocity + position, Rotation);
-            hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y / 2, position.Z - dimensions.Z / 2), new Vector3(position.X + dimensions.X / 2, position.Y + dimensions.Y / 2, position.Z + dimensions.Z / 2));
+            //Only update collision is there is velocity
+            if (velocity != Vector3.Zero)
+            {
+                standingBlock = null;
+
+                //Apply the velocity to a temporary hitbox and then check the collisions on that. This will stop movement that goes into a block collider.
+                CollideBlocks(hitbox, tempHitbox);
+
+                //Move using velocity
+                MoveTo(velocity + position, Rotation);
+                hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y / 2, position.Z - dimensions.Z / 2), new Vector3(position.X + dimensions.X / 2, position.Y + dimensions.Y / 2, position.Z + dimensions.Z / 2));
+
+                //Debug update bounding box
+                if (!lastPosition.Equals(position))
+                {
+                    BuildBoundingBoxDebug();
+                }
+            }
 
             PostUpdate();
         }
 
+        /// <summary>
+        /// Calculates which face (of the faces hit by the players ray) is closest. Not run every update frame for the base entity class
+        /// Only run when needed (similar to RaySight()). Must be run before raysight for accurate results.
+        /// </summary>
         protected void CalculateClosestFace()
         {
             if (rayFaces.Count <= 0)
@@ -118,7 +150,11 @@ namespace BlockGame.Components.Entities
             }
         }
 
-        //Method which updates the entities seen hitboxes of the ray. Todo: Make this return the list, rather than just updating a made variable.
+        /// <summary>
+        /// Method which updates this entities list of faces it is hitting.
+        /// This is NOT called on base entity update, it will only be called in higher classes
+        /// This is because not all entities need this info.
+        /// </summary>
         public void RaySight()
         {
             //YAW PTICH ROLL! Get direction using Vector3 rotation
@@ -206,6 +242,7 @@ namespace BlockGame.Components.Entities
                             if (velocity.Y < 0 && currentHitbox.Min.Y > faces[i].hitbox.Max.Y)
                             {
                                 velocity.Y = 0;
+                                standingBlock = faces[i];
                             }
                         }
                         if(faces[i].blockNormal.Equals(new Vector3(0, -1, 0)))
@@ -242,8 +279,8 @@ namespace BlockGame.Components.Entities
             if (Game1.debug)
             {
                 DrawBoundingBox(_graphics, basicEffect, camera);
-                DrawView(_graphics, basicEffect, camera);
-
+/*                DrawView(_graphics, basicEffect, camera);
+*/
             }
         }
 
@@ -279,55 +316,8 @@ namespace BlockGame.Components.Entities
         //Draw a bounding box (this actually works for any in theory but is spedcifically for hitboxes right now...)
         private void DrawBoundingBox(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera)
         {
-            List<VertexPositionColor> vertexList = new List<VertexPositionColor>();
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-            //
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red));
-
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red));
-            vertexList.Add(new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red));
-
-            //Building vertex buffer for it and drawing every frame (since movmenet every frame basically)
-            VertexBuffer vertexBuffer;
-
             if (vertexList.Count > 0)
             {
-                vertexBuffer = new VertexBuffer(_graphics.GraphicsDevice, typeof(VertexPositionColor), vertexList.Count, BufferUsage.WriteOnly);
-                vertexBuffer.SetData(vertexList.ToArray());
-
                 basicEffect.VertexColorEnabled = true;
                 basicEffect.View = camera.View;
                 basicEffect.Projection = camera.Projection;
@@ -342,6 +332,43 @@ namespace BlockGame.Components.Entities
                 }
             }
 
+        }
+
+        private void BuildBoundingBoxDebug()
+        {
+            vertexList = new List<VertexPositionColor>
+                {
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red),
+                    //
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Min.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Min.X, hitbox.Max.Y, hitbox.Max.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Min.Y, hitbox.Min.Z), Color.Red),
+                    new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red)
+                };
+
+            vertexBuffer = new VertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColor), vertexList.Count, BufferUsage.WriteOnly);
+            vertexBuffer.SetData(vertexList.ToArray());
         }
 
         //method that simulates movement

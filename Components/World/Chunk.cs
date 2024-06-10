@@ -277,7 +277,7 @@ namespace BlockGame.Components.World
                     Vector3 adjacentBlock = face.blockPosition - Vector3.UnitX;
                     int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
-                    Block.AddNegXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos); Game1.BlockCount++;
+                    Block.AddNegXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
 
                 }

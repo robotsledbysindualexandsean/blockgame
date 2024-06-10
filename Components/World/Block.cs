@@ -1,4 +1,5 @@
-﻿using BlockGame.Components.Items;
+﻿using BlockGame.Components.Entities;
+using BlockGame.Components.Items;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -52,6 +53,12 @@ namespace BlockGame.Components.World
             {
                 data.lightEmittingIDs.Add(blockID);
             }
+        }
+
+        public void Destroy(WorldManager world, Vector3 blockPosition)
+        {
+            DroppedItem.DropItem(blockPosition + new Vector3(0, 1, 0), 1, world);
+            world.SetBlockAtWorldIndex(blockPosition, 0);
         }
 
         public bool IsLightSource()

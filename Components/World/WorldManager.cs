@@ -347,7 +347,10 @@ namespace BlockGame.Components.World
             }
 
             chunks[chunkIndex[0], chunkIndex[1]].SetBlock(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4] ), blockId);
+
             UpdateLighting();
+
+
         }
 
         public void SetBlockLightLevelAtWorldIndex(Vector3 worldPos, ushort newLight)

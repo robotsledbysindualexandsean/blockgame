@@ -88,7 +88,7 @@ namespace BlockGame.Components.Entities
             world.LoadChunksInstantly(new Vector2(chunkPos[0], chunkPos[1]), renderDistance);
 
             //debug items
-            inventory.AddItem(2);
+            inventory.AddItem(2, 1);
         }
 
 

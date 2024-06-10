@@ -32,7 +32,6 @@ namespace BlockGame
 
         //Counters mostly used in early development to determine if features were working. Mostly able to be deprecated now.
         public static int TriangleCount = 0;
-        public static int BlockCount = 0;
         public static int ChunkCount = 0;
         public static int ChunksRendered = 0;
         public static int RebuildCalls = 0;
@@ -156,7 +155,7 @@ namespace BlockGame
 
             _spriteBatch.DrawString(debugFont, "Chunks: " + Game1.ChunkCount, new Vector2(0, 15), Color.White);
             _spriteBatch.DrawString(debugFont, "Rebuilds: " + Game1.RebuildCalls, new Vector2(0, 30), Color.White);
-            _spriteBatch.DrawString(debugFont, "Triangles Drawn: " + Game1.TriangleCount, new Vector2(0, 45), Color.White);
+            _spriteBatch.DrawString(debugFont, "Entities: " + world.entities.Count, new Vector2(0, 45), Color.White);
             Vector3 temp = world.player.Position / Block.blockSize;
             temp.Floor();
             _spriteBatch.DrawString(debugFont, "Position: " + (temp).ToString(), new Vector2(0, 60), Color.White);

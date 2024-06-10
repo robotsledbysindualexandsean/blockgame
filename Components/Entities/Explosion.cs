@@ -10,7 +10,7 @@ namespace BlockGame.Components.Entities
 {
     internal class Explosion : Entity
     {
-        private static Vector3 dimensions = new Vector3(50f, 50f, 50f);
+        private static Vector3 dimensions = new Vector3(5, 5, 5);
         private int duration = 60 * 1;
 
         public Explosion(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager, dimensions)
@@ -26,16 +26,20 @@ namespace BlockGame.Components.Entities
 
         public override void Update(GameTime gameTime)
         {
-            //Destroy blocks it collides with
-            Chunk[,] chunks = world.GetChunksNearby(position, 1);
-
-            foreach(Chunk chunk in chunks)
+            //Check all blocks within the radius, destroy them
+            for (int x = (int)-dimensions.X / 2; x <= dimensions.X / 2; x++)
             {
-                foreach(Face face in chunk.visibleFaces)
+                for (int y = (int)-dimensions.Y / 2; y <= dimensions.Y / 2; y++)
                 {
-                    if (Vector3.Distance(face.blockPosition, this.position) <= Explosion.dimensions.X / 2)
+                    for (int z = (int)-dimensions.Z / 2; z <= dimensions.Z / 2; z++)
                     {
-                        world.SetBlockAtWorldIndex(face.blockPosition, 0);
+                        //A distance check is performed to give a circular "radius" rather than a square
+                        Vector3 targetedBlock = this.position + new Vector3(x, y, z);
+                        if (world.GetBlockAtWorldIndex(targetedBlock) != 0 &&  Vector3.Distance(this.position, targetedBlock) <= Explosion.dimensions.X / 2)
+                        {
+                            dataManager.blockData[world.GetBlockAtWorldIndex(targetedBlock)].Destroy(world, targetedBlock);
+
+                        }
                     }
                 }
             }

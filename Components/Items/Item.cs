@@ -58,9 +58,12 @@ namespace BlockGame.Components.Items
         /// <param name="player"></param>
         public virtual void OnLeftClick(WorldManager world, DataManager dataManager, Player player, Entity user)
         {
-            //Add the drop to the players inventory
-            player.Inventory.AddItem(dataManager.blockData[world.GetBlockAtWorldIndex(player.ClosestFace.blockPosition)].drop);
-            world.SetBlockAtWorldIndex(player.ClosestFace.blockPosition, 0);
+            //Add the drop to the players inventory (OLD)
+            //player.Inventory.AddItem(dataManager.blockData[world.GetBlockAtWorldIndex(player.ClosestFace.blockPosition)].drop);
+
+            //Destroy block
+            dataManager.blockData[world.GetBlockAtWorldIndex(user.ClosestFace.blockPosition)].Destroy(world, user.ClosestFace.blockPosition);
+
         }
     }
 }
