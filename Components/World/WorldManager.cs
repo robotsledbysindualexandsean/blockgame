@@ -91,36 +91,36 @@ namespace BlockGame.Components.World
         {
             //Getting 2D map
             dungeonMap = dungeonManager.GenerateDungeon((chunksGenerated - 2) * 16, (chunksGenerated - 2) * 16);
-            
+
             //Offset for dungeon map array and the actual world block pos
             Vector3 arrayOffset = new Vector3(chunksGenerated * Chunk.chunkLength / 2, 0, chunksGenerated * Chunk.chunkWidth / 2);
 
             //Looping through each index in the 2D map, then depending on what it is, changing that column in the world
-            for(int x = 0; x < (chunksGenerated-2)*Chunk.chunkLength; x++)
+            for (int x = 0; x < (chunksGenerated - 2) * Chunk.chunkLength; x++)
             {
-                for(int z = 0; z < (chunksGenerated-2)*Chunk.chunkWidth; z++)
+                for (int z = 0; z < (chunksGenerated - 2) * Chunk.chunkWidth; z++)
                 {
                     //If this column has a 1, then cut a floor.
-                    if (dungeonMap[x,z] == 1)
+                    if (dungeonMap[x, z] == 1)
                     {
                         //Starting from the middle of the chunk, set roomHeight/2 upwards and downwards to air
-                        for(int y = Chunk.chunkHeight/2-roomHeight/2; y < Chunk.chunkHeight/2+roomHeight/2; y++)
+                        for (int y = Chunk.chunkHeight / 2 - roomHeight / 2; y < Chunk.chunkHeight / 2 + roomHeight / 2; y++)
                         {
                             //Set block to empty
-                            SetBlockAtWorldIndex(new Vector3(x,y,z) - arrayOffset, 0);
+                            SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, 0);
                         }
 
                         //Generate random stone texture for floor
-                        SetBlockAtWorldIndex(new Vector3(x, Chunk.chunkHeight / 2 - roomHeight / 2 - 1, z) - arrayOffset, (ushort)rnd.Next(3,5));
+                        SetBlockAtWorldIndex(new Vector3(x, Chunk.chunkHeight / 2 - roomHeight / 2 - 1, z) - arrayOffset, (ushort)rnd.Next(3, 5));
                     }
 
                     //If the index is a wall, then set the blocks in the room to be the wall block (wood)
                     if (dungeonMap[x, z] == 2)
                     {
-                        for (int y = Chunk.chunkHeight / 2 - roomHeight / 2 ; y < Chunk.chunkHeight / 2 + roomHeight / 2; y++)
+                        for (int y = Chunk.chunkHeight / 2 - roomHeight / 2; y < Chunk.chunkHeight / 2 + roomHeight / 2; y++)
                         {
                             //Set block to be wall (wood)
-                            SetBlockAtWorldIndex(new Vector3(x,y,z) - arrayOffset, (ushort)rnd.Next(1, 3));
+                            SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, (ushort)rnd.Next(1, 3));
                         }
                     }
                     //If index is a door, then cut 3 blocks upwards from the floor.
@@ -292,7 +292,9 @@ namespace BlockGame.Components.World
                 return 0;
             }
 
-            return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]));
+            Vector3 posRelativeToChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
+
+            return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(posRelativeToChunk);
         }
         public ushort GetBlockLightLevelAtWorldIndex(Vector3 worldpos)
         {
@@ -336,21 +338,9 @@ namespace BlockGame.Components.World
                 return;
             }
 
-            if (dataManager.lightEmittingIDs.Contains(blockId)) // If this block ID emits light...
-            {
-                dataManager.lightEmittingPos.Add(worldPos); // Add to list of all light emitting block locations.
-            }
+            Vector3 posRelativeToChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
 
-            if (dataManager.blockData[GetBlockAtWorldIndex(worldPos)].IsLightSource())
-            {
-                DestroyLightSource(worldPos);
-            }
-
-            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4] ), blockId);
-
-            UpdateLighting();
-
-
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(posRelativeToChunk, blockId);
         }
 
         public void SetBlockLightLevelAtWorldIndex(Vector3 worldPos, ushort newLight)
@@ -503,91 +493,6 @@ namespace BlockGame.Components.World
             }
 
             return array;
-        }
-
-        public void UpdateLighting()
-        {
-            foreach (Vector3 source in dataManager.lightEmittingPos)
-            {
-                ushort curLight = GetBlockLightLevelAtWorldIndex(source);
-                Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
-                List<Vector3> newSrcs = new List<Vector3>();
-                List<Vector3> visited = new List<Vector3>();
-                visited.Add(source);
-
-                foreach (Vector3 target in targets)
-                {
-                    if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < curLight)
-                    {
-                        SetBlockLightLevelAtWorldIndex(target, (ushort)(curLight - 1));
-                        newSrcs.Add(target);
-                        visited.Add(target);
-                    }
-                }
-
-                SecondaryLightFill(newSrcs, visited);
-            }
-        }
-
-        public void SecondaryLightFill(List<Vector3> sources, List<Vector3> visited)
-        {
-            List<Vector3> newSrcs = new List<Vector3>();
-
-            foreach (Vector3 source in sources)
-            {
-                ushort curLight = GetBlockLightLevelAtWorldIndex(source);
-
-                if (curLight > 1)
-                {
-                    Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
-
-                    foreach (Vector3 target in targets)
-                    {
-                        if (!visited.Contains(target) && GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < curLight)
-                        {
-                            SetBlockLightLevelAtWorldIndex(target, (ushort)(curLight - 1));
-                            newSrcs.Add(target);
-                            visited.Add(target);
-                        }
-                    }
-                }
-            }
-
-            if (newSrcs.Count > 0)
-            {
-                SecondaryLightFill(newSrcs, visited);
-            }
-        }
-
-        public void DestroyLightSource(Vector3 source)
-        {
-            ushort curLight = GetBlockLightLevelAtWorldIndex(source);
-            SetBlockLightLevelAtWorldIndex(source, 0);
-            dataManager.lightEmittingPos.Remove(source);
-            Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
-
-            foreach (Vector3 target in targets)
-            {
-                if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < curLight)
-                {
-                    SecondaryDarkFill(target);
-                }
-            }
-        }
-
-        public void SecondaryDarkFill(Vector3 source)
-        {
-            ushort curLight = GetBlockLightLevelAtWorldIndex(source);
-            SetBlockLightLevelAtWorldIndex(source, 0);
-            Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
-
-            foreach (Vector3 target in targets)
-            {
-                if (GetBlockAtWorldIndex(target) == 0 && GetBlockLightLevelAtWorldIndex(target) < curLight)
-                {
-                    SecondaryDarkFill(target);
-                }
-            }
         }
 
         public void CreateEntity(Entity entity)

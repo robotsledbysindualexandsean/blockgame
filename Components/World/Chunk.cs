@@ -48,7 +48,9 @@ namespace BlockGame.Components.World
         /// These variables are used to code that in.
         /// </summary>
         private bool rebuildNextFrame = false;
+        public bool updateLightingNextFrame = false;
         private int framesSinceLastRebuild = 10000;
+        private int framesSinceLastLight = 10000;
 
         private DataManager dataManager;
 
@@ -66,6 +68,8 @@ namespace BlockGame.Components.World
         //Each chunk stores its block's colliders (hitboxes) and normals. This is only iterared for visible blocks.
         public List<Face> visibleFaces;
         public bool drawHitboxes = false;
+
+        public List<Vector3> lights = new List<Vector3>();
 
         public Chunk(WorldManager world, Vector3 chunkPos, GraphicsDeviceManager graphics, DataManager dataManager)
         {
@@ -241,7 +245,7 @@ namespace BlockGame.Components.World
             List<VertexPositionColorTexture> vertexList = new List<VertexPositionColorTexture>();
             List<VertexPositionColor> lineList = new List<VertexPositionColor>();
 
-            int defaultLightHue = 200;
+            int defaultLightHue = 0;
 
             //Check sides of the empty block, render those faces if there is a block
             foreach (Face face in visibleFaces)
@@ -388,6 +392,11 @@ namespace BlockGame.Components.World
             }
         }
 
+        public Vector3 ChunkPosToWorldPos(Vector3 posRelativeToChunk)
+        {
+            return new Vector3(posRelativeToChunk.X + chunkPos.X*chunkWidth, posRelativeToChunk.Y, posRelativeToChunk.Z + chunkPos.Z*chunkLength);
+        }
+
         /// <summary>
         /// Gets the current block ID given the block position relative to the current chunk.
         /// </summary>
@@ -416,52 +425,77 @@ namespace BlockGame.Components.World
             CreateDebugVBOList();
         }
 
-        public void SetBlock(Vector3 posRelativeToChunk, ushort block)
+        public void SetBlock(Vector3 posRelativeToChunk, ushort blockID)
         {
+            Vector3 worldPos = ChunkPosToWorldPos(posRelativeToChunk);
+
+            if (dataManager.blockData[world.GetBlockAtWorldIndex(worldPos)].IsLightSource())
+            {
+                DestroyLightSource(worldPos);
+            }
+
             if ((int)posRelativeToChunk.X >= chunkLength || (int)posRelativeToChunk.Z >= chunkWidth || posRelativeToChunk.Y >= chunkHeight || posRelativeToChunk.X < 0 || posRelativeToChunk.Y < 0 || posRelativeToChunk.Z < 0)
             {
                 return;
             }
 
-            blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z][0] = block;
+            blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z][0] = blockID;
 
             //When placing a block, the chunk will reload within the next few frames. It also reloads the chunk NEXT to it, should the block be broken on the edge of the chunk.
             rebuildNextFrame = true;
+            updateLightingNextFrame = true;
 
-            if (posRelativeToChunk.X == 0)
+            Chunk chunkNegX = world.GetChunk(new Vector2(this.chunkPos.X - 1, this.chunkPos.Z) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
+            Chunk chunkPosX = world.GetChunk(new Vector2(this.chunkPos.X + 1, this.chunkPos.Z) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
+            Chunk chunkNegZ = world.GetChunk(new Vector2(this.chunkPos.X, this.chunkPos.Z - 1) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
+            Chunk chunkPosZ = world.GetChunk(new Vector2(this.chunkPos.X, this.chunkPos.Z + 1) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
+
+            if (chunkNegX != null)
             {
-                Chunk chunk = world.GetChunk(new Vector2(this.chunkPos.X - 1, this.chunkPos.Z) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
-                if (chunk != null)
+                chunkNegX.updateLightingNextFrame = true;
+
+                if (posRelativeToChunk.X == 0)
                 {
-                    chunk.rebuildNextFrame = true;
+                    chunkNegX.rebuildNextFrame = true;
                 }
             }
-            else if (posRelativeToChunk.X == 15)
+
+            if (chunkPosX != null)
             {
-                Chunk chunk = world.GetChunk(new Vector2(this.chunkPos.X + 1, this.chunkPos.Z) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
-                if (chunk != null)
+                chunkPosX.updateLightingNextFrame = true;
+
+                if (posRelativeToChunk.X == 0)
                 {
-                    chunk.rebuildNextFrame = true;
+                    chunkPosX.rebuildNextFrame = true;
                 }
             }
-            if (posRelativeToChunk.Z == 0)
+
+            if (chunkNegZ != null)
             {
-                Chunk chunk = world.GetChunk(new Vector2(this.chunkPos.X, this.chunkPos.Z - 1) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
-                if (chunk != null)
+                chunkNegZ.updateLightingNextFrame = true;
+
+                if (posRelativeToChunk.X == 0)
                 {
-                    chunk.rebuildNextFrame = true;
+                    chunkNegZ.rebuildNextFrame = true;
                 }
             }
-            else if (posRelativeToChunk.Z == 15)
+
+            if (chunkPosZ != null)
             {
-                Chunk chunk = world.GetChunk(new Vector2(this.chunkPos.X, this.chunkPos.Z + 1) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
-                if (chunk != null)
+                chunkPosZ.updateLightingNextFrame = true;
+
+                if (posRelativeToChunk.X == 0)
                 {
-                    chunk.rebuildNextFrame = true;
+                    chunkPosZ.rebuildNextFrame = true;
                 }
             }
-            
-            SetBlockLightLevel(posRelativeToChunk, dataManager.blockData[block].lightEmittingFactor);
+
+            if (dataManager.lightEmittingIDs.Contains(blockID)) // If this block ID emits light...
+            {
+                lights.Add(worldPos); // Add to list of all light emitting block locations.
+            }
+
+            SetBlockLightLevel(posRelativeToChunk, dataManager.blockData[blockID].lightEmittingFactor);
         }
 
         public void GenerateEmptyChunk()
@@ -495,7 +529,16 @@ namespace BlockGame.Components.World
                 rebuildNextFrame = false;
                 framesSinceLastRebuild = 0;
             }
+
+            if (updateLightingNextFrame && framesSinceLastLight > -1)
+            {
+                UpdateLighting();
+                updateLightingNextFrame = false;
+                framesSinceLastLight = 0;
+            }
+
             framesSinceLastRebuild += 1;
+            framesSinceLastLight += 1;
         }
 
         private void UnloadChunk()
@@ -508,6 +551,124 @@ namespace BlockGame.Components.World
                 lineBuffer = null;
 
                 chunkLoaded = false;
+            }
+        }
+
+        public void UpdateLighting()
+        {
+            Game1.LightingUpdates++;
+            foreach (Vector3 source in lights)
+            {
+                ushort curLight = world.GetBlockLightLevelAtWorldIndex(source);
+                Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+                List<Vector3> toPropagate = new List<Vector3>();
+                List<Vector3> visited = new List<Vector3>();
+                visited.Add(source);
+
+                foreach (Vector3 target in targets)
+                {
+                    if (world.GetBlockAtWorldIndex(target) == 0 && world.GetBlockLightLevelAtWorldIndex(target) < curLight)
+                    {
+                        world.SetBlockLightLevelAtWorldIndex(target, (ushort)(curLight - 1));
+                        toPropagate.Add(target);
+                        visited.Add(target);
+                    }
+                }
+
+                if (toPropagate.Count > 0)
+                {
+                    SecondaryLightFill(toPropagate, visited);
+                }
+            }
+        }
+
+        public void SecondaryLightFill(List<Vector3> toPropagate, List<Vector3> visited)
+        {
+            List<Vector3> newToPropagate = new List<Vector3>();
+
+            ushort curLight = world.GetBlockLightLevelAtWorldIndex(toPropagate[0]);
+            ushort newLight = (ushort)(curLight - 1);
+
+            if (curLight > 1)
+            {
+                foreach (Vector3 source in toPropagate)
+                {
+                    Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+
+                    foreach (Vector3 target in targets)
+                    {
+                        if (!visited.Contains(target) && world.GetBlockAtWorldIndex(target) == 0 && world.GetBlockLightLevelAtWorldIndex(target) < curLight)
+                        {
+                            world.SetBlockLightLevelAtWorldIndex(target, newLight);
+                            newToPropagate.Add(target);
+                            visited.Add(target);
+                        }
+                    }
+                }
+            }
+
+            if (newToPropagate.Count > 0)
+            {
+                SecondaryLightFill(newToPropagate, visited);
+            }
+        }
+
+        public void DestroyLightSource(Vector3 source)
+        {
+            ushort curLight = world.GetBlockLightLevelAtWorldIndex(source);
+            world.SetBlockLightLevelAtWorldIndex(source, 0);
+            lights.Remove(source);
+
+            Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+            
+            List<Vector3> toPropagate = new List<Vector3>();
+            List<Vector3> visited = new List<Vector3>();
+            visited.Add(source);
+
+            foreach (Vector3 target in targets)
+            {
+                if (world.GetBlockAtWorldIndex(target) == 0)
+                {
+                    toPropagate.Add(target);
+                    visited.Add(target);
+                }
+            }
+
+            if (toPropagate.Count > 0)
+            {
+                SecondaryDarkFill(toPropagate, visited);
+            }
+        }
+
+        public void SecondaryDarkFill(List<Vector3> toPropagate, List<Vector3> visited)
+        {
+            List<Vector3> newToPropagate = new List<Vector3>();
+
+            ushort newLight = (ushort)(world.GetBlockLightLevelAtWorldIndex(toPropagate[0]) - 1);
+
+            if (newLight >= 0)
+            {
+                foreach (Vector3 source in toPropagate)
+                {
+                    world.SetBlockLightLevelAtWorldIndex(source, 0);
+
+                    Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
+
+                    foreach (Vector3 target in targets)
+                    {
+                        if (!visited.Contains(target) && world.GetBlockAtWorldIndex(target) == 0 && world.GetBlockLightLevelAtWorldIndex(target) == newLight)
+                        {
+                            world.GetChunk(world.WorldPositionToChunk(target)).updateLightingNextFrame = true;
+                            newToPropagate.Add(target);
+                            visited.Add(target);
+                        }
+                    }
+                }
+            }
+
+            if (newToPropagate.Count > 0)
+            {
+                SecondaryDarkFill(newToPropagate, visited);
             }
         }
     }

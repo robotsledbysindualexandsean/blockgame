@@ -31,7 +31,6 @@ namespace BlockGame.Components
         public Dictionary<ushort, Item> itemData = new Dictionary<ushort, Item>();
 
         public List<ushort> lightEmittingIDs = new List<ushort>();
-        public List<Vector3> lightEmittingPos = new List<Vector3>();
 
         public DataManager() {
 
@@ -64,7 +63,7 @@ namespace BlockGame.Components
             new Block(this, 2, new Vector2(1, 1), 0, 1); //Wood
             new Block(this, 3, new Vector2(0, 0), 0, 1); //cobblestone
             new Block(this, 4, new Vector2(1, 0), 0, 1); //stone
-            new Block(this, 5, new Vector2(0, 2), 9, 1); //glowstone
+            new Block(this, 5, new Vector2(0, 2), 15, 1); //glowstone
 
         }
 

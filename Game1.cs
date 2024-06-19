@@ -35,10 +35,9 @@ namespace BlockGame
         public static int ChunkCount = 0;
         public static int ChunksRendered = 0;
         public static int RebuildCalls = 0;
-
-        static Texture2D rect; //A texture used to draw all 2D reactangles
-
-        static public bool debug = false; //Boolean determining if debug mode is on (essentially F3 in minecraft with noclip)
+        static Texture2D rect;
+        static public bool debug = false;
+        public static int LightingUpdates = 0;
 
         //3D mesh testing
         SkinnedModel characterModel;
@@ -91,7 +90,6 @@ namespace BlockGame
 
             //Load all content via datamanager
             dataManager.LoadContent(Content);
-
         }
 
         protected override void Update(GameTime gameTime)
@@ -143,7 +141,7 @@ namespace BlockGame
 
             //Debug Panel
 
-            DrawRectangle(new Rectangle(0, 0, 200, 95), Color.Black);
+            DrawRectangle(new Rectangle(0, 0, 250, 125), Color.Black);
 
             _spriteBatch.DrawString(debugFont, "Frames: " + (1 / gameTime.ElapsedGameTime.TotalSeconds).ToString(), new Vector2(0, 0), Color.White);
 
@@ -155,11 +153,14 @@ namespace BlockGame
 
             _spriteBatch.DrawString(debugFont, "Chunks: " + Game1.ChunkCount, new Vector2(0, 15), Color.White);
             _spriteBatch.DrawString(debugFont, "Rebuilds: " + Game1.RebuildCalls, new Vector2(0, 30), Color.White);
-            _spriteBatch.DrawString(debugFont, "Entities: " + world.entities.Count, new Vector2(0, 45), Color.White);
+            _spriteBatch.DrawString(debugFont, "Triangles Drawn: " + Game1.TriangleCount, new Vector2(0, 45), Color.White);
+            //Vector3 temp = player.Position / Block.blockSize;
+            _spriteBatch.DrawString(debugFont, "Lighting Updates: " + Game1.LightingUpdates, new Vector2(0, 60), Color.White);
+            _spriteBatch.DrawString(debugFont, "Entities: " + world.entities.Count, new Vector2(0, 75), Color.White);
             Vector3 temp = world.player.Position / Block.blockSize;
             temp.Floor();
-            _spriteBatch.DrawString(debugFont, "Position: " + (temp).ToString(), new Vector2(0, 60), Color.White);
-            _spriteBatch.DrawString(debugFont, "Chunks Rendered: " + (ChunksRendered).ToString(), new Vector2(0, 75), Color.White);
+            _spriteBatch.DrawString(debugFont, "Position: " + (temp).ToString(), new Vector2(0, 90), Color.White);
+            _spriteBatch.DrawString(debugFont, "Chunks Rendered: " + (ChunksRendered).ToString(), new Vector2(0, 105), Color.White);
 
             //Debug Map
             /*            int[,] noise = world.dungeonMap;
