@@ -513,13 +513,16 @@ namespace BlockGame.Components.World
 
             SetBlockLightLevelAtWorldIndex(worldPos, newLight);
 
-            foreach (Vector3 target in targets)
+            if (newLight > 1)
             {
-                ushort curLight = GetBlockLightLevelAtWorldIndex(target);
-
-                if (GetBlockAtWorldIndex(target) == 0 && curLight < newLight)
+                foreach (Vector3 target in targets)
                 {
-                    PropagateLightToBlock(target);
+                    ushort curLight = GetBlockLightLevelAtWorldIndex(target);
+
+                    if (GetBlockAtWorldIndex(target) == 0 && curLight < newLight - 1)
+                    {
+                        PropagateLightToBlock(target);
+                    }
                 }
             }
         }
