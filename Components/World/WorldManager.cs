@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace BlockGame.Components.World
 {
@@ -493,6 +494,34 @@ namespace BlockGame.Components.World
             }
 
             return array;
+        }
+
+        public void PropagateLightToBlock(Vector3 worldPos)
+        {
+            Vector3[] targets = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos + Vector3.UnitY, worldPos - Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
+            ushort newLight = 0;
+
+            foreach (Vector3 target in targets)
+            {
+                ushort curLight = GetBlockLightLevelAtWorldIndex(target);
+
+                if (curLight > newLight)
+                {
+                    newLight = (ushort)(curLight - 1);
+                }
+            }
+
+            SetBlockLightLevelAtWorldIndex(worldPos, newLight);
+
+            foreach (Vector3 target in targets)
+            {
+                ushort curLight = GetBlockLightLevelAtWorldIndex(target);
+
+                if (GetBlockAtWorldIndex(target) == 0 && curLight < newLight)
+                {
+                    PropagateLightToBlock(target);
+                }
+            }
         }
 
         public void CreateEntity(Entity entity)

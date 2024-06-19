@@ -394,7 +394,7 @@ namespace BlockGame.Components.World
 
         public Vector3 ChunkPosToWorldPos(Vector3 posRelativeToChunk)
         {
-            return new Vector3(posRelativeToChunk.X + chunkPos.X*chunkWidth, posRelativeToChunk.Y, posRelativeToChunk.Z + chunkPos.Z*chunkLength);
+            return new Vector3(posRelativeToChunk.X + chunkPos.X * chunkWidth, posRelativeToChunk.Y, posRelativeToChunk.Z + chunkPos.Z * chunkLength);
         }
 
         /// <summary>
@@ -428,10 +428,13 @@ namespace BlockGame.Components.World
         public void SetBlock(Vector3 posRelativeToChunk, ushort blockID)
         {
             Vector3 worldPos = ChunkPosToWorldPos(posRelativeToChunk);
+            ushort oldBlockID = world.GetBlockAtWorldIndex(worldPos);
+            bool oldIsLight = false;
 
-            if (dataManager.blockData[world.GetBlockAtWorldIndex(worldPos)].IsLightSource())
+            if (dataManager.blockData[oldBlockID].IsLightSource())
             {
                 DestroyLightSource(worldPos);
+                oldIsLight = true;
             }
 
             if ((int)posRelativeToChunk.X >= chunkLength || (int)posRelativeToChunk.Z >= chunkWidth || posRelativeToChunk.Y >= chunkHeight || posRelativeToChunk.X < 0 || posRelativeToChunk.Y < 0 || posRelativeToChunk.Z < 0)
@@ -443,59 +446,40 @@ namespace BlockGame.Components.World
 
             //When placing a block, the chunk will reload within the next few frames. It also reloads the chunk NEXT to it, should the block be broken on the edge of the chunk.
             rebuildNextFrame = true;
-            updateLightingNextFrame = true;
 
             Chunk chunkNegX = world.GetChunk(new Vector2(this.chunkPos.X - 1, this.chunkPos.Z) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
             Chunk chunkPosX = world.GetChunk(new Vector2(this.chunkPos.X + 1, this.chunkPos.Z) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
             Chunk chunkNegZ = world.GetChunk(new Vector2(this.chunkPos.X, this.chunkPos.Z - 1) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
             Chunk chunkPosZ = world.GetChunk(new Vector2(this.chunkPos.X, this.chunkPos.Z + 1) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
 
-            if (chunkNegX != null)
+            if (posRelativeToChunk.X == 0 && chunkNegX != null)
             {
-                chunkNegX.updateLightingNextFrame = true;
-
-                if (posRelativeToChunk.X == 0)
-                {
-                    chunkNegX.rebuildNextFrame = true;
-                }
+                chunkNegX.rebuildNextFrame = true;
+            }
+            else if (posRelativeToChunk.X == 15 && chunkPosX != null)
+            {
+                chunkPosX.rebuildNextFrame = true;
             }
 
-            if (chunkPosX != null)
+            if (posRelativeToChunk.Z == 0 && chunkNegZ != null)
             {
-                chunkPosX.updateLightingNextFrame = true;
-
-                if (posRelativeToChunk.X == 0)
-                {
-                    chunkPosX.rebuildNextFrame = true;
-                }
+                chunkNegZ.rebuildNextFrame = true;
             }
-
-            if (chunkNegZ != null)
+            else if (posRelativeToChunk.Z == 15 && chunkPosZ != null)
             {
-                chunkNegZ.updateLightingNextFrame = true;
-
-                if (posRelativeToChunk.X == 0)
-                {
-                    chunkNegZ.rebuildNextFrame = true;
-                }
-            }
-
-            if (chunkPosZ != null)
-            {
-                chunkPosZ.updateLightingNextFrame = true;
-
-                if (posRelativeToChunk.X == 0)
-                {
-                    chunkPosZ.rebuildNextFrame = true;
-                }
+                chunkPosZ.rebuildNextFrame = true;
             }
 
             if (dataManager.lightEmittingIDs.Contains(blockID)) // If this block ID emits light...
             {
                 lights.Add(worldPos); // Add to list of all light emitting block locations.
+                SetBlockLightLevel(posRelativeToChunk, dataManager.blockData[blockID].lightEmittingFactor);
+                updateLightingNextFrame = true;
             }
-
-            SetBlockLightLevel(posRelativeToChunk, dataManager.blockData[blockID].lightEmittingFactor);
+            else if (blockID == 0 && !oldIsLight)
+            {
+                world.PropagateLightToBlock(worldPos);
+            }
         }
 
         public void GenerateEmptyChunk()
@@ -530,7 +514,7 @@ namespace BlockGame.Components.World
                 framesSinceLastRebuild = 0;
             }
 
-            if (updateLightingNextFrame && framesSinceLastLight > -1)
+            if (updateLightingNextFrame && framesSinceLastLight > 5)
             {
                 UpdateLighting();
                 updateLightingNextFrame = false;
