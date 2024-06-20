@@ -496,53 +496,75 @@ namespace BlockGame.Components.World
             return array;
         }
 
+        /// <summary>
+        /// Gets an array of all blocks adjacent to a given block, taking into account the top and bottom of the world.
+        /// </summary>
+        /// <param name="worldPos">The world position of the block to check the adjacent blocks of.</param>
+        /// <returns>An array of all blocks adjacent to worldPos.</returns>
         public Vector3[] GetAdjacentBlocks(Vector3 worldPos)
         {
-            Vector3[] adjacentBlocks = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos + Vector3.UnitY, worldPos - Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
-            return adjacentBlocks;
+            if (worldPos.Y > 0 && worldPos.Y < Chunk.chunkHeight - 1) // If this block is above the bottom of the world and below the top of the world...
+            {
+                Vector3[] adjacentBlocks = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos + Vector3.UnitY, worldPos - Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
+                return adjacentBlocks; // All 6 adjacent blocks.
+            }
+            else if (worldPos.Y <= 0) // If this block is at the bottom of the world...
+            {
+                Vector3[] adjacentBlocks = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos + Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
+                return adjacentBlocks; // Excludes the block below worldPos (worldPos - Vector3.UnitY).
+            }
+            else // If this block is at the top of the world...
+            {
+                Vector3[] adjacentBlocks = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos - Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
+                return adjacentBlocks; // Excludes the block above worldPos (worldPos + Vector3.UnitY).
+            }
         }
 
+        /// <summary>
+        /// Calculates the correct light value for a block based on the adjacent blocks' light values.
+        /// </summary>
+        /// <param name="worldPos">The world position of the block to propagate light to.</param>
         public void PropagateLight(Vector3 worldPos)
         {
-            Game1.LightingPasses++;
+            Game1.LightingPasses++; // Updates the number of global light passes.
 
             Vector3[] targets = GetAdjacentBlocks(worldPos);
-            ushort oldLight = GetBlockLightLevelAtWorldIndex(worldPos);
-            ushort newLight = 0;
+            ushort oldLight = GetBlockLightLevelAtWorldIndex(worldPos); // The light level of the block before being recalculated.
+            ushort newLight = 0; // The light level to potentially change to (if it becomes higher than oldLight).
 
-            if (GetBlockAtWorldIndex(worldPos) != 0)
+            if (GetBlockAtWorldIndex(worldPos) != 0) // If this block is not air...
             {
-                return;
+                return; // End.
             }
 
-            foreach (Vector3 target in targets)
+            foreach (Vector3 target in targets) // For each adjacent block...
             {
-                ushort blockID = GetBlockAtWorldIndex(target);
+                ushort blockID = GetBlockAtWorldIndex(target); // The block ID of the current target.
 
-                if (blockID == 0 || dataManager.blockData[blockID].IsLightSource())
+                if (blockID == 0 || dataManager.blockData[blockID].IsLightSource()) // If the target block is either air or a light source...
                 {
-                    ushort targetLight = GetBlockLightLevelAtWorldIndex(target);
+                    ushort targetLight = GetBlockLightLevelAtWorldIndex(target); // Get the light level at the target.
 
-                    if (targetLight > newLight)
+                    if (targetLight > newLight) // If the target's light level is greater than the currently stored newLight light level...
                     {
-                        newLight = (ushort)(targetLight - 1);
+                        newLight = (ushort)(targetLight - 1); // Set the new light level to be 1 less than the target's light level.
                     }
                 }
             }
 
-            if (newLight > oldLight)
+            if (newLight > oldLight) // If the recalculated light level is greater than the original light level on the block...
             {
-                SetBlockLightLevelAtWorldIndex(worldPos, newLight);
+                SetBlockLightLevelAtWorldIndex(worldPos, newLight); // Set the light level to be equal to newLight.
 
                 if (newLight > 1)
                 {
-                    foreach (Vector3 target in targets)
+                    foreach (Vector3 target in targets) // For each adjacent block...
                     {
-                        ushort targetLight = GetBlockLightLevelAtWorldIndex(target);
+                        ushort targetLight = GetBlockLightLevelAtWorldIndex(target); // Get the light level at the target.
 
-                        if (GetBlockAtWorldIndex(target) == 0 && targetLight < newLight - 1)
+                        if (GetBlockAtWorldIndex(target) == 0 && targetLight < newLight - 1) // If the target block is air and has a light level less than newLight - 1 (i.e., is eligible to be propagated to)...
                         {
-                            PropagateLight(target);
+                            PropagateLight(target); // Propagate light to the target block.
                         }
                     }
                 }
