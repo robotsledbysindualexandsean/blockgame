@@ -10,6 +10,7 @@ using BlockGame.Components.World;
 using System.Diagnostics;
 using BlockGame.Components.Items;
 using Microsoft.Xna.Framework.Content;
+using Assimp;
 
 namespace BlockGame.Components.Entities
 {
@@ -129,7 +130,7 @@ namespace BlockGame.Components.Entities
             //Update Ray view
             RaySight();
 
-            //Calcualte the closest face to the entity
+            //Calc closest block
             CalculateClosestFace();
 
             //Mouse inputs (like block breaking)
@@ -233,17 +234,17 @@ namespace BlockGame.Components.Entities
             }
 
             //Clamping vertical mouse movemnt
-            if (mouseRotationBuffer.Y < MathHelper.ToRadians(-75.0f))
+            if (mouseRotationBuffer.Y < MathHelper.ToRadians(-89.0f))
             {
-                mouseRotationBuffer.Y = mouseRotationBuffer.Y - (mouseRotationBuffer.Y - MathHelper.ToRadians(-75.0f));
+                mouseRotationBuffer.Y = mouseRotationBuffer.Y - (mouseRotationBuffer.Y - MathHelper.ToRadians(-89.0f));
             }
-            else if (mouseRotationBuffer.Y > MathHelper.ToRadians(75.0f))
+            else if (mouseRotationBuffer.Y > MathHelper.ToRadians(89.0f))
             {
-                mouseRotationBuffer.Y = mouseRotationBuffer.Y - (mouseRotationBuffer.Y - MathHelper.ToRadians(75.0f));
+                mouseRotationBuffer.Y = mouseRotationBuffer.Y - (mouseRotationBuffer.Y - MathHelper.ToRadians(89.0f));
             }
 
             //After getting mouse movement, set rotation to this using the Rotation buffer
-            Rotation = new Vector3(-MathHelper.Clamp(mouseRotationBuffer.Y, MathHelper.ToRadians(-75.0f), MathHelper.ToRadians(75.0f)), MathHelper.WrapAngle(mouseRotationBuffer.X), 0);
+            Rotation = new Vector3(-MathHelper.Clamp(mouseRotationBuffer.Y, MathHelper.ToRadians(-89.0f), MathHelper.ToRadians(89.0f)), MathHelper.WrapAngle(mouseRotationBuffer.X), 0);
 
             //Reset mouse to middle of screen
             Mouse.SetPosition(graphics.GraphicsDevice.Viewport.Width / 2, graphics.GraphicsDevice.Viewport.Height / 2);
@@ -309,10 +310,10 @@ namespace BlockGame.Components.Entities
         private void LeftClick()
         {
             //If a valid closest block is within reach, then...
-            if (Vector3.Distance(position, closestFace.hitbox.Max) < 10)
+            if (Vector3.Distance(position, ClosestFace.hitbox.Max) < 10)
             {
                 //Do whaterver should happen when block is left clicked (usually nothing)
-                dataManager.blockData[world.GetBlockAtWorldIndex(closestFace.blockPosition)].OnLeftClick(inventory, world, closestFace.blockPosition);
+                dataManager.blockData[world.GetBlockAtWorldIndex(ClosestFace.blockPosition)].OnLeftClick(inventory, world, ClosestFace.blockPosition);
 
             }
 
@@ -323,13 +324,13 @@ namespace BlockGame.Components.Entities
         private void RightClick()
         {
             //If a valid closest and is within reach, then...
-            if (Vector3.Distance(position, closestFace.hitbox.Max) < 10)
+            if (Vector3.Distance(position, ClosestFace.hitbox.Max) < 10)
             {
                 //Add cooldown
                 clickTimer = 10;
 
                 //Do whaterver should happen when block is right clicked (usually nothing)
-                dataManager.blockData[world.GetBlockAtWorldIndex(closestFace.blockPosition)].OnRightClick(inventory, world, closestFace.blockPosition);
+                dataManager.blockData[world.GetBlockAtWorldIndex(ClosestFace.blockPosition)].OnRightClick(inventory, world, ClosestFace.blockPosition);
             }
 
             //Do whatever should happen when the item is right clicked
@@ -339,7 +340,14 @@ namespace BlockGame.Components.Entities
 
         public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
+            //Draw inventory
             inventory.DrawBottomBar(new Vector2(_graphics.PreferredBackBufferWidth / 2, _graphics.PreferredBackBufferHeight - 50), spriteBatch, highlightedHotbarSlot);
+
+            //Draw crosshair
+            int crossHairScale = 3;
+            Rectangle atlasRect = new Rectangle(47, 28, 7, 7);
+            spriteBatch.Draw(DataManager.uiAtlas, new Rectangle(graphics.GraphicsDevice.Viewport.Width / 2 - atlasRect.Width/2*crossHairScale, graphics.GraphicsDevice.Viewport.Height / 2 - atlasRect.Height / 2 * crossHairScale, atlasRect.Width*crossHairScale,atlasRect.Height*crossHairScale), atlasRect, Color.White);
+
             base.Draw(_graphics, basicEffect, camera, spriteBatch, skinEffect);
         }
 

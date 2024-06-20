@@ -120,7 +120,7 @@ namespace BlockGame.Components.Entities
 
             //Check if the entity is still colliding with theyre standing block. If so, then just quickly reset  Y velocity that to 0 to avoid collision checks.
             BoundingBox tempHitbox = new BoundingBox(new Vector3(hitbox.Min.X + velocity.X, hitbox.Min.Y + velocity.Y, hitbox.Min.Z + velocity.Z), new Vector3(hitbox.Max.X + velocity.X, hitbox.Max.Y + velocity.Y, hitbox.Max.Z + velocity.Z));
-            if (standingBlock != null && tempHitbox.Intersects(standingBlock.hitbox))
+            if (standingBlock != null && tempHitbox.Intersects(standingBlock.hitbox) && world.GetBlockAtWorldIndex(standingBlock.blockPosition) != 0)
             {
                 velocity.Y = 0;
             }
@@ -184,7 +184,7 @@ namespace BlockGame.Components.Entities
 
             for (int i = 0; i < rayFaces.Count; i++)
             {
-                if (Vector3.Distance(position, rayFaces[i].hitbox.Max) < Vector3.Distance(position, closestFace.hitbox.Max))
+                if (Vector3.Distance(position, rayFaces[i].blockPosition) < Vector3.Distance(position, closestFace.blockPosition))
                 {
                     closestFace = rayFaces[i];
                 }

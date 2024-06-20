@@ -26,13 +26,6 @@
 /processorParam:TextureFormat=Color
 /build:atlas.png
 
-#begin Bomb.fbx
-/importer:SkinnedMeshImporter
-/processor:SkinnedMeshProcessor
-/processorParam:KeyframeDecimalPlaceRounding=5
-/processorParam:SkipUVs=False
-/build:Bomb.fbx
-
 #begin Bomb_Diffuse.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -44,6 +37,13 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Bomb_Diffuse.png
+
+#begin Bomb.fbx
+/importer:SkinnedMeshImporter
+/processor:SkinnedMeshProcessor
+/processorParam:KeyframeDecimalPlaceRounding=5
+/processorParam:SkipUVs=False
+/build:Bomb.fbx
 
 #begin Debug.spritefont
 /importer:FontDescriptionImporter
