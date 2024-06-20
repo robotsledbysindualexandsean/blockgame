@@ -259,12 +259,16 @@ namespace BlockGame.Components.Entities
             //If not on cooldown and left click, then do left click
             if (currentMouseState.LeftButton == ButtonState.Pressed && clickTimer <= 0)
             {
+                //add cooldown
+                clickTimer = 10;
                 LeftClick();
             }
 
             //If not on cooldown and right click, then do right click
             if (currentMouseState.RightButton == ButtonState.Pressed && clickTimer <= 0 )
             {
+                //add cooldown
+                clickTimer = 10;
                 RightClick();
             }
 
@@ -307,10 +311,6 @@ namespace BlockGame.Components.Entities
             //If a valid closest block is within reach, then...
             if (Vector3.Distance(position, closestFace.hitbox.Max) < 10)
             {
-
-                //add cooldown
-                clickTimer = 10;
-
                 //Do whaterver should happen when block is left clicked (usually nothing)
                 dataManager.blockData[world.GetBlockAtWorldIndex(closestFace.blockPosition)].OnLeftClick(inventory, world, closestFace.blockPosition);
 
@@ -337,10 +337,10 @@ namespace BlockGame.Components.Entities
 
         }
 
-        public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch)
+        public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
             inventory.DrawBottomBar(new Vector2(_graphics.PreferredBackBufferWidth / 2, _graphics.PreferredBackBufferHeight - 50), spriteBatch, highlightedHotbarSlot);
-            base.Draw(_graphics, basicEffect, camera, spriteBatch);
+            base.Draw(_graphics, basicEffect, camera, spriteBatch, skinEffect);
         }
 
 

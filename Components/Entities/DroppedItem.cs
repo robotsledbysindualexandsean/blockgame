@@ -1,5 +1,6 @@
 ﻿using BlockGame.Components.World;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,9 @@ namespace BlockGame.Components.Entities
 
         //how much is in this stack
         public ushort stack = 0;
+
+        //Rendering
+        private VertexBuffer vertexBuffer;
 
         public DroppedItem(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager, ushort itemID) : base(position, rotation, world, dataManager, dimensions)
         {
@@ -48,6 +52,28 @@ namespace BlockGame.Components.Entities
             }
 
             base.Update(gameTime);
+        }
+
+        public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
+        {
+            //Drawing 2D model
+
+
+
+            base.Draw(_graphics, basicEffect, camera, spriteBatch, skinEffect);
+        }
+
+        protected override void OnMovement()
+        {
+            //Rebuild vb
+            BuildVertexBuffer();
+
+            base.OnMovement();
+        }
+
+        private void BuildVertexBuffer()
+        {
+
         }
 
         //Static method to drop an tiem in a world.

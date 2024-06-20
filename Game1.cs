@@ -120,11 +120,11 @@ namespace BlockGame
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             //Render the world (chunks and blocks)
-            world.Draw(basicEffect, _spriteBatch);
+            world.Draw(basicEffect, _spriteBatch, skinEffect);
 
             //Everything below is debug stuff
 
-            skinEffect.World = Matrix.CreateTranslation(0, 20 / 1, 0) * Matrix.CreateScale(1f, 1f, 1f);
+/*            skinEffect.World = Matrix.CreateTranslation(0, 20 / 1, 0) * Matrix.CreateScale(1f, 1f, 1f);
             skinEffect.View = world.player.Camera.View;
             skinEffect.Projection = world.player.Camera.Projection;
             skinEffect.EnableDefaultLighting();
@@ -137,7 +137,7 @@ namespace BlockGame
                 skinEffect.CurrentTechnique.Passes[0].Apply();
 
                 mesh.Draw();
-            }
+            }*/
 
             //Debug Panel
 
