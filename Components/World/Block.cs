@@ -55,9 +55,17 @@ namespace BlockGame.Components.World
             }
         }
 
+        /// <summary>
+        /// What should happen when a block is destroyed
+        /// </summary>
+        /// <param name="world"></param>
+        /// <param name="blockPosition"></param>
         public void Destroy(WorldManager world, Vector3 blockPosition)
         {
-            DroppedItem.DropItem(blockPosition + new Vector3(0, 1, 0), 1, world);
+            //Drop item (0.5f above to avoid clipping)
+            DroppedItem.DropItem(blockPosition + new Vector3(0, 0.5f, 0), 1, world);
+
+            //Set the block to air
             world.SetBlockAtWorldIndex(blockPosition, 0);
         }
 

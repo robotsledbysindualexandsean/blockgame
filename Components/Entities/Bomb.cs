@@ -1,11 +1,14 @@
 ﻿using Assimp;
 using BlockGame.Components.Items;
 using BlockGame.Components.World;
+using Liru3D.Animations;
+using Liru3D.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,6 +27,18 @@ namespace BlockGame.Components.Entities
             this.rotation = rotation;
             this.position = position;
 
+            LoadModel();
+        }
+
+        protected override void LoadModel()
+        {
+            model = dataManager.models["bomb"];
+            modelTexture = dataManager.modelTextures["bomb"];
+
+            modelAnimation = new AnimationPlayer(model);
+            modelAnimation.Animation = null;
+
+            base.LoadModel();
         }
 
         public override void Update(GameTime gameTime)

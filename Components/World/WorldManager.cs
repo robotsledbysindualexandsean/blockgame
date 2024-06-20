@@ -215,7 +215,7 @@ namespace BlockGame.Components.World
 
         }
 
-        public void Draw(BasicEffect basicEffect, SpriteBatch spriteBatch)
+        public void Draw(BasicEffect basicEffect, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
             int counter = 0;
             foreach (Chunk chunk in chunks)
@@ -231,7 +231,7 @@ namespace BlockGame.Components.World
             //Draw entities
             foreach (Entity entity in entities)
             {
-                entity.Draw(graphics, basicEffect, player.Camera, spriteBatch);
+                entity.Draw(graphics, basicEffect, player.Camera, spriteBatch, skinEffect);
             }
         }
 
