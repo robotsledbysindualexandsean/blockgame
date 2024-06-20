@@ -10,7 +10,7 @@ namespace BlockGame.Components.Entities
 {
     internal class Explosion : Entity
     {
-        private static Vector3 dimensions = new Vector3(25, 25, 25);
+        private static Vector3 dimensions = new Vector3(5, 5, 5);
         private int duration = 60 * 1;
 
         public Explosion(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager, dimensions)

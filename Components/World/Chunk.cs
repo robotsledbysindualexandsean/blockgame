@@ -241,7 +241,7 @@ namespace BlockGame.Components.World
             List<VertexPositionColorTexture> vertexList = new List<VertexPositionColorTexture>();
             List<VertexPositionColor> lineList = new List<VertexPositionColor>();
 
-            int defaultLightHue = 255;
+            int defaultLightHue = 0;
 
             //Check sides of the empty block, render those faces if there is a block
             foreach (Face face in visibleFaces)
