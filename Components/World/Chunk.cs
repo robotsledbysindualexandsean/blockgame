@@ -257,7 +257,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition - Vector3.UnitZ;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddNegZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
                 }
@@ -267,7 +267,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition + Vector3.UnitZ;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddPosZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -279,7 +279,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition - Vector3.UnitX;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddNegXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -291,7 +291,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition + Vector3.UnitX;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddPosXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -302,7 +302,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition - Vector3.UnitY;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddNegYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -315,7 +315,7 @@ namespace BlockGame.Components.World
                     ushort blockID = world.GetBlockAtWorldIndex(face.blockPosition);
 
                     Vector3 adjacentBlock = face.blockPosition + Vector3.UnitY;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 20 + defaultLightHue;
+                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
                     Color color = new Color(colorValue, colorValue, colorValue);
                     Block.AddPosYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
 
@@ -433,7 +433,14 @@ namespace BlockGame.Components.World
 
             if (dataManager.blockData[oldBlockID].IsLightSource())
             {
-                DestroyLightSource(worldPos);
+                world.DestroyLightSource(worldPos);
+
+                foreach (Vector3 target in world.toPropagate)
+                {
+                    world.PropagateLightToBlock(target);
+                }
+
+                world.toPropagate.Clear();
                 oldIsLight = true;
             }
 
@@ -470,13 +477,20 @@ namespace BlockGame.Components.World
                 chunkPosZ.rebuildNextFrame = true;
             }
 
-            if (dataManager.lightEmittingIDs.Contains(blockID)) // If this block ID emits light...
+            if (dataManager.blockData[blockID].IsLightSource()) // If this block ID emits light...
             {
                 lights.Add(worldPos); // Add to list of all light emitting block locations.
                 SetBlockLightLevel(posRelativeToChunk, dataManager.blockData[blockID].lightEmittingFactor);
                 updateLightingNextFrame = true;
+
+                Vector3[] targets = world.GetAdjacentBlocks(worldPos);
+
+                foreach (Vector3 target in targets)
+                {
+                    world.PropagateLightToBlock(target);
+                }
             }
-            else if (blockID == 0 && !oldIsLight)
+            else if (blockID == 0)
             {
                 world.PropagateLightToBlock(worldPos);
             }
@@ -516,7 +530,7 @@ namespace BlockGame.Components.World
 
             if (updateLightingNextFrame && framesSinceLastLight > 5)
             {
-                UpdateLighting();
+                //UpdateLighting();
                 updateLightingNextFrame = false;
                 framesSinceLastLight = 0;
             }
@@ -538,66 +552,7 @@ namespace BlockGame.Components.World
             }
         }
 
-        public void UpdateLighting()
-        {
-            Game1.LightingUpdates++;
-            foreach (Vector3 source in lights)
-            {
-                ushort curLight = world.GetBlockLightLevelAtWorldIndex(source);
-                Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
-                List<Vector3> toPropagate = new List<Vector3>();
-                List<Vector3> visited = new List<Vector3>();
-                visited.Add(source);
-
-                foreach (Vector3 target in targets)
-                {
-                    if (world.GetBlockAtWorldIndex(target) == 0 && world.GetBlockLightLevelAtWorldIndex(target) < curLight)
-                    {
-                        world.SetBlockLightLevelAtWorldIndex(target, (ushort)(curLight - 1));
-                        toPropagate.Add(target);
-                        visited.Add(target);
-                    }
-                }
-
-                if (toPropagate.Count > 0)
-                {
-                    SecondaryLightFill(toPropagate, visited);
-                }
-            }
-        }
-
-        public void SecondaryLightFill(List<Vector3> toPropagate, List<Vector3> visited)
-        {
-            List<Vector3> newToPropagate = new List<Vector3>();
-
-            ushort curLight = world.GetBlockLightLevelAtWorldIndex(toPropagate[0]);
-            ushort newLight = (ushort)(curLight - 1);
-
-            if (curLight > 1)
-            {
-                foreach (Vector3 source in toPropagate)
-                {
-                    Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
-
-                    foreach (Vector3 target in targets)
-                    {
-                        if (!visited.Contains(target) && world.GetBlockAtWorldIndex(target) == 0 && world.GetBlockLightLevelAtWorldIndex(target) < curLight)
-                        {
-                            world.SetBlockLightLevelAtWorldIndex(target, newLight);
-                            newToPropagate.Add(target);
-                            visited.Add(target);
-                        }
-                    }
-                }
-            }
-
-            if (newToPropagate.Count > 0)
-            {
-                SecondaryLightFill(newToPropagate, visited);
-            }
-        }
-
-        public void DestroyLightSource(Vector3 source)
+        /*public void DestroyLightSource(Vector3 source)
         {
             ushort curLight = world.GetBlockLightLevelAtWorldIndex(source);
             world.SetBlockLightLevelAtWorldIndex(source, 0);
@@ -654,6 +609,6 @@ namespace BlockGame.Components.World
             {
                 SecondaryDarkFill(newToPropagate, visited);
             }
-        }
+        }*/
     }
 }

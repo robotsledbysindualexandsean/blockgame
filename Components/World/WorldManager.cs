@@ -44,6 +44,7 @@ namespace BlockGame.Components.World
         /// List of entities in the world
         /// </summary>
         public List<Entity> entities = new List<Entity>();
+        public List<Vector3> toPropagate = new List<Vector3>();
 
         //Player reference as well
         public Player player;
@@ -213,7 +214,6 @@ namespace BlockGame.Components.World
             {
                 entity.Update(gameTime);
             }
-
         }
 
         public void Draw(BasicEffect basicEffect, SpriteBatch spriteBatch)
@@ -496,32 +496,89 @@ namespace BlockGame.Components.World
             return array;
         }
 
+        public Vector3[] GetAdjacentBlocks(Vector3 worldPos)
+        {
+            Vector3[] adjacentBlocks = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos + Vector3.UnitY, worldPos - Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
+            return adjacentBlocks;
+        }
+
         public void PropagateLightToBlock(Vector3 worldPos)
         {
-            Vector3[] targets = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos + Vector3.UnitY, worldPos - Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
+            Game1.LightingPasses++;
+
+            Vector3[] targets = GetAdjacentBlocks(worldPos);
+            ushort oldLight = GetBlockLightLevelAtWorldIndex(worldPos);
             ushort newLight = 0;
+
+            if (GetBlockAtWorldIndex(worldPos) != 0)
+            {
+                return;
+            }
 
             foreach (Vector3 target in targets)
             {
-                ushort curLight = GetBlockLightLevelAtWorldIndex(target);
+                ushort blockID = GetBlockAtWorldIndex(target);
 
-                if (curLight > newLight)
+                if (blockID == 0 || dataManager.blockData[blockID].IsLightSource())
                 {
-                    newLight = (ushort)(curLight - 1);
+                    ushort targetLight = GetBlockLightLevelAtWorldIndex(target);
+
+                    if (targetLight > newLight)
+                    {
+                        newLight = (ushort)(targetLight - 1);
+                    }
                 }
             }
 
-            SetBlockLightLevelAtWorldIndex(worldPos, newLight);
-
-            if (newLight > 1)
+            if (newLight > oldLight)
             {
-                foreach (Vector3 target in targets)
-                {
-                    ushort curLight = GetBlockLightLevelAtWorldIndex(target);
+                SetBlockLightLevelAtWorldIndex(worldPos, newLight);
 
-                    if (GetBlockAtWorldIndex(target) == 0 && curLight < newLight - 1)
+                if (newLight > 1)
+                {
+                    foreach (Vector3 target in targets)
                     {
-                        PropagateLightToBlock(target);
+                        ushort targetLight = GetBlockLightLevelAtWorldIndex(target);
+
+                        if (GetBlockAtWorldIndex(target) == 0 && targetLight < newLight - 1)
+                        {
+                            PropagateLightToBlock(target);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void DestroyLightSource(Vector3 worldPos)
+        {
+            Game1.LightingPasses++;
+
+            Vector3[] targets = GetAdjacentBlocks(worldPos);
+            ushort oldLight = GetBlockLightLevelAtWorldIndex(worldPos);
+            ushort newLight = (ushort)(oldLight - 1);
+
+            SetBlockLightLevelAtWorldIndex(worldPos, 0);
+
+            if (newLight == 0)
+            {
+                return;
+            }
+
+            foreach (Vector3 target in targets)
+            {
+                ushort blockID = GetBlockAtWorldIndex(target);
+
+                if (blockID == 0)
+                {
+                    ushort targetLight = GetBlockLightLevelAtWorldIndex(target);
+
+                    if (targetLight == newLight)
+                    {
+                        DestroyLightSource(target);
+                    }
+                    else if (targetLight != 0)
+                    {
+                        toPropagate.Add(worldPos);
                     }
                 }
             }

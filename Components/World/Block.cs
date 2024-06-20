@@ -30,15 +30,12 @@ namespace BlockGame.Components.World
         //what item this block drops
         public ushort drop;
 
-
-
         public Block(DataManager data, ushort blockID, ushort lef)
         {
             data.blockData.Add(blockID, this);
             this.blockID = blockID;
             this.lightEmittingFactor = lef;
         }
-
 
         public Block(DataManager data, ushort blockID, Vector2 atlasPos, ushort lef, ushort drop)
         {
@@ -54,6 +51,7 @@ namespace BlockGame.Components.World
                 data.lightEmittingIDs.Add(blockID);
             }
         }
+
 
         public void Destroy(WorldManager world, Vector3 blockPosition)
         {
