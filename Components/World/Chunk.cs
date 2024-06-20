@@ -48,9 +48,7 @@ namespace BlockGame.Components.World
         /// These variables are used to code that in.
         /// </summary>
         private bool rebuildNextFrame = false;
-        public bool updateLightingNextFrame = false;
         private int framesSinceLastRebuild = 10000;
-        private int framesSinceLastLight = 10000;
 
         private DataManager dataManager;
 
@@ -68,8 +66,6 @@ namespace BlockGame.Components.World
         //Each chunk stores its block's colliders (hitboxes) and normals. This is only iterared for visible blocks.
         public List<Face> visibleFaces;
         public bool drawHitboxes = false;
-
-        public List<Vector3> lights = new List<Vector3>();
 
         public Chunk(WorldManager world, Vector3 chunkPos, GraphicsDeviceManager graphics, DataManager dataManager)
         {
@@ -479,9 +475,7 @@ namespace BlockGame.Components.World
 
             if (dataManager.blockData[blockID].IsLightSource()) // If this block ID emits light...
             {
-                lights.Add(worldPos); // Add to list of all light emitting block locations.
                 SetBlockLightLevel(posRelativeToChunk, dataManager.blockData[blockID].lightEmittingFactor);
-                updateLightingNextFrame = true;
 
                 Vector3[] targets = world.GetAdjacentBlocks(worldPos);
 
@@ -528,15 +522,7 @@ namespace BlockGame.Components.World
                 framesSinceLastRebuild = 0;
             }
 
-            if (updateLightingNextFrame && framesSinceLastLight > 5)
-            {
-                //UpdateLighting();
-                updateLightingNextFrame = false;
-                framesSinceLastLight = 0;
-            }
-
             framesSinceLastRebuild += 1;
-            framesSinceLastLight += 1;
         }
 
         private void UnloadChunk()
