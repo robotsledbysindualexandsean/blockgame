@@ -433,11 +433,11 @@ namespace BlockGame.Components.World
 
             if (dataManager.blockData[oldBlockID].IsLightSource())
             {
-                world.DestroyLightSource(worldPos);
+                world.DepopulateLight(worldPos);
 
                 foreach (Vector3 target in world.toPropagate)
                 {
-                    world.PropagateLightToBlock(target);
+                    world.PropagateLight(target);
                 }
 
                 world.toPropagate.Clear();
@@ -487,12 +487,12 @@ namespace BlockGame.Components.World
 
                 foreach (Vector3 target in targets)
                 {
-                    world.PropagateLightToBlock(target);
+                    world.PropagateLight(target);
                 }
             }
             else if (blockID == 0)
             {
-                world.PropagateLightToBlock(worldPos);
+                world.PropagateLight(worldPos);
             }
         }
 
@@ -551,64 +551,5 @@ namespace BlockGame.Components.World
                 chunkLoaded = false;
             }
         }
-
-        /*public void DestroyLightSource(Vector3 source)
-        {
-            ushort curLight = world.GetBlockLightLevelAtWorldIndex(source);
-            world.SetBlockLightLevelAtWorldIndex(source, 0);
-            lights.Remove(source);
-
-            Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
-            
-            List<Vector3> toPropagate = new List<Vector3>();
-            List<Vector3> visited = new List<Vector3>();
-            visited.Add(source);
-
-            foreach (Vector3 target in targets)
-            {
-                if (world.GetBlockAtWorldIndex(target) == 0)
-                {
-                    toPropagate.Add(target);
-                    visited.Add(target);
-                }
-            }
-
-            if (toPropagate.Count > 0)
-            {
-                SecondaryDarkFill(toPropagate, visited);
-            }
-        }
-
-        public void SecondaryDarkFill(List<Vector3> toPropagate, List<Vector3> visited)
-        {
-            List<Vector3> newToPropagate = new List<Vector3>();
-
-            ushort newLight = (ushort)(world.GetBlockLightLevelAtWorldIndex(toPropagate[0]) - 1);
-
-            if (newLight >= 0)
-            {
-                foreach (Vector3 source in toPropagate)
-                {
-                    world.SetBlockLightLevelAtWorldIndex(source, 0);
-
-                    Vector3[] targets = { source + Vector3.UnitX, source - Vector3.UnitX, source + Vector3.UnitY, source - Vector3.UnitY, source + Vector3.UnitZ, source - Vector3.UnitZ };
-
-                    foreach (Vector3 target in targets)
-                    {
-                        if (!visited.Contains(target) && world.GetBlockAtWorldIndex(target) == 0 && world.GetBlockLightLevelAtWorldIndex(target) == newLight)
-                        {
-                            world.GetChunk(world.WorldPositionToChunk(target)).updateLightingNextFrame = true;
-                            newToPropagate.Add(target);
-                            visited.Add(target);
-                        }
-                    }
-                }
-            }
-
-            if (newToPropagate.Count > 0)
-            {
-                SecondaryDarkFill(newToPropagate, visited);
-            }
-        }*/
     }
 }

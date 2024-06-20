@@ -502,7 +502,7 @@ namespace BlockGame.Components.World
             return adjacentBlocks;
         }
 
-        public void PropagateLightToBlock(Vector3 worldPos)
+        public void PropagateLight(Vector3 worldPos)
         {
             Game1.LightingPasses++;
 
@@ -542,14 +542,14 @@ namespace BlockGame.Components.World
 
                         if (GetBlockAtWorldIndex(target) == 0 && targetLight < newLight - 1)
                         {
-                            PropagateLightToBlock(target);
+                            PropagateLight(target);
                         }
                     }
                 }
             }
         }
 
-        public void DestroyLightSource(Vector3 worldPos)
+        public void DepopulateLight(Vector3 worldPos)
         {
             Game1.LightingPasses++;
 
@@ -574,7 +574,7 @@ namespace BlockGame.Components.World
 
                     if (targetLight == newLight)
                     {
-                        DestroyLightSource(target);
+                        DepopulateLight(target);
                     }
                     else if (targetLight != 0)
                     {
