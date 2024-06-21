@@ -571,36 +571,40 @@ namespace BlockGame.Components.World
             }
         }
 
+        /// <summary>
+        /// Removes light from a light source, de-propagating outwards to any affected blocks.
+        /// </summary>
+        /// <param name="worldPos">The world position of the block to remove light from.</param>
         public void DepopulateLight(Vector3 worldPos)
         {
-            Game1.LightingPasses++;
+            Game1.LightingPasses++; // Updates the number of global light passes.
 
             Vector3[] targets = GetAdjacentBlocks(worldPos);
-            ushort oldLight = GetBlockLightLevelAtWorldIndex(worldPos);
-            ushort newLight = (ushort)(oldLight - 1);
+            ushort oldLight = GetBlockLightLevelAtWorldIndex(worldPos); // The light level of the block before being removed.
+            ushort newLight = (ushort)(oldLight - 1); // The exact threshold of light de-propagation (i.e., the light level that this light source would propagate to other blocks).
 
-            SetBlockLightLevelAtWorldIndex(worldPos, 0);
+            SetBlockLightLevelAtWorldIndex(worldPos, 0); // Set the light level at worldPos to 0.
 
-            if (newLight == 0)
+            if (newLight == 0) // If the threshold is 0...
             {
-                return;
+                return; // End.
             }
 
-            foreach (Vector3 target in targets)
+            foreach (Vector3 target in targets) // For each adjacent block...
             {
-                ushort blockID = GetBlockAtWorldIndex(target);
+                ushort blockID = GetBlockAtWorldIndex(target); // The block ID of the current target.
 
-                if (blockID == 0)
+                if (blockID == 0) // If the target block is air...
                 {
-                    ushort targetLight = GetBlockLightLevelAtWorldIndex(target);
+                    ushort targetLight = GetBlockLightLevelAtWorldIndex(target); // Get the light level at the target.
 
-                    if (targetLight == newLight)
+                    if (targetLight == newLight) // If the target's light level is equal to the threshold...
                     {
-                        DepopulateLight(target);
+                        DepopulateLight(target); // Depopulate light at the target block.
                     }
-                    else if (targetLight != 0)
+                    else if (targetLight != 0) // If the target's light level is NOT equal to the threshold and is also not zero...
                     {
-                        toPropagate.Add(worldPos);
+                        toPropagate.Add(worldPos); // Add worldPos to the list of blocks to propagate light to after depopulation is complete.
                     }
                 }
             }
