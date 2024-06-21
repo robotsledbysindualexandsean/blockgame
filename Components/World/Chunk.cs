@@ -388,28 +388,39 @@ namespace BlockGame.Components.World
             }
         }
 
-        public Vector3 ChunkPosToWorldPos(Vector3 posRelativeToChunk)
+        public Vector3 PosInChunkToPosInWorld(Vector3 posInChunk)
         {
-            return new Vector3(posRelativeToChunk.X + chunkPos.X * chunkWidth, posRelativeToChunk.Y, posRelativeToChunk.Z + chunkPos.Z * chunkLength);
+            return new Vector3(posInChunk.X + chunkPos.X * chunkWidth, posInChunk.Y, posInChunk.Z + chunkPos.Z * chunkLength);
         }
 
         /// <summary>
         /// Gets the current block ID given the block position relative to the current chunk.
         /// </summary>
-        /// <param name="posRelativeToChunk"></param>
-        /// <returns></returns>
-        public ushort GetBlock(Vector3 posRelativeToChunk)
+        /// <param name="posInChunk">The position of the block in relation to the chunk.</param>
+        /// <returns>The block ID of the given block.</returns>
+        public ushort GetBlock(Vector3 posInChunk)
         {
-            return blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z][0];
+            return blockIDs[(int)posInChunk.X, (int)posInChunk.Y, (int)posInChunk.Z][0];
         }
 
-        public ushort GetBlockLightLevel(Vector3 posRelativeToChunk)
+        /// <summary>
+        /// Gets the light level of a given block.
+        /// </summary>
+        /// <param name="posInChunk">The position of the block in relation to the chunk.</param>
+        /// <returns>The light level of the given block.</returns>
+        public ushort GetBlockLightLevel(Vector3 posInChunk)
         {
-            return blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z][1];
+            return blockIDs[(int)posInChunk.X, (int)posInChunk.Y, (int)posInChunk.Z][1];
         }
-        public void SetBlockLightLevel(Vector3 posRelativeToChunk, ushort newLight)
+
+        /// <summary>
+        /// Sets the light level of a given block.
+        /// </summary>
+        /// <param name="posInChunk">The position of the block in relation to the chunk.</param>
+        /// <param name="newLight">The light level to set the block to.</param>
+        public void SetBlockLightLevel(Vector3 posInChunk, ushort newLight)
         {
-            blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z][1] = newLight;
+            blockIDs[(int)posInChunk.X, (int)posInChunk.Y, (int)posInChunk.Z][1] = newLight;
             rebuildNextFrame = true;
         }
 
@@ -421,72 +432,80 @@ namespace BlockGame.Components.World
             CreateDebugVBOList();
         }
 
-        public void SetBlock(Vector3 posRelativeToChunk, ushort blockID)
+        /// <summary>
+        /// Places a block in the chunk at a given position with a given block ID.
+        /// </summary>
+        /// <param name="posInChunk">The position of the block in relation to the chunk.</param>
+        /// <param name="blockID">The block ID to set to.</param>
+        public void SetBlock(Vector3 posInChunk, ushort blockID)
         {
-            Vector3 worldPos = ChunkPosToWorldPos(posRelativeToChunk);
-            ushort oldBlockID = world.GetBlockAtWorldIndex(worldPos);
-            bool oldIsLight = false;
+            Vector3 posInWorld = PosInChunkToPosInWorld(posInChunk);
+            ushort oldBlockID = world.GetBlockAtWorldIndex(posInWorld); // The block ID at the location before being changed.
 
-            if (dataManager.blockData[oldBlockID].IsLightSource())
+            // Determines if the old block was a light source, and if so, uses DepopulateLight to remove the light source and PropagateLight to fill in the removed light if necessary.
+            if (dataManager.blockData[oldBlockID].IsLightSource()) // If the old block was a light source...
             {
-                world.DepopulateLight(worldPos);
+                world.DepopulateLight(posInWorld); // Depopulate light at the position.
 
-                foreach (Vector3 target in world.toPropagate)
+                foreach (Vector3 target in world.toPropagate) // For each queued block from DepopulateLight...
                 {
                     world.PropagateLight(target);
                 }
 
-                world.toPropagate.Clear();
-                oldIsLight = true;
+                world.toPropagate.Clear(); // Clear the propagation queue.
             }
 
-            if ((int)posRelativeToChunk.X >= chunkLength || (int)posRelativeToChunk.Z >= chunkWidth || posRelativeToChunk.Y >= chunkHeight || posRelativeToChunk.X < 0 || posRelativeToChunk.Y < 0 || posRelativeToChunk.Z < 0)
+            if ((int)posInChunk.X >= chunkLength || (int)posInChunk.Z >= chunkWidth || posInChunk.Y >= chunkHeight || posInChunk.X < 0 || posInChunk.Y < 0 || posInChunk.Z < 0)
             {
                 return;
             }
 
-            blockIDs[(int)posRelativeToChunk.X, (int)posRelativeToChunk.Y, (int)posRelativeToChunk.Z][0] = blockID;
+            blockIDs[(int)posInChunk.X, (int)posInChunk.Y, (int)posInChunk.Z][0] = blockID; // Sets the block at posInChunk to blockID.
 
-            //When placing a block, the chunk will reload within the next few frames. It also reloads the chunk NEXT to it, should the block be broken on the edge of the chunk.
             rebuildNextFrame = true;
 
+            // Adjacent chunks in the positive and negative X and Z directions.
             Chunk chunkNegX = world.GetChunk(new Vector2(this.chunkPos.X - 1, this.chunkPos.Z) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
             Chunk chunkPosX = world.GetChunk(new Vector2(this.chunkPos.X + 1, this.chunkPos.Z) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
             Chunk chunkNegZ = world.GetChunk(new Vector2(this.chunkPos.X, this.chunkPos.Z - 1) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
             Chunk chunkPosZ = world.GetChunk(new Vector2(this.chunkPos.X, this.chunkPos.Z + 1) + new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2));
 
-            if (posRelativeToChunk.X == 0 && chunkNegX != null)
+            // If the block is at either X end of the chunk, set the adjacent chunk to rebuild as well.
+            if (posInChunk.X == 0 && chunkNegX != null) // If the block is at the negative X end of the chunk and an adjacent chunk exists...
             {
                 chunkNegX.rebuildNextFrame = true;
             }
-            else if (posRelativeToChunk.X == 15 && chunkPosX != null)
+            else if (posInChunk.X == 15 && chunkPosX != null) // If the block is at the positive X end of the chunk and an adjacent chunk exists...
             {
                 chunkPosX.rebuildNextFrame = true;
             }
 
-            if (posRelativeToChunk.Z == 0 && chunkNegZ != null)
+            // If the block is at either Z end of the chunk, set the adjacent chunk to rebuild as well.
+            if (posInChunk.Z == 0 && chunkNegZ != null) // If the block is at the negative Z end of the chunk and an adjacent chunk exists...
             {
                 chunkNegZ.rebuildNextFrame = true;
             }
-            else if (posRelativeToChunk.Z == 15 && chunkPosZ != null)
+            else if (posInChunk.Z == 15 && chunkPosZ != null) // If the block is at the positive Z end of the chunk and an adjacent chunk exists...
             {
                 chunkPosZ.rebuildNextFrame = true;
             }
 
-            if (dataManager.blockData[blockID].IsLightSource()) // If this block ID emits light...
+            // If the new set block is a light source, set its light level accordingly and propagate light to the adjacent blocks. If the new set block is air, propagate light to it.
+            if (dataManager.blockData[blockID].IsLightSource()) // If the new block is a light source...
             {
-                SetBlockLightLevel(posRelativeToChunk, dataManager.blockData[blockID].lightEmittingFactor);
+                SetBlockLightLevel(posInChunk, dataManager.blockData[blockID].lightEmittingFactor); // Set the block's light level to the light source's LEF.
 
-                Vector3[] targets = world.GetAdjacentBlocks(worldPos);
+                Vector3[] targets = world.GetAdjacentBlocks(posInWorld);
 
+                // Propagate light to each adjacent block.
                 foreach (Vector3 target in targets)
                 {
                     world.PropagateLight(target);
                 }
             }
-            else if (blockID == 0)
+            else if (blockID == 0) // If the new block is air...
             {
-                world.PropagateLight(worldPos);
+                world.PropagateLight(posInWorld);
             }
         }
 
@@ -507,7 +526,7 @@ namespace BlockGame.Components.World
         public void Update(Player player)
         {
             //if player is greater than render distance, then unload the chunk
-            int[] playerPos = WorldManager.WorldPositionToChunkIndex(player.Position);
+            int[] playerPos = WorldManager.posInWorlditionToChunkIndex(player.Position);
             //Still gotta offset array index to chunk index ;-;
             if (chunkLoaded && Vector2.Distance(new Vector2(playerPos[0], playerPos[1]) - new Vector2(WorldManager.chunksGenerated / 2, WorldManager.chunksGenerated / 2), new Vector2(this.chunkPos.X, this.chunkPos.Z)) > Player.renderDistance)
             {

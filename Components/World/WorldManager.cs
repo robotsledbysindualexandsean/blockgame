@@ -240,15 +240,15 @@ namespace BlockGame.Components.World
         //Converts a world position (XYZ) into a chunk position (XZ,XYZ)
         //This is useful since blocks have a WORLD position, however chunks are storing them in chunk positon
         //This way, WorldManager and Chunks can access other chunks blocks using ChunkIndex
-        public static int[] WorldPositionToChunkIndex(Vector3 worldPos)
+        public static int[] posInWorlditionToChunkIndex(Vector3 posInWorld)
         {
-            worldPos += new Vector3( 16 * chunksGenerated / 2,  0,  16 * chunksGenerated / 2); //since the chunks actual pos is cnetered at 0,0 readd the old centering to reset it to not be.
+            posInWorld += new Vector3( 16 * chunksGenerated / 2,  0,  16 * chunksGenerated / 2); //since the chunks actual pos is cnetered at 0,0 readd the old centering to reset it to not be.
             int[] chunkIndex = new int[5];
-            chunkIndex[0] = (int)(worldPos.X / Chunk.chunkLength);
-            chunkIndex[1] = (int)(worldPos.Z / Chunk.chunkWidth);
-            chunkIndex[2] = (int)Math.Abs(worldPos.X % Chunk.chunkLength);
-            chunkIndex[4] = (int)(worldPos.Z % Chunk.chunkWidth);
-            chunkIndex[3] = (int)worldPos.Y;
+            chunkIndex[0] = (int)(posInWorld.X / Chunk.chunkLength);
+            chunkIndex[1] = (int)(posInWorld.Z / Chunk.chunkWidth);
+            chunkIndex[2] = (int)Math.Abs(posInWorld.X % Chunk.chunkLength);
+            chunkIndex[4] = (int)(posInWorld.Z % Chunk.chunkWidth);
+            chunkIndex[3] = (int)posInWorld.Y;
             return chunkIndex;
 
         }
@@ -275,11 +275,11 @@ namespace BlockGame.Components.World
         /// <summary>
         /// Gets the block id when given a 3D world position
         /// </summary>
-        /// <param name="worldpos"></param>
+        /// <param name="posInWorld"></param>
         /// <returns></returns>
-        public ushort GetBlockAtWorldIndex(Vector3 worldpos)
+        public ushort GetBlockAtWorldIndex(Vector3 posInWorld)
         {
-            int[] chunkIndex = WorldPositionToChunkIndex(worldpos);
+            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld);
 
             //greater than size of array
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
@@ -293,13 +293,13 @@ namespace BlockGame.Components.World
                 return 0;
             }
 
-            Vector3 posRelativeToChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
+            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
 
-            return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(posRelativeToChunk);
+            return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(posInChunk);
         }
-        public ushort GetBlockLightLevelAtWorldIndex(Vector3 worldpos)
+        public ushort GetBlockLightLevelAtWorldIndex(Vector3 posInWorld)
         {
-            int[] chunkIndex = WorldPositionToChunkIndex(worldpos);
+            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld);
 
             //greater than size of array
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
@@ -313,19 +313,19 @@ namespace BlockGame.Components.World
                 return 0;
             }
 
-            Vector3 posRelativeToChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
+            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
 
-            return chunks[chunkIndex[0], chunkIndex[1]].GetBlockLightLevel(posRelativeToChunk);
+            return chunks[chunkIndex[0], chunkIndex[1]].GetBlockLightLevel(posInChunk);
         }
 
         /// <summary>
         /// Sets the block to the given ID when given a world position
         /// </summary>
-        /// <param name="worldPos"></param>
+        /// <param name="posInWorld"></param>
         /// <param name="blockId"></param>
-        public void SetBlockAtWorldIndex(Vector3 worldPos, ushort blockId)
+        public void SetBlockAtWorldIndex(Vector3 posInWorld, ushort blockId)
         {
-            int[] chunkIndex = WorldPositionToChunkIndex(worldPos);
+            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld);
 
             //greater than size of array
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
@@ -339,14 +339,14 @@ namespace BlockGame.Components.World
                 return;
             }
 
-            Vector3 posRelativeToChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
+            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
 
-            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(posRelativeToChunk, blockId);
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(posInChunk, blockId);
         }
 
-        public void SetBlockLightLevelAtWorldIndex(Vector3 worldPos, ushort newLight)
+        public void SetBlockLightLevelAtWorldIndex(Vector3 posInWorld, ushort newLight)
         {
-            int[] chunkIndex = WorldPositionToChunkIndex(worldPos);
+            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld);
 
             //greater than size of array
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
@@ -367,12 +367,12 @@ namespace BlockGame.Components.World
         /// <summary>
         /// Returns what chunk a specific 3D world position is in. Giving in array terms (not chunk world position)
         /// </summary>
-        /// <param name="worldPos"></param>
+        /// <param name="posInWorld"></param>
         /// <returns></returns>
-        public Vector2 WorldPositionToChunk(Vector3 worldPos)
+        public Vector2 posInWorlditionToChunk(Vector3 posInWorld)
         {
-            worldPos += new Vector3(16 * chunksGenerated / 2, 0, 16 * chunksGenerated / 2);
-            return new Vector2((int)(worldPos.X / Chunk.chunkLength), (int)(worldPos.Z / Chunk.chunkWidth));
+            posInWorld += new Vector3(16 * chunksGenerated / 2, 0, 16 * chunksGenerated / 2);
+            return new Vector2((int)(posInWorld.X / Chunk.chunkLength), (int)(posInWorld.Z / Chunk.chunkWidth));
             
         }
 
@@ -472,7 +472,7 @@ namespace BlockGame.Components.World
         {
             Chunk[,] array = new Chunk[1 + radius * 2, 1 + radius * 2];
 
-            Vector2 chunk = WorldPositionToChunk(position);
+            Vector2 chunk = posInWorlditionToChunk(position);
 
             for (int x = 0; x <= radius * 2; x++)
             {
@@ -499,44 +499,45 @@ namespace BlockGame.Components.World
         /// <summary>
         /// Gets an array of all blocks adjacent to a given block, taking into account the top and bottom of the world.
         /// </summary>
-        /// <param name="worldPos">The world position of the block to check the adjacent blocks of.</param>
-        /// <returns>An array of all blocks adjacent to worldPos.</returns>
-        public Vector3[] GetAdjacentBlocks(Vector3 worldPos)
+        /// <param name="posInWorld">The world position of the block to check the adjacent blocks of.</param>
+        /// <returns>An array of all blocks adjacent to posInWorld.</returns>
+        public Vector3[] GetAdjacentBlocks(Vector3 posInWorld)
         {
-            if (worldPos.Y > 0 && worldPos.Y < Chunk.chunkHeight - 1) // If this block is above the bottom of the world and below the top of the world...
+            if (posInWorld.Y > 0 && posInWorld.Y < Chunk.chunkHeight - 1) // If this block is above the bottom of the world and below the top of the world...
             {
-                Vector3[] adjacentBlocks = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos + Vector3.UnitY, worldPos - Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
+                Vector3[] adjacentBlocks = { posInWorld + Vector3.UnitX, posInWorld - Vector3.UnitX, posInWorld + Vector3.UnitY, posInWorld - Vector3.UnitY, posInWorld + Vector3.UnitZ, posInWorld - Vector3.UnitZ };
                 return adjacentBlocks; // All 6 adjacent blocks.
             }
-            else if (worldPos.Y <= 0) // If this block is at the bottom of the world...
+            else if (posInWorld.Y <= 0) // If this block is at the bottom of the world...
             {
-                Vector3[] adjacentBlocks = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos + Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
-                return adjacentBlocks; // Excludes the block below worldPos (worldPos - Vector3.UnitY).
+                Vector3[] adjacentBlocks = { posInWorld + Vector3.UnitX, posInWorld - Vector3.UnitX, posInWorld + Vector3.UnitY, posInWorld + Vector3.UnitZ, posInWorld - Vector3.UnitZ };
+                return adjacentBlocks; // Excludes the block below posInWorld (posInWorld - Vector3.UnitY).
             }
             else // If this block is at the top of the world...
             {
-                Vector3[] adjacentBlocks = { worldPos + Vector3.UnitX, worldPos - Vector3.UnitX, worldPos - Vector3.UnitY, worldPos + Vector3.UnitZ, worldPos - Vector3.UnitZ };
-                return adjacentBlocks; // Excludes the block above worldPos (worldPos + Vector3.UnitY).
+                Vector3[] adjacentBlocks = { posInWorld + Vector3.UnitX, posInWorld - Vector3.UnitX, posInWorld - Vector3.UnitY, posInWorld + Vector3.UnitZ, posInWorld - Vector3.UnitZ };
+                return adjacentBlocks; // Excludes the block above posInWorld (posInWorld + Vector3.UnitY).
             }
         }
 
         /// <summary>
         /// Calculates the correct light value for a block based on the adjacent blocks' light values.
         /// </summary>
-        /// <param name="worldPos">The world position of the block to propagate light to.</param>
-        public void PropagateLight(Vector3 worldPos)
+        /// <param name="posInWorld">The world position of the block to propagate light to.</param>
+        public void PropagateLight(Vector3 posInWorld)
         {
             Game1.LightingPasses++; // Updates the number of global light passes.
 
-            Vector3[] targets = GetAdjacentBlocks(worldPos);
-            ushort oldLight = GetBlockLightLevelAtWorldIndex(worldPos); // The light level of the block before being recalculated.
+            Vector3[] targets = GetAdjacentBlocks(posInWorld);
+            ushort oldLight = GetBlockLightLevelAtWorldIndex(posInWorld); // The light level of the block before being recalculated.
             ushort newLight = 0; // The light level to potentially change to (if it becomes higher than oldLight).
 
-            if (GetBlockAtWorldIndex(worldPos) != 0) // If this block is not air...
+            if (GetBlockAtWorldIndex(posInWorld) != 0) // If this block is not air...
             {
                 return; // End.
             }
 
+            // Sets newLight to be equal to the highest light level in the adjacent blocks - 1.
             foreach (Vector3 target in targets) // For each adjacent block...
             {
                 ushort blockID = GetBlockAtWorldIndex(target); // The block ID of the current target.
@@ -552,12 +553,14 @@ namespace BlockGame.Components.World
                 }
             }
 
+
             if (newLight > oldLight) // If the recalculated light level is greater than the original light level on the block...
             {
-                SetBlockLightLevelAtWorldIndex(worldPos, newLight); // Set the light level to be equal to newLight.
+                SetBlockLightLevelAtWorldIndex(posInWorld, newLight); // Set the light level to be equal to newLight.
 
                 if (newLight > 1)
                 {
+                    // Propagate light to each eligible adjacent block.
                     foreach (Vector3 target in targets) // For each adjacent block...
                     {
                         ushort targetLight = GetBlockLightLevelAtWorldIndex(target); // Get the light level at the target.
@@ -574,22 +577,23 @@ namespace BlockGame.Components.World
         /// <summary>
         /// Removes light from a light source, de-propagating outwards to any affected blocks.
         /// </summary>
-        /// <param name="worldPos">The world position of the block to remove light from.</param>
-        public void DepopulateLight(Vector3 worldPos)
+        /// <param name="posInWorld">The world position of the block to remove light from.</param>
+        public void DepopulateLight(Vector3 posInWorld)
         {
             Game1.LightingPasses++; // Updates the number of global light passes.
 
-            Vector3[] targets = GetAdjacentBlocks(worldPos);
-            ushort oldLight = GetBlockLightLevelAtWorldIndex(worldPos); // The light level of the block before being removed.
+            Vector3[] targets = GetAdjacentBlocks(posInWorld);
+            ushort oldLight = GetBlockLightLevelAtWorldIndex(posInWorld); // The light level of the block before being removed.
             ushort newLight = (ushort)(oldLight - 1); // The exact threshold of light de-propagation (i.e., the light level that this light source would propagate to other blocks).
 
-            SetBlockLightLevelAtWorldIndex(worldPos, 0); // Set the light level at worldPos to 0.
+            SetBlockLightLevelAtWorldIndex(posInWorld, 0); // Set the light level at posInWorld to 0.
 
             if (newLight == 0) // If the threshold is 0...
             {
                 return; // End.
             }
 
+            // Depopulates light from each eligible adjacent block and queues light propagation to lit edge blocks.
             foreach (Vector3 target in targets) // For each adjacent block...
             {
                 ushort blockID = GetBlockAtWorldIndex(target); // The block ID of the current target.
@@ -604,7 +608,7 @@ namespace BlockGame.Components.World
                     }
                     else if (targetLight != 0) // If the target's light level is NOT equal to the threshold and is also not zero...
                     {
-                        toPropagate.Add(worldPos); // Add worldPos to the list of blocks to propagate light to after depopulation is complete.
+                        toPropagate.Add(posInWorld); // Add posInWorld to the list of blocks to propagate light to after depopulation is complete.
                     }
                 }
             }

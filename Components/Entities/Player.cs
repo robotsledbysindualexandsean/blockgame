@@ -83,7 +83,7 @@ namespace BlockGame.Components.Entities
             this.world = world;
 
             //Build vertex buffers around chunk where spawned
-            int[] chunkPos = WorldManager.WorldPositionToChunkIndex(position);
+            int[] chunkPos = WorldManager.posInWorlditionToChunkIndex(position);
 
             //Load all the chunks around the player instantly on creation
             world.LoadChunksInstantly(new Vector2(chunkPos[0], chunkPos[1]), renderDistance);
@@ -118,7 +118,7 @@ namespace BlockGame.Components.Entities
             KeyboardInput(deltaTime);
 
             //Getting currentChunk (before movement) in Vector2, array format
-            playerChunkPos = WorldManager.WorldPositionToChunkIndex(position);
+            playerChunkPos = WorldManager.posInWorlditionToChunkIndex(position);
             Vector2 lastPlayerChunk = new Vector2(playerChunkPos[0], playerChunkPos[1]);
 
             //Update mouse state
@@ -359,7 +359,7 @@ namespace BlockGame.Components.Entities
         {
             //After movement, seeing if chunk changed
             //Getting currentChunk (before movement) in Vector2, array format
-            playerChunkPos = WorldManager.WorldPositionToChunkIndex(position);
+            playerChunkPos = WorldManager.posInWorlditionToChunkIndex(position);
             Vector2 newPlayerChunk = new Vector2(playerChunkPos[0], playerChunkPos[1]);
 
             //IF changed, now we need to update chunks
