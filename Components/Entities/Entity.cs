@@ -16,54 +16,48 @@ namespace BlockGame.Components.Entities
 {
     internal class Entity
     {
-        //Transforms
-        public Vector3 position;
-        protected Vector3 lastPosition;
-        public Vector3 rotation;
+        public Vector3 position; //Entity's position
+        protected Vector3 lastPosition; //The entity's position last frame
+        public Vector3 rotation; //Entitiy's rotation
+
         public Vector3 fixed_rotation_based_velocity; //Fixed rotation, based on entities facing direction (for fixed "forward" control)
         public Vector3 rotational_velocity = Vector3.Zero; //Velocity in terms of entities rotation
         public Vector3 dynamic_velocity = Vector3.Zero; //Dynamic velocity caused by "forces". This slowly dissipates to 0.
-        public Vector3 velocity;
-        private Vector3 dimensions;
+        public Vector3 velocity; //Total velocity (fixed + dynamic)
 
-        //Storing World variable
-        public WorldManager world;
-        public DataManager dataManager;
+        private Vector3 dimensions; //Entities dimensions, used for hitbox
 
-        public float speed = 5f;
+        public WorldManager world; //World
+        public DataManager dataManager; //DataManager
 
-        //Collision Variables
-        public BoundingBox hitbox;
-        private Ray viewRay;
-        public List<Face> rayFaces = new List<Face>();
-        public Vector3 direction;
-        private Vector3 forward = new Vector3(0,0,1);
+        public float speed = 5f; //Entity's speed
+        protected bool enforceGravity = true; //Is the entity affected by gravity?
+
+        public BoundingBox hitbox; //Entity's hitbox
+        private Ray viewRay; //Ray which points in the entity's facing direction
+        public List<Face> rayFaces = new List<Face>(); //List of all the faces that the viewRay is hitting
         protected Vector3 rayOriginPosition; //Where the ray is shot from (this is because position =/= camera for player)
+        protected Face closestFace; //Closest face to the entity
 
-        //Is this affected by gravity?
-        protected bool enforceGravity = true;
+        public Vector3 direction; //Entities direction
+        private Vector3 forward = new Vector3(0,0,1); //Forward direction, used for turning rotation into a ray
 
-        //Closest things:
-        protected Face closestFace;
+        private Face standingBlock; //What block the entity is currently standing on
 
-        //Standing Block
-        // Stores a reference to what block is being stood on. So that when the only velocity is gravity, collision is not checked if still stnading on that block.
-        private Face standingBlock;
+        private List<VertexPositionColor> vertexList = new List<VertexPositionColor>(); //Debug list of hitbox verticies
+        private VertexBuffer vertexBuffer; //Debug vertex buffer
 
-        //Debug
-        private List<VertexPositionColor> vertexList = new List<VertexPositionColor>(); //debug hitbox list
-        private VertexBuffer vertexBuffer;
+        protected SkinnedModel model; //Entity's model
+        protected Texture2D modelTexture; //Entity's model's texture
+        protected AnimationPlayer modelAnimation; //Entity's model's animation
 
-        //Rendering
-        protected SkinnedModel model;
-        protected Texture2D modelTexture;
-        protected AnimationPlayer modelAnimation;
-
+        //Getter for the entity's closest face
         public Face ClosestFace
         {
             get { return closestFace; }
         }
 
+        //Getter and Setter for entities rotation
         public virtual Vector3 Rotation
         {
             get { return rotation; }
@@ -74,6 +68,7 @@ namespace BlockGame.Components.Entities
             }
         }
 
+        //Getter for entities position
         public virtual Vector3 Position
         {
             get { return position; }
@@ -81,80 +76,78 @@ namespace BlockGame.Components.Entities
 
         public Entity(Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager, Vector3 dimensions)
         {
-            this.position = position;
-            this.rotation = rotation;
-            this.world = world;
-            this.dataManager = dataManager;
-            this.dimensions = dimensions;
+            this.position = position; //Set position
+            this.rotation = rotation; //Set rotation
+            this.world = world; //Set world
+            this.dataManager = dataManager; //Set DataManager
+            this.dimensions = dimensions; //Set hitbox dimensions
 
-            //Setting up inital hitbox and ray
-            hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y /2, position.Z - dimensions.Z /2), new Vector3(position.X + dimensions.X / 2, position.Y+dimensions.Y / 2, position.Z + dimensions.Z / 2));
-            viewRay = new Ray(position, rotation);
+            hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y /2, position.Z - dimensions.Z /2), new Vector3(position.X + dimensions.X / 2, position.Y+dimensions.Y / 2, position.Z + dimensions.Z / 2)); //Create the inital hitbox
+            viewRay = new Ray(position, rotation); //Create the inital ray
         }
 
         public virtual void Update(GameTime gameTime)
         {
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            lastPosition = position;
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds; //Get the time between this frame and the last
+            lastPosition = position; //Update last position
 
-            //YAW PTICH ROLL! Get direction using Vector3 rotation
-            Matrix yawPitchRoll = Matrix.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
-            direction = Vector3.Transform(forward, yawPitchRoll);
+            Matrix yawPitchRoll = Matrix.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z); //Turn entity rotation into a direction matrix
+            direction = Vector3.Transform(forward, yawPitchRoll); //Turn the entity rotation into a direction vector
 
-            //Do rotation
-            rotation += rotational_velocity;
+            rotation += rotational_velocity; //Update velocity
 
-            //reduce dynamic velocity
+            //Reduce the all velocities towards 0.
             dynamic_velocity.X /= 1.25f;
             dynamic_velocity.Z /= 1.25f;
             rotational_velocity /= 1.25f;
 
-            //Enforce gravity
-            if (dynamic_velocity.Y >= -0.1 && enforceGravity)
+            if (dynamic_velocity.Y >= -0.1 && enforceGravity) //If the entity shoud have gravity and isn't at terminal velocity
             {
-                dynamic_velocity.Y -= 0.2f * deltaTime;
+                dynamic_velocity.Y -= 0.2f * deltaTime; //Accelerate Y velocity downwards
             }
 
-            //Velocity is made of two components, dynamic (applied forces) and fixed (movement). These are added together once both are calculated.
-            velocity = dynamic_velocity + fixed_rotation_based_velocity;
+            velocity = dynamic_velocity + fixed_rotation_based_velocity; //Velocity is made of two components, dynamic (applied forces) and fixed (movement). These are added together once both are calculated.
 
-            //Check if the entity is still colliding with theyre standing block. If so, then just quickly reset  Y velocity that to 0 to avoid collision checks.
+
+            //Check if the entity is still colliding with their standing block. If so, then just quickly reset Y velocity that to 0 to avoid collision checks.
             BoundingBox tempHitbox = new BoundingBox(new Vector3(hitbox.Min.X + velocity.X, hitbox.Min.Y + velocity.Y, hitbox.Min.Z + velocity.Z), new Vector3(hitbox.Max.X + velocity.X, hitbox.Max.Y + velocity.Y, hitbox.Max.Z + velocity.Z));
             if (standingBlock != null && tempHitbox.Intersects(standingBlock.hitbox) && world.GetBlockAtWorldIndex(standingBlock.blockPosition) != 0)
             {
                 velocity.Y = 0;
             }
 
-            //Only update collision is there is velocity
+            //Only update block collision if there is any velocity (no movement means no collision has changed)
             if (velocity != Vector3.Zero)
             {
-                standingBlock = null;
+                standingBlock = null; //Reset the entity's standing block
 
-                //Apply the velocity to a temporary hitbox and then check the collisions on that. This will stop movement that goes into a block collider.
-                CollideBlocks(hitbox, tempHitbox);
+                CollideBlocks(hitbox, tempHitbox); //Apply the velocity to a temporary hitbox and then check the collisions on that. This will stop movement that goes into a block collider.
 
-                //Move using velocity
-                MoveTo(velocity + position, Rotation);
+                MoveTo(velocity + position, Rotation); //Move entity
+
+                //Remake hitbox
                 hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y / 2, position.Z - dimensions.Z / 2), new Vector3(position.X + dimensions.X / 2, position.Y + dimensions.Y / 2, position.Z + dimensions.Z / 2));
 
-                //Debug update bounding box
+                //If position has changed
                 if (!lastPosition.Equals(position))
                 {
-                    OnMovement();
-                    BuildBoundingBoxDebug();
+                    OnMovement(); //Rebuild vertex buffer 
+                    BuildBoundingBoxDebug(); //Build debug bounding box buffer
                 }
             }
 
-            //Update animation
+            //Update models animation
             if(modelAnimation != null)
             {
                 modelAnimation.Update(gameTime);
             }
 
-            PostUpdate();
+            PostUpdate(); //Run post update
         }
 
-        ///Loading a model
+        /// <summary>
+        /// Loads a model. This is class specific.
+        /// </summary>
         protected virtual void LoadModel()
         {
 
@@ -162,6 +155,7 @@ namespace BlockGame.Components.Entities
 
         /// <summary>
         /// Method should something special happen to the entity on it's movement.
+        /// Runs when position has changed.
         /// </summary>
         protected virtual void OnMovement()
         {
@@ -174,53 +168,54 @@ namespace BlockGame.Components.Entities
         /// </summary>
         protected void CalculateClosestFace()
         {
+            //If no faces hit, change nothing.
             if (rayFaces.Count <= 0)
             {
                 return;
             }
 
-            //Get the closest face to the player
-            closestFace = rayFaces[0];
+            closestFace = rayFaces[0]; //Set start to 0 index
 
+            //Check all faces, find the closest
             for (int i = 0; i < rayFaces.Count; i++)
             {
-                if (Vector3.Distance(position, rayFaces[i].blockPosition) < Vector3.Distance(position, closestFace.blockPosition))
+                if (Vector3.Distance(position, rayFaces[i].blockPosition + rayFaces[i].blockNormal) < Vector3.Distance(position, closestFace.blockPosition + closestFace.blockNormal)) //Check if distance of current iteration 'i' is closer than the currnet "closest"
                 {
-                    closestFace = rayFaces[i];
+                    closestFace = rayFaces[i]; //Set as closest
                 }
             }
         }
 
         /// <summary>
-        /// Method which updates this entities list of faces it is hitting.
+        /// Method which updates this entit's list of faces it is hitting (rayFaces).
         /// This is NOT called on base entity update, it will only be called in higher classes
         /// This is because not all entities need this info.
         /// </summary>
         public void RaySight()
         {
-            //Cast a ray in the entities direction
-            viewRay = new Ray(rayOriginPosition, direction);
-            Chunk[,] chunks = world.GetChunksNearby(position, 1);
+            viewRay = new Ray(rayOriginPosition, direction); //Cast a ray in the looking direction
 
-            //List of faces hit by the entitys look ray
-            rayFaces = new List<Face>();
+            Chunk[,] chunks = world.GetChunksNearby(position, 1); //Get the chunks the entity is in
 
-            //If the ray hits a block in the chunks, add that face to the list of faces
+            rayFaces = new List<Face>(); //Reset list
+
+            //For each chunk, if a ray hits a face in the chunk, then add it to the list.
             foreach (Chunk chunk in chunks)
             {
-
+                //If on the edge of the world, skip that chunk.
                 if (chunk == null)
                 {
                     continue;
                 }
 
-                List<Face> faces = chunk.visibleFaces;
+                List<Face> faces = chunk.visibleFaces; //Get chunk's visible faces
 
+                //Check each visble face, if it collides with ray
                 for(int i = 0; i < faces.Count; i++)
                 {
                     if (viewRay.Intersects(faces[i].hitbox) != null)
                     {
-                        rayFaces.Add(faces[i]);
+                        rayFaces.Add(faces[i]); //If ray collides, then  add to list
 
                     }
                 }
@@ -231,79 +226,77 @@ namespace BlockGame.Components.Entities
         /// Method which checks collisions with blocks, and then stop movement if it hits a block.
         /// Takes the current hitbox of the entity as well as the predicted hitbox once movement is applied.
         /// </summary>
-        /// <param name="currentHitbox"></param>
-        /// <param name="predictedHitbox"></param>
+        /// <param name="currentHitbox">Current entities hitbox</param>
+        /// <param name="predictedHitbox">Hitbox which will happen after velocity is applied</param>
         public void CollideBlocks(BoundingBox currentHitbox, BoundingBox predictedHitbox) {
-            Chunk[,] chunks = world.GetChunksNearby(position, 1);
+            Chunk[,] chunks = world.GetChunksNearby(position, 1); //Get chunks nearby
 
+            //Check each face in each chunk. If the player collides with it, stop movement in that direction.
             foreach (Chunk chunk in chunks)
             {
+                //Check edge case, edge of the world.
                 if(chunk == null)
                 {
                     continue;
                 }
 
-                chunk.drawHitboxes = true;
-                List<Face> faces = chunk.visibleFaces;
+                chunk.drawHitboxes = true; //Draw hitboxes of chunks nearby
+                List<Face> faces = chunk.visibleFaces; //Get visible faces in chunk
 
+                //If the player is in debug mode, skip this
                 if (Game1.debug && this.GetType() == typeof(Player))
                 {
                     continue;
                 }
 
-                //For each block, check if the hitbox is intersecting it AND if it is within it's range (i.e is accurately above the block and hitting a top). Update the velocity based on normal data
+                //This loop checks if the entity is intersecting a face, and if so, stops its velocity in that direction.
                 for(int i = 0; i < faces.Count; i++)
                 {
+                    //If the predicted hitbox intesects a face, then continue
                     if (predictedHitbox.Contains(faces[i].hitbox) == ContainmentType.Intersects && currentHitbox.Contains(faces[i].hitbox) != ContainmentType.Intersects)
                     {
-                        //If the faces normal is in this direction, then reset the velocity in that direction
-                        if (faces[i].blockNormal.Equals(new Vector3(0,0,1)) )
+                        if (faces[i].blockNormal.Equals(new Vector3(0,0,1))) //Checking what direction this face's normal is
                         {
-                            //Reset velocity to 0 in that direction
-                            if(velocity.Z < 0 && currentHitbox.Min.Z > faces[i].hitbox.Max.Z)
+                            if(velocity.Z < 0 && currentHitbox.Min.Z > faces[i].hitbox.Max.Z) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.Z = 0;
+                                velocity.Z = 0; //Reset velocity
                             }
                         }
-                        if (faces[i].blockNormal.Equals(new Vector3(0, 0, -1)))
+                        if (faces[i].blockNormal.Equals(new Vector3(0, 0, -1))) //Checking what direction this face's normal is
                         {
-                            //Reset velocity to 0 in that direction
-                            if (velocity.Z > 0 && currentHitbox.Max.Z < faces[i].hitbox.Min.Z)
+                            
+                            if (velocity.Z > 0 && currentHitbox.Max.Z < faces[i].hitbox.Min.Z) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.Z = 0;
+                                velocity.Z = 0; //Reset velocity
                             }
                         }
-                        if (faces[i].blockNormal.Equals(new Vector3(0, 1, 0)))
+                        if (faces[i].blockNormal.Equals(new Vector3(0, 1, 0))) //Checking what direction this face's normal is
                         {
-                            //Reset velocity to 0 in that direction
-                            if (velocity.Y < 0 && currentHitbox.Min.Y > faces[i].hitbox.Max.Y)
+                            if (velocity.Y < 0 && currentHitbox.Min.Y > faces[i].hitbox.Max.Y) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.Y = 0;
-                                standingBlock = faces[i];
+                                velocity.Y = 0; //Reset velocity
+                                standingBlock = faces[i]; //Set the entity's standing block
                             }
                         }
-                        if(faces[i].blockNormal.Equals(new Vector3(0, -1, 0)))
+                        if(faces[i].blockNormal.Equals(new Vector3(0, -1, 0))) //Checking what direction this face's normal is
                         {
-                            //Reset velocity to 0 in that direction
-                            if (velocity.Y > 0 && currentHitbox.Max.Y < faces[i].hitbox.Min.Y)
+                            if (velocity.Y > 0 && currentHitbox.Max.Y < faces[i].hitbox.Min.Y) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.Y = 0;
+                                velocity.Y = 0; //Reset velocity
                             }
                         }
-                        if (faces[i].blockNormal.Equals(new Vector3(1, 0, 0)))
+                        if (faces[i].blockNormal.Equals(new Vector3(1, 0, 0))) //Checking what direction this face's normal is
                         {
-                            //Reset velocity to 0 in that direction
-                            if (velocity.X < 0 && currentHitbox.Min.X > faces[i].hitbox.Max.X)
+                            if (velocity.X < 0 && currentHitbox.Min.X > faces[i].hitbox.Max.X) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.X = 0;
+                                velocity.X = 0; //Reset velocity
                             } 
                         }
-                        if(faces[i].blockNormal.Equals(new Vector3(-1, 0, 0)))
+                        if(faces[i].blockNormal.Equals(new Vector3(-1, 0, 0))) //Checking what direction this face's normal is
                         {
-                            //Reset velocity to 0 in that direction
-                            if (velocity.X > 0 && currentHitbox.Max.X < faces[i].hitbox.Min.X)
+                            if (velocity.X > 0 && currentHitbox.Max.X < faces[i].hitbox.Min.X) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.X = 0;
+                                velocity.X = 0; //Reset velocity
                             }
                         }
                     }
@@ -313,36 +306,38 @@ namespace BlockGame.Components.Entities
 
         public virtual void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
+            //If the game is in debug mode, then draw the entity's bounding box
             if (Game1.debug)
             {
-                DrawBoundingBox(_graphics, basicEffect, camera);
-/*                DrawView(_graphics, basicEffect, camera);
+                DrawBoundingBox(_graphics, basicEffect, camera); //Draw boudning box
+/*                DrawView(_graphics, basicEffect, camera); //Draw view ray
 */
             }
 
-            //Draw model
+            //Drawing the entity's model
             if(model != null)
             {
+                //Set the models position, scale, and rotation
                 skinEffect.World = Matrix.CreateRotationX(rotation.X) * Matrix.CreateRotationY(rotation.Y) * Matrix.CreateRotationZ(rotation.Z) * Matrix.CreateTranslation(position - new Vector3(0, this.dimensions.Y / 2, 0)) *Matrix.CreateScale(1f, 1f, 1f);
-                skinEffect.View = world.player.Camera.View;
-                skinEffect.Projection = world.player.Camera.Projection;
-                skinEffect.EnableDefaultLighting();
-                skinEffect.DirectionalLight0.Enabled = true;
-                skinEffect.SpecularColor = new Vector3(0,0,0); //turn off shine (kinda works)
+                
+                skinEffect.View = world.player.Camera.View; //Set view matrix
+                skinEffect.Projection = world.player.Camera.Projection; //Set projection matrix
 
-                //Set the models lighting to be its current blocks lighting
-                ushort lightLevel = world.GetBlockLightLevelAtWorldIndex(this.position+ new Vector3(0,1,0));
+                skinEffect.EnableDefaultLighting(); //Turn on lighting so that textures are shown
+                skinEffect.SpecularColor = new Vector3(0,0,0); //Turn off the shine default lighting has
+
+                ushort lightLevel = world.GetBlockLightLevelAtWorldIndex(this.position+ new Vector3(0,1,0)); //Get the block the entity is on's light level
+
                 //Diffuse color ranges from 0-1, so trake 1/maxlightlevel, then times that by its light level, to set its diffuse color.
-                skinEffect.DiffuseColor = new Vector3(1f/(float)DataManager.maxLightLevel*(float)lightLevel, 1f / (float)DataManager.maxLightLevel * (float)lightLevel, 1f / (float)DataManager.maxLightLevel * (float)lightLevel); 
-
+                skinEffect.DiffuseColor = new Vector3(1f/(float)DataManager.maxLightLevel*(float)lightLevel, 1f / (float)DataManager.maxLightLevel * (float)lightLevel, 1f / (float)DataManager.maxLightLevel * (float)lightLevel); //Set the entity's light level
 
                 foreach (SkinnedMesh mesh in model.Meshes)
                 {
-                    skinEffect.Texture = modelTexture;
+                    skinEffect.Texture = modelTexture; //Set the models texture
 
                     if(modelAnimation.Animation != null)
                     {
-                        modelAnimation.SetEffectBones(skinEffect);
+                        modelAnimation.SetEffectBones(skinEffect); //Set the animations bones
                     }
 
                     skinEffect.CurrentTechnique.Passes[0].Apply();
@@ -352,7 +347,7 @@ namespace BlockGame.Components.Entities
             }
         }
 
-        //Drawing view ray (debug)
+        //Draws debug ray
         private void DrawView(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera)
         {
             //Draw line
@@ -381,7 +376,7 @@ namespace BlockGame.Components.Entities
             }
         }
 
-        //Draw a bounding box (this actually works for any in theory but is spedcifically for hitboxes right now...)
+        //Draw a bounding box
         private void DrawBoundingBox(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera)
         {
             if (vertexList.Count > 0)
@@ -402,6 +397,7 @@ namespace BlockGame.Components.Entities
 
         }
 
+        //buildng the entity's hitbox bounding box
         private void BuildBoundingBoxDebug()
         {
             vertexList = new List<VertexPositionColor>
@@ -439,7 +435,11 @@ namespace BlockGame.Components.Entities
             vertexBuffer.SetData(vertexList.ToArray());
         }
 
-        //method that simulates movement
+        /// <summary>
+        /// Method which previews the entities movement before it actually moves. This is just used for some player stuff specifically.
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <returns></returns>
         public virtual Vector3 PreviewMove(Vector3 amount)
         {
             //Create rotation matrix
@@ -453,13 +453,17 @@ namespace BlockGame.Components.Entities
             return position + movement;
         }
 
-        //Actually moving the camera
+        //???
         public virtual void Move(Vector3 scale)
         {
             MoveTo(PreviewMove(scale), Rotation);
         }
 
-        //Method that sets camera pos and rot
+        /// <summary>
+        /// Moves the entity to the given postiion and rotation
+        /// </summary>
+        /// <param name="pos">position to be moved to</param>
+        /// <param name="rot">rotation to be given</param>
         public virtual void MoveTo(Vector3 pos, Vector3 rot)
         {
             position = pos;
