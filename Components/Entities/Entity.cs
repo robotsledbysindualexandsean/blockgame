@@ -94,7 +94,7 @@ namespace BlockGame.Components.Entities
             Matrix yawPitchRoll = Matrix.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z); //Turn entity rotation into a direction matrix
             direction = Vector3.Transform(forward, yawPitchRoll); //Turn the entity rotation into a direction vector (using direction matrix)
 
-            rotation += rotational_velocity; //Update velocity
+            rotation += rotational_velocity; //Update rotational velocity
 
             //Reduce the all velocities towards 0. This is "friction" so to say.
             dynamic_velocity.X /= 1.25f;
@@ -175,7 +175,7 @@ namespace BlockGame.Components.Entities
                 return;
             }
 
-            closestFace = rayFaces[0]; //Set start to 0 index
+            closestFace = rayFaces[0]; //Set closest face to 0 index to start
 
             //Check all faces, find the closest
             for (int i = 0; i < rayFaces.Count; i++)
