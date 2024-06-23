@@ -16,41 +16,35 @@ namespace BlockGame.Components.Entities
 {
     internal class Player : Entity
     {
-        //Attributes
-        private GraphicsDeviceManager graphics;
-        private Camera camera;
+        private GraphicsDeviceManager graphics; //GraphicsDevice
+        private Camera camera; //Player camera
 
-        //Offset of camera from players origin
-        private Vector3 cameraOffset = new Vector3(0, 0.75f, 0);
+        private Vector3 cameraOffset = new Vector3(0, 0.75f, 0); //How much the camera is offset from the actual players origin position
 
-        //dimensions
-        private static Vector3 playerDimensions = new Vector3(0.5f, 1.5f, 0.5f);
+        private static Vector3 playerDimensions = new Vector3(0.5f, 1.5f, 0.5f); //Hitbox dimensions
 
-        public static int renderDistance = 16; //this is diameter, not raidus! :)
+        public static int renderDistance = 16; //Chunk render distance, in diameter not radius
 
-        //Variables storing the players chunk and its chunk last frame. Why one is an int[] and one is a Vector2 is something to fix.
-        private int[] playerChunkPos;
-        private Vector2 lastPlayerChunk;
+        private Vector2 playerChunkPos; //Players current chunk position
+        private Vector2 lastPlayerChunk; //Players chunk from last frame
 
-        //Inventory
-        private Inventory inventory;
-        public int highlightedHotbarSlot;
+        private Inventory inventory; //Inventory
+        public int highlightedHotbarSlot; //Which hotbar slot is highlighted by the player
 
-        //Scroll bar (hotbar)
-        int scrollTimer = 0;
-        int scrollCooldown = 3;
+        int scrollTimer = 0; //Timer for scroll wheel delay
+        int scrollCooldown = 3; //Cooldown for scrolling
 
-        //Inventory getter
-        public Inventory Inventory { get { return inventory; } }
+        public Inventory Inventory { get { return inventory; } } //Inventory getter
 
 
+        //TODO: Entities need view rotation and a physical rotation
         public override Vector3 Rotation
         {
             get { return rotation; }
             set
             {
                 rotation = value;
-                camera.Rotation = rotation;
+                camera.Rotation = rotation; //For the player, set camera rotation as well as entity rotation
             }
         }
 
@@ -59,37 +53,30 @@ namespace BlockGame.Components.Entities
             get { return position; }
         }
 
-        //Mouse variables used for camera movement
-        private Vector3 mouseRotationBuffer;
-        private MouseState currentMouseState;
-        private MouseState previousMouseState;
-        private float sensitivity = 4f;
+        private Vector3 mouseRotationBuffer; //Buffer used for moving the camera with the mouse
+        private MouseState currentMouseState; //Current mouse info
+        private MouseState previousMouseState; //Mouse info from the previous frame
+        private float sensitivity = 4f; //Mouse sensitvitiy
 
-        //Breaking block cooldown
-        int clickTimer = 0;
+        int clickTimer = 0; //Timer/cooldown for interacting with things (left/right click)
 
         public Player(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager, playerDimensions)
         {
-            graphics = _graphics;
-            camera = new Camera(_graphics, position + cameraOffset, rotation);
+            graphics = _graphics; //Store graphicsdevice
 
-            //Setting up inventory
-            inventory = new Inventory(7,2, dataManager);
-            highlightedHotbarSlot = 0;
+            camera = new Camera(_graphics, position + cameraOffset, rotation); //Create the camera
 
-            //Set Camera position and rotation
-            this.rotation = rotation;
-            this.speed = 10f;
-            this.world = world;
+            inventory = new Inventory(7,2, dataManager); //Make inventory
+            highlightedHotbarSlot = 0; //Set the current hotbar slot to 0
 
-            //Build vertex buffers around chunk where spawned
-            int[] chunkPos = WorldManager.posInWorlditionToChunkIndex(position);
+            this.rotation = rotation; //Set rotation
+            this.speed = 10f; //Set the players movement speed
 
-            //Load all the chunks around the player instantly on creation
-            world.LoadChunksInstantly(new Vector2(chunkPos[0], chunkPos[1]), renderDistance);
+            int[] chunkPos = WorldManager.posInWorlditionToChunkIndex(position); //Get the players current chunk position
 
-            //debug items
-            inventory.AddItem(2, 1);
+            world.LoadChunksInstantly(new Vector2(chunkPos[0], chunkPos[1]), renderDistance); //Load all the chunks around the player instantly
+
+            inventory.AddItem(2, 1); //Add bomb (debug)
         }
 
 
@@ -98,18 +85,23 @@ namespace BlockGame.Components.Entities
             get { return camera; }
         }
 
-        //Method that sets camera pos and rot
+        /// <summary>
+        /// Move to a specific postiion/rotation.
+        /// Unlike most entities, when the player moves, the camera must move with it
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="rot"></param>
         public override void MoveTo(Vector3 pos, Vector3 rot)
         {
             position = pos;
             rotation = rot;
-            camera.MoveTo(pos + cameraOffset, rot);
-            rayOriginPosition = pos + cameraOffset;
+            camera.MoveTo(pos + cameraOffset, rot); //Move camera
+            rayOriginPosition = pos + cameraOffset; //Set the position where the view ray is sent to the cameras offset
         }
 
         public override void Update(GameTime gameTime)
         {
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds; //time s9ince last frame (i think)
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds; //Time since last frame
 
             //Update click timer
             clickTimer -= 1;
@@ -118,8 +110,8 @@ namespace BlockGame.Components.Entities
             KeyboardInput(deltaTime);
 
             //Getting currentChunk (before movement) in Vector2, array format
-            playerChunkPos = WorldManager.posInWorlditionToChunkIndex(position);
-            Vector2 lastPlayerChunk = new Vector2(playerChunkPos[0], playerChunkPos[1]);
+            playerChunkPos = new Vector2(WorldManager.posInWorlditionToChunkIndex(position)[0], WorldManager.posInWorlditionToChunkIndex(position)[1]);
+            Vector2 lastPlayerChunk = new Vector2(playerChunkPos.X, playerChunkPos.Y);
 
             //Update mouse state
             currentMouseState = Mouse.GetState();
@@ -136,7 +128,7 @@ namespace BlockGame.Components.Entities
             //Mouse inputs (like block breaking)
             MouseInput(deltaTime);
 
-            previousMouseState = currentMouseState;
+            previousMouseState = currentMouseState; //Update prev mouse state
 
             base.Update(gameTime);
 
@@ -148,11 +140,12 @@ namespace BlockGame.Components.Entities
         /// <param name="deltaTime"></param>
         private void KeyboardInput(float deltaTime)
         {
-            KeyboardState keyboardState = Keyboard.GetState();
+            KeyboardState keyboardState = Keyboard.GetState();  //Get keyboard information
 
-            //Getting movement vector3
+            //Vector for what direction the player is moving
             Vector3 dir = Vector3.Zero;
 
+            //Basic movement inputs
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 dir.Z = 1;
@@ -174,26 +167,29 @@ namespace BlockGame.Components.Entities
             if (Keyboard.HasBeenPressed(Keys.F3))
             {
                 Game1.debug = !Game1.debug;
-                enforceGravity = !enforceGravity;
-                dir.Y = 0;
+                enforceGravity = !enforceGravity; //Turn off player gravity
+
+                //Reset Y velocities
+                dir.Y = 0; 
                 velocity.Y = 0;
                 dynamic_velocity.Y = 0;
             }
 
-            //IF debug, then fly, if not, then jump
+            //Debug mode flying
             if (Game1.debug)
             {
                 if (keyboardState.IsKeyDown(Keys.Space))
                 {
-                    dir.Y = 1;
+                    dir.Y = 1; //Go up
                 }
                 if (keyboardState.IsKeyDown(Keys.LeftShift))
                 {
-                    dir.Y = -1;
+                    dir.Y = -1; //Go down
                 }
             }
             else
             {
+                //If not in debug mode, then jump (add Y velocity)
                 if (Keyboard.HasBeenPressed(Keys.Space))
                 {
                     dynamic_velocity.Y = 0.1f;
@@ -210,7 +206,7 @@ namespace BlockGame.Components.Entities
                 dir *= deltaTime * speed;
             }
 
-            fixed_rotation_based_velocity = GetFixedMovementVector(dir);
+            fixed_rotation_based_velocity = GetFixedMovementVector(dir); //Set the fixed velocity to the direction
         }
 
         /// <summary>
@@ -280,10 +276,9 @@ namespace BlockGame.Components.Entities
             //If scroll down, move slot down
             if(scrollTimer > scrollCooldown && previousMouseState.ScrollWheelValue < currentMouseState.ScrollWheelValue)
             {
-                //If slot is already 0, go back to the top
                 if(highlightedHotbarSlot == 0)
                 {
-                    highlightedHotbarSlot = inventory.GetWidth() - 1;
+                    highlightedHotbarSlot = inventory.GetWidth() - 1;  //If slot is already 0, go back to the top
                 }
                 else
                 {
@@ -294,16 +289,16 @@ namespace BlockGame.Components.Entities
             //If scroll up, move slot up
             else if (scrollTimer > scrollCooldown && previousMouseState.ScrollWheelValue > currentMouseState.ScrollWheelValue)
             {
-                //If slot is already 0, go back to the top
                 if (highlightedHotbarSlot == inventory.GetWidth() - 1)
                 {
-                    highlightedHotbarSlot = 0;
+                    highlightedHotbarSlot = 0;  //If slot is already 0, go back to the top
                 }
                 else
                 {
                     highlightedHotbarSlot++;
                 }
-                scrollTimer = 0;
+
+                scrollTimer = 0; //Reset the scrolling timer
             }
         }
 
@@ -344,8 +339,8 @@ namespace BlockGame.Components.Entities
             inventory.DrawBottomBar(new Vector2(_graphics.PreferredBackBufferWidth / 2, _graphics.PreferredBackBufferHeight - 50), spriteBatch, highlightedHotbarSlot);
 
             //Draw crosshair
-            int crossHairScale = 3;
-            Rectangle atlasRect = new Rectangle(47, 28, 7, 7);
+            int crossHairScale = 3; //Scale for the crosshair size
+            Rectangle atlasRect = new Rectangle(47, 28, 7, 7); //Crosshair texture position in UIatlas
             spriteBatch.Draw(DataManager.uiAtlas, new Rectangle(graphics.GraphicsDevice.Viewport.Width / 2 - atlasRect.Width/2*crossHairScale, graphics.GraphicsDevice.Viewport.Height / 2 - atlasRect.Height / 2 * crossHairScale, atlasRect.Width*crossHairScale,atlasRect.Height*crossHairScale), atlasRect, Color.White);
 
             base.Draw(_graphics, basicEffect, camera, spriteBatch, skinEffect);
@@ -354,18 +349,19 @@ namespace BlockGame.Components.Entities
 
         /// <summary>
         /// Post update function, which is used to see if the players chunk has changed chunks after updating. This is used to load new chunks
+        /// Generally can be used for running code after update.
         /// </summary>
         public override void PostUpdate()
         {
             //After movement, seeing if chunk changed
             //Getting currentChunk (before movement) in Vector2, array format
-            playerChunkPos = WorldManager.posInWorlditionToChunkIndex(position);
-            Vector2 newPlayerChunk = new Vector2(playerChunkPos[0], playerChunkPos[1]);
+            playerChunkPos = new Vector2(WorldManager.posInWorlditionToChunkIndex(position)[0], WorldManager.posInWorlditionToChunkIndex(position)[1]);
+            Vector2 newPlayerChunk = new Vector2(playerChunkPos.X, playerChunkPos.Y);
 
-            //IF changed, now we need to update chunks
+            //If the player has moved chunks,  we need to update chunks
             if (!newPlayerChunk.Equals(lastPlayerChunk))
             {
-                world.LoadChunks(newPlayerChunk, renderDistance);
+                world.LoadChunks(newPlayerChunk, renderDistance); //Load the chunks in the render distance
             }
 
             base.PostUpdate();
@@ -391,6 +387,11 @@ namespace BlockGame.Components.Entities
             MoveTo(PreviewMove(scale), Rotation);
         }
 
+        /// <summary>
+        /// Turning the players direction into a vector, based on cameras rotation.
+        /// </summary>
+        /// <param name="amount">Player direction to move</param>
+        /// <returns></returns>
         public Vector3 GetFixedMovementVector(Vector3 amount)
         {
             //Create rotation matrix

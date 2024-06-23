@@ -25,11 +25,21 @@ namespace BlockGame.Components
             return currentKeyState;
         }
 
+        /// <summary>
+        /// Is the key currently pressed?
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public static bool IsPressed(Keys key)
         {
             return currentKeyState.IsKeyDown(key);
         }
 
+        /// <summary>
+        /// Has the key been pressed once recently?
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public static bool HasBeenPressed(Keys key)
         {
             return currentKeyState.IsKeyDown(key) && !previousKeyState.IsKeyDown(key);

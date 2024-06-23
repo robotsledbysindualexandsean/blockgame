@@ -24,19 +24,19 @@ namespace BlockGame.Components
     internal class DataManager
     {
         //Atlases for textures
-        public static Texture2D blockAtlas;
-        public static Texture2D itemAtlas;
-        public static Texture2D uiAtlas;
+        public static Texture2D blockAtlas; //Atlas for block textures
+        public static Texture2D itemAtlas; //Atlas for item sprites
+        public static Texture2D uiAtlas; //Atlas for UI elements
 
         //Hashmaps
-        public Dictionary<ushort, Block> blockData = new Dictionary<ushort, Block>();
-        public Dictionary<ushort, Item> itemData = new Dictionary<ushort, Item>();
-        public Dictionary<string, SkinnedModel> models = new Dictionary<string, SkinnedModel>();
-        public Dictionary<string, Texture2D> modelTextures = new Dictionary<string, Texture2D>();
+        public Dictionary<ushort, Block> blockData = new Dictionary<ushort, Block>(); //All block objects
+        public Dictionary<ushort, Item> itemData = new Dictionary<ushort, Item>(); //All item objects
+        public Dictionary<string, SkinnedModel> models = new Dictionary<string, SkinnedModel>(); //All models that are laoded
+        public Dictionary<string, Texture2D> modelTextures = new Dictionary<string, Texture2D>(); //All model textures that are loaded
 
-        public List<ushort> lightEmittingIDs = new List<ushort>();
+        public List<ushort> lightEmittingIDs = new List<ushort>(); //List of blocks that emit light
 
-        public static ushort maxLightLevel = 15;
+        public static ushort maxLightLevel = 15; //max block light level
 
         public DataManager() {
 
@@ -48,15 +48,16 @@ namespace BlockGame.Components
         /// <param name="content"></param>
         public void LoadContent(ContentManager content)
         {
-            //Load block
+            //Load block atlas
             blockAtlas = content.Load<Texture2D>("atlas");
 
-            //Load item
+            //Load item atlas
             itemAtlas = content.Load<Texture2D>("itematlas");
 
-            //ui
+            //ui atlas
             uiAtlas = content.Load<Texture2D>("uiatlas");
 
+            //Load models
             LoadModels(content);
         }
 
@@ -86,7 +87,7 @@ namespace BlockGame.Components
         }
 
         /// <summary>
-        /// Load models
+        /// Models in the game that can be used.
         /// </summary>
         public void LoadModels(ContentManager Content)
         {

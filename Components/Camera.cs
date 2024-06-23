@@ -14,11 +14,11 @@ namespace BlockGame.Components
     internal class Camera
     {
         //Attributes
-        private Vector3 cameraPosition;
-        private Vector3 cameraRotation;
-        private Vector3 cameraLookAt;
-        private GraphicsDeviceManager graphics;
-        private BoundingFrustum boundingFrustum;
+        private Vector3 cameraPosition; //Cameras position
+        private Vector3 cameraRotation; //Cameras rotation
+        private Vector3 cameraLookAt; //Cameras look at vector (used for matrix calcs)
+        private GraphicsDeviceManager graphics; //Graphics reference
+        private BoundingFrustum boundingFrustum; //Bounding frustum hitbox, used for frustum culling
 
         //Properties
         public Vector3 Position
@@ -36,7 +36,7 @@ namespace BlockGame.Components
             set
             {
                 cameraRotation = value;
-                UpdateLookAt();
+                UpdateLookAt(); //When the cameras rotation is changed, the matrix of things it sees needs to be updated
             }
         }
         public Matrix Projection
@@ -49,7 +49,7 @@ namespace BlockGame.Components
         {
             get
             {
-                return Matrix.CreateLookAt(cameraPosition, cameraLookAt, Vector3.Up);
+                return Matrix.CreateLookAt(cameraPosition, cameraLookAt, Vector3.Up); //Get the LookAt matrix (view matrix)
             }
         }
 
@@ -98,7 +98,7 @@ namespace BlockGame.Components
         /// <returns>True if in frustum, false if not.</returns>
         public bool InFrustum(BoundingBox box)
         {
-            if (boundingFrustum.Contains(box) == ContainmentType.Contains || boundingFrustum.Contains(box) == ContainmentType.Intersects)
+            if (boundingFrustum.Contains(box) == ContainmentType.Contains || boundingFrustum.Contains(box) == ContainmentType.Intersects) ///Is this hitbox in the frustum?
             {
                 return true;
             }

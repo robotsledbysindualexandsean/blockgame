@@ -11,42 +11,45 @@ using System.Threading.Tasks;
 
 namespace BlockGame.Components.World
 {
+    /// <summary>
+    /// Class which stores block data. Each object is "static", in the sense that all blocks of that ID use that object to perform actions.
+    /// </summary>
     internal class Block
     {
-        //Size of one block on the atlas (this is redudant but just so its not hardcoded)
-        public static float blockSize = 1;
+        public static float blockSize = 1; //Size of one block on the atlas (this is redudant but just so its not hardcoded)
 
-        //How many blocks x blocks the atlas it
-        private static Vector2 blockCount = new Vector2(2, 3);
+        private static Vector2 blockCount = new Vector2(2, 3); //Dimensons of the blockatlas by BlockxBlock
 
-        //Size of one block in terms of UV coordinates
-        private static Vector2 sizeOfOneBlock = new Vector2(1, 1) / blockCount;
+        private static Vector2 sizeOfOneBlock = new Vector2(1, 1) / blockCount; //Calculating the size of one block in terms of UV coorindates
 
-        //What position the blocks texture is on the atlas
-        public Vector2 atlasPos;
-        public ushort lightEmittingFactor;
-        public ushort blockID;
+        public Vector2 atlasPos; //Blocks position in the atlas
 
-        //what item this block drops
-        public ushort drop;
+        public ushort lightEmittingFactor; //How much light this block emits
+
+        public ushort blockID; //Blocks ID
+
+        public ushort drop; //what item this block drops
 
         public Block(DataManager data, ushort blockID, ushort lef)
         {
-            data.blockData.Add(blockID, this);
+            data.blockData.Add(blockID, this); //Add to the block hashmap
+
+            //Set variables
             this.blockID = blockID;
             this.lightEmittingFactor = lef;
         }
 
         public Block(DataManager data, ushort blockID, Vector2 atlasPos, ushort lef, ushort drop)
         {
-            data.blockData.Add(blockID, this);
+            data.blockData.Add(blockID, this); //Add to block hashmap
+
+            //Set variables
             this.blockID = blockID;
             this.lightEmittingFactor = lef;
-
             this.drop = drop;
             this.atlasPos = atlasPos;
 
-            if (lef > 0)
+            if (lef > 0) //If a light emitting block, add it to the list of light emitting blocks
             {
                 data.lightEmittingIDs.Add(blockID);
             }
@@ -59,11 +62,9 @@ namespace BlockGame.Components.World
         /// <param name="blockPosition"></param>
         public void Destroy(WorldManager world, Vector3 blockPosition)
         {
-            //Drop item (0.5f above to avoid clipping)
-            DroppedItem.DropItem(blockPosition + new Vector3(0, 0.5f, 0), 1, world);
+            DroppedItem.DropItem(blockPosition + new Vector3(0, 0.5f, 0), 1, world); //Drop item entity (0.5f above to avoid clipping)
 
-            //Set the block to air
-            world.SetBlockAtWorldIndex(blockPosition, 0);
+            world.SetBlockAtWorldIndex(blockPosition, 0); //Set the block to air
         }
 
         public bool IsLightSource()
@@ -95,6 +96,14 @@ namespace BlockGame.Components.World
 
         /// <summary>
         /// Below are static methods for adding face verticies to the vertex list
+        /// 
+        /// SOME EXPLANTION OF UVs
+        /// Each face needs its UV coordinates for the blockatlas. Idk much about how UV coords work, but the main idea is that im taking
+        /// the size of the atlas, and dividng it by the amount of blocks, to get a UV coordinate for one "block" unit. Then, I apply that to the face.
+        /// TO DO:
+        /// Multiple face deisgns
+        /// smaller block sizes
+        /// animation
         /// </summary>
         /// <param name="position">3D position in the world</param>
         /// <param name="vertexList">The list the verticies should be added to</param>

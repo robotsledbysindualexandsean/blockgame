@@ -92,11 +92,11 @@ namespace BlockGame.Components.Entities
             lastPosition = position; //Update last position
 
             Matrix yawPitchRoll = Matrix.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z); //Turn entity rotation into a direction matrix
-            direction = Vector3.Transform(forward, yawPitchRoll); //Turn the entity rotation into a direction vector
+            direction = Vector3.Transform(forward, yawPitchRoll); //Turn the entity rotation into a direction vector (using direction matrix)
 
             rotation += rotational_velocity; //Update velocity
 
-            //Reduce the all velocities towards 0.
+            //Reduce the all velocities towards 0. This is "friction" so to say.
             dynamic_velocity.X /= 1.25f;
             dynamic_velocity.Z /= 1.25f;
             rotational_velocity /= 1.25f;
@@ -108,12 +108,13 @@ namespace BlockGame.Components.Entities
 
             velocity = dynamic_velocity + fixed_rotation_based_velocity; //Velocity is made of two components, dynamic (applied forces) and fixed (movement). These are added together once both are calculated.
 
+            //Create a temporary hitbox with velocity added to perform future collision calcualtions
+            BoundingBox tempHitbox = new BoundingBox(new Vector3(hitbox.Min.X + velocity.X, hitbox.Min.Y + velocity.Y, hitbox.Min.Z + velocity.Z), new Vector3(hitbox.Max.X + velocity.X, hitbox.Max.Y + velocity.Y, hitbox.Max.Z + velocity.Z)); 
 
             //Check if the entity is still colliding with their standing block. If so, then just quickly reset Y velocity that to 0 to avoid collision checks.
-            BoundingBox tempHitbox = new BoundingBox(new Vector3(hitbox.Min.X + velocity.X, hitbox.Min.Y + velocity.Y, hitbox.Min.Z + velocity.Z), new Vector3(hitbox.Max.X + velocity.X, hitbox.Max.Y + velocity.Y, hitbox.Max.Z + velocity.Z));
             if (standingBlock != null && tempHitbox.Intersects(standingBlock.hitbox) && world.GetBlockAtWorldIndex(standingBlock.blockPosition) != 0)
             {
-                velocity.Y = 0;
+                velocity.Y = 0; //Set velocity to 0
             }
 
             //Only update block collision if there is any velocity (no movement means no collision has changed)
@@ -123,7 +124,7 @@ namespace BlockGame.Components.Entities
 
                 CollideBlocks(hitbox, tempHitbox); //Apply the velocity to a temporary hitbox and then check the collisions on that. This will stop movement that goes into a block collider.
 
-                MoveTo(velocity + position, Rotation); //Move entity
+                MoveTo(velocity + position, Rotation); //Apply velocity
 
                 //Remake hitbox
                 hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y / 2, position.Z - dimensions.Z / 2), new Vector3(position.X + dimensions.X / 2, position.Y + dimensions.Y / 2, position.Z + dimensions.Z / 2));

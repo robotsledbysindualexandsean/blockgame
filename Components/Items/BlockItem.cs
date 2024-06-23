@@ -9,9 +9,11 @@ using System.Threading.Tasks;
 
 namespace BlockGame.Components.Items
 {
+    /// <summary>
+    /// Item used to place blocks
+    /// </summary>
     internal class BlockItem : Item
     {
-        //Items that are stored in item id hashmap, storing their id, where theyre texture is on the atlas, and theyre max count.
         public BlockItem(DataManager data, ushort itemID, Rectangle atlasRect, int maxCount, GraphicsDeviceManager graphics) : base(data, itemID, atlasRect, maxCount, graphics)
         {
 
@@ -19,15 +21,14 @@ namespace BlockGame.Components.Items
 
         public override void OnRightClick(WorldManager world, DataManager dataManager, Player player, Entity user)
         {
-            //Check distance
+            //Is the player in range to the closest block to place something down? If so, place a block
             if(Vector3.Distance(user.position, user.ClosestFace.blockPosition) < 10)
             {
+                world.SetBlockAtWorldIndex(player.ClosestFace.blockPosition + player.ClosestFace.blockNormal, 5); //Place block
 
-                ///Place a block on the closest blocks normal
-                world.SetBlockAtWorldIndex(player.ClosestFace.blockPosition + player.ClosestFace.blockNormal, 5);
+                //TO DO: turn this to remove from "entity" inventory not the player.
+                player.Inventory.RemoveItem(new Vector2(player.highlightedHotbarSlot, player.Inventory.GetHeight() - 1), itemID); //Remove from players inventory
 
-                //Remove that block from the players inventory
-                player.Inventory.RemoveItem(new Vector2(player.highlightedHotbarSlot, player.Inventory.GetHeight() - 1), itemID);
                 base.OnRightClick(world, dataManager, player, user);
             }
 

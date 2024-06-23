@@ -15,9 +15,11 @@ namespace BlockGame.Components.World
     /// </summary>
     internal class Face
     {
-        public BoundingBox hitbox;
-        public Vector3 blockNormal;
-        public Vector3 blockPosition;
+        public BoundingBox hitbox; //Face htibox
+
+        public Vector3 blockNormal; //What direction the face is looking
+
+        public Vector3 blockPosition; //Face's block's position
 
         public Face(Vector3 blockPosition, BoundingBox hitbox, Vector3 blockNormal )
         {

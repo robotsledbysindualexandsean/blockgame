@@ -17,45 +17,34 @@ namespace BlockGame.Components.World
     {
 
         //World Generation Properties
-        static public int chunksGenerated = 20; //Must be even, and greater than 2 :)
+        static public int chunksGenerated = 20; //How many chunks (square diameter) will be generated. Must be even, and greater than 2 :)
         static public int roomHeight = 10; //Height for all rooms
 
-        //Array which stores all chunks in the world. 0 -> chunksGenerated
-        private Chunk[,] chunks = new Chunk[chunksGenerated, chunksGenerated];
+        private Chunk[,] chunks = new Chunk[chunksGenerated, chunksGenerated]; //Array which stores all chunks in the world. 0 -> chunksGenerated
 
-        //Refernece to graphics device
-        private GraphicsDeviceManager graphics;
-
-        //An old and deprecated array which stored perlin noise output.
-        private float[,] perlinNoise;
+        private GraphicsDeviceManager graphics; //Refernece to graphics device
 
         /// <summary>
         /// List of all chunks that need to be loaded.
-        /// Chunks are loaded on an interval (one at a time) to prevent lag.
+        /// Chunks are loaded on an interval (one at a time, one per frame) to prevent lag.
         /// </summary>
         private List<Chunk> chunksToLoad = new List<Chunk>();
 
-        //Dungeon Manager and array storing it's output
-        private DungeonManager dungeonManager = new DungeonManager();
-        public DataManager dataManager;
-        public int[,] dungeonMap;
+        private DungeonManager dungeonManager = new DungeonManager(); //Dungeon Manager
+        public DataManager dataManager; //DataManager reference
+        public int[,] dungeonMap; //Array storing the 2d dungoen map
 
-        /// <summary>
-        /// List of entities in the world
-        /// </summary>
-        public List<Entity> entities = new List<Entity>();
-        public List<Vector3> toPropagate = new List<Vector3>();
+        public List<Entity> entities = new List<Entity>(); //List of all entities in this world
+        public List<Vector3> toPropagate = new List<Vector3>(); //List of blocks that need to be propogated
 
-        //Player reference as well
-        public Player player;
+        public Player player; //Reference to the player
 
         private Random rnd = new Random();
 
-        public float[,] PerlinNoise
-        {
-            get { return perlinNoise; }
-        }
-
+        /// <summary>
+        /// Debug getters and setters.
+        /// used to display how many chunks are generated/ blocks generated.
+        /// </summary>
         public int BlockCount
         {
             get { return (Chunk.chunkLength-1) * (Chunk.chunkHeight-1) * (Chunk.chunkWidth - 1) * chunksGenerated * chunksGenerated; }
@@ -68,21 +57,16 @@ namespace BlockGame.Components.World
 
         public WorldManager(GraphicsDeviceManager graphics, DataManager dataManager)
         {
+            //Setting variables
             this.graphics = graphics;
             this.dataManager = dataManager;
 
-            //Generating perlin noise for terrain generation. Currenly unused (for dungeon gen)
-            //perlinNoise = Perlin.GeneratePerlinNoise(chunksGenerated*Chunk.chunkLength, chunksGenerated*Chunk.chunkWidth, 8);
+            GenerateChunks(); //Generate chunks with all blocks filled
 
-            //Generate chunks with all blocks filled
-            GenerateChunks();
+            GenerateDungeon(); //"Cut" the dungeon into the chunks
 
-            //Add Dungeon, this cuts into the blocks
-            GenerateDungeon();
-
-            //Set up player
-            player = new Player(graphics, new Vector3(0f, 25, 0f), Vector3.Zero, this, dataManager);
-            entities.Add(player);
+            player = new Player(graphics, new Vector3(0f, 25, 0f), Vector3.Zero, this, dataManager); //Create player entity
+            entities.Add(player); //Add it to the list of entities
         }
 
 
@@ -165,38 +149,39 @@ namespace BlockGame.Components.World
             for (int i = 0; i < chunksGenerated; i++)
             {
                 //This (and all chunks below) need to have their positions offset by the chunksGenerated/2, so that they can have negative positions.
-                chunks[0, i] = new Chunk(this, new Vector3(0, 0, i) - new Vector3(chunksGenerated / 2, 0, chunksGenerated / 2), graphics, dataManager);
-                chunks[0, i].GenerateEmptyChunk();
+                chunks[0, i] = new Chunk(this, new Vector3(0, 0, i) - new Vector3(chunksGenerated / 2, 0, chunksGenerated / 2), graphics, dataManager); //Create chunk object
+                chunks[0, i].GenerateEmptyChunk(); //Make it empty
             }
 
             //Generate Middle chunks (not empty)
             for (int x = 1; x < chunksGenerated-1; x++)
             {
                 //Generate Side empty chunks (PosZ and NegZ)
-                chunks[x,0] = new Chunk(this, new Vector3(x, 0, 0) - new Vector3(chunksGenerated / 2, 0, chunksGenerated / 2), graphics, dataManager);
-                chunks[x,0].GenerateEmptyChunk();
-                chunks[x, chunksGenerated - 1] = new Chunk(this, new Vector3(x, 0, chunksGenerated - 1) - new Vector3(chunksGenerated / 2, 0, chunksGenerated / 2), graphics, dataManager);
-                chunks[x, chunksGenerated - 1].GenerateEmptyChunk();
+                chunks[x,0] = new Chunk(this, new Vector3(x, 0, 0) - new Vector3(chunksGenerated / 2, 0, chunksGenerated / 2), graphics, dataManager); //Create chunk object
+                chunks[x,0].GenerateEmptyChunk(); //make above object empty
+
+                chunks[x, chunksGenerated - 1] = new Chunk(this, new Vector3(x, 0, chunksGenerated - 1) - new Vector3(chunksGenerated / 2, 0, chunksGenerated / 2), graphics, dataManager); //Create chunk object
+                chunks[x, chunksGenerated - 1].GenerateEmptyChunk(); //Make the above object empty
 
                 //Generate Middle chunks (full)
                 for (int z = 1; z < chunksGenerated-1; z++)
                 {
-                    chunks[x, z] = new Chunk(this, new Vector3(x, 0, z) - new Vector3(chunksGenerated/2, 0, chunksGenerated / 2), graphics, dataManager);
-                    chunks[x, z].GenerateFullChunk();
+                    chunks[x, z] = new Chunk(this, new Vector3(x, 0, z) - new Vector3(chunksGenerated/2, 0, chunksGenerated / 2), graphics, dataManager); //Create chunk object
+                    chunks[x, z].GenerateFullChunk(); //Fill all blocks
                 }
             }
 
             //Generate Neg Z Empty Chunks
             for (int i = 0; i < chunksGenerated; i++)
             {
-                chunks[chunksGenerated-1, i] = new Chunk(this, new Vector3(chunksGenerated - 1, 0, i) - new Vector3(chunksGenerated / 2, 0, chunksGenerated / 2), graphics, dataManager);
-                chunks[chunksGenerated - 1, i].GenerateEmptyChunk();
+                chunks[chunksGenerated-1, i] = new Chunk(this, new Vector3(chunksGenerated - 1, 0, i) - new Vector3(chunksGenerated / 2, 0, chunksGenerated / 2), graphics, dataManager); //Create chunk object
+                chunks[chunksGenerated - 1, i].GenerateEmptyChunk(); //make it empty
             }
         }
 
         public void Update(GameTime gameTime)
         {
-            //Load all the chunks which are queued to load.
+            //Load the first chunk in the chunkstoload frame (this loads one chunk per frame)
             if(chunksToLoad.Count > 0)
             {
                 chunksToLoad.ElementAt(0).BuildChunk();
@@ -216,14 +201,16 @@ namespace BlockGame.Components.World
             }
         }
 
+
         public void Draw(BasicEffect basicEffect, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
-            int counter = 0;
+            int counter = 0; //Counter for counting how many chunks get rendered
+
             foreach (Chunk chunk in chunks)
             {
                 if(chunk != null && player.Camera.InFrustum(chunk.ChunkBox))
                 {
-                    chunk.Draw(player.Camera, basicEffect);
+                    chunk.Draw(player.Camera, basicEffect); //Draw chunk
                     counter++;
                 }
             }
@@ -243,12 +230,12 @@ namespace BlockGame.Components.World
         public static int[] posInWorlditionToChunkIndex(Vector3 posInWorld)
         {
             posInWorld += new Vector3( 16 * chunksGenerated / 2,  0,  16 * chunksGenerated / 2); //since the chunks actual pos is cnetered at 0,0 readd the old centering to reset it to not be.
-            int[] chunkIndex = new int[5];
-            chunkIndex[0] = (int)(posInWorld.X / Chunk.chunkLength);
-            chunkIndex[1] = (int)(posInWorld.Z / Chunk.chunkWidth);
-            chunkIndex[2] = (int)Math.Abs(posInWorld.X % Chunk.chunkLength);
-            chunkIndex[4] = (int)(posInWorld.Z % Chunk.chunkWidth);
-            chunkIndex[3] = (int)posInWorld.Y;
+            int[] chunkIndex = new int[5]; //Creating arraay
+            chunkIndex[0] = (int)(posInWorld.X / Chunk.chunkLength); //Chunk X coordinate
+            chunkIndex[1] = (int)(posInWorld.Z / Chunk.chunkWidth); //Chunk Y coordinate
+            chunkIndex[2] = (int)Math.Abs(posInWorld.X % Chunk.chunkLength); //Block X coordinate
+            chunkIndex[4] = (int)(posInWorld.Z % Chunk.chunkWidth); //Block Z coordinate
+            chunkIndex[3] = (int)posInWorld.Y; //Block Y coordinate
             return chunkIndex;
 
         }
@@ -260,6 +247,7 @@ namespace BlockGame.Components.World
         /// <returns></returns>
         public Chunk GetChunk(Vector2 index)
         {
+            //If out of bounds, then just return null
             if(index.X < 0 || index.Y < 0)
             {
                 return null;
@@ -269,98 +257,105 @@ namespace BlockGame.Components.World
                 return null;
             }
 
-            return chunks[(int)index.X, (int)index.Y];
+            return chunks[(int)index.X, (int)index.Y]; //Return the chunk at this index
         }
 
         /// <summary>
         /// Gets the block id when given a 3D world position
         /// </summary>
-        /// <param name="posInWorld"></param>
-        /// <returns></returns>
+        /// <param name="posInWorld">3D coordinate in the world</param>
+        /// <returns>Block ID</returns>
         public ushort GetBlockAtWorldIndex(Vector3 posInWorld)
         {
-            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld);
+            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld); //Gets the block data
 
-            //greater than size of array
+            //If greater than array size, return air
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
             {
                 return 0;
             }
 
-            //less than 0
+            //IF less than array size, return air
             if (chunkIndex[0] < 0 || chunkIndex[1] < 0 || chunkIndex[2] < 0 || chunkIndex[3] < 0 || chunkIndex[4] < 0)
             {
                 return 0;
             }
 
-            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
+            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]); //Turn array data into vector so it can be passed into method
 
-            return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(posInChunk);
+            return chunks[chunkIndex[0], chunkIndex[1]].GetBlock(posInChunk); //Return the block in the chunk, using GetBlock.
         }
+
+        //Gets a blocks light level at a world index
         public ushort GetBlockLightLevelAtWorldIndex(Vector3 posInWorld)
         {
-            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld);
+            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld); //gets block data
 
-            //greater than size of array
+            //If greater than array size, return no light
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
             {
                 return 0;
             }
 
-            //les than 0
+            //IF less than array size, return no light
             if (chunkIndex[0] < 0 || chunkIndex[1] < 0 || chunkIndex[2] < 0 || chunkIndex[3] < 0 || chunkIndex[4] < 0)
             {
                 return 0;
             }
 
-            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
+            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]); //Turn array data into vector so it can be passed into method
 
-            return chunks[chunkIndex[0], chunkIndex[1]].GetBlockLightLevel(posInChunk);
+            return chunks[chunkIndex[0], chunkIndex[1]].GetBlockLightLevel(posInChunk); //Return the block in the chunk, using GetBlockLightLevel.
         }
 
         /// <summary>
         /// Sets the block to the given ID when given a world position
         /// </summary>
-        /// <param name="posInWorld"></param>
-        /// <param name="blockId"></param>
+        /// <param name="posInWorld">World position to change block to</param>
+        /// <param name="blockId">Block to be changed to</param>
         public void SetBlockAtWorldIndex(Vector3 posInWorld, ushort blockId)
         {
-            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld);
+            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld); //Get block data
 
-            //greater than size of array
+            //If greater than array size, stop method
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
             {
                 return;
             }
 
-            //les than 0
+            //IF less than array size, stop method
             if (chunkIndex[0] < 0 || chunkIndex[1] < 0 || chunkIndex[2] < 0 || chunkIndex[3] < 0 || chunkIndex[4] < 0)
             {
                 return;
             }
 
-            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]);
+            Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]); //Turn array data into vector so it can be passed into method
 
-            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(posInChunk, blockId);
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(posInChunk, blockId); //Setting block
         }
 
+        /// <summary>
+        /// Sets a blocks light level, when given a world index
+        /// </summary>
+        /// <param name="posInWorld">Wolrd index to change block light level</param>
+        /// <param name="newLight">Light level to change to</param>
         public void SetBlockLightLevelAtWorldIndex(Vector3 posInWorld, ushort newLight)
         {
-            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld);
+            int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld); //Get block data
 
-            //greater than size of array
+            //If greater than array size, stop method
             if (chunkIndex[0] >= chunksGenerated || Math.Abs(chunkIndex[1]) >= chunksGenerated || Math.Abs(chunkIndex[2]) >= Chunk.chunkLength || Math.Abs(chunkIndex[4]) >= Chunk.chunkWidth || Math.Abs(chunkIndex[3]) >= Chunk.chunkHeight)
             {
                 return;
             }
 
-            //les than 0
+            //IF less than array size, stop method
             if (chunkIndex[0] < 0 || chunkIndex[1] < 0 || chunkIndex[2] < 0 || chunkIndex[3] < 0 || chunkIndex[4] < 0)
             {
                 return;
             }
 
-            chunks[chunkIndex[0], chunkIndex[1]].SetBlockLightLevel(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]), newLight);
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlockLightLevel(new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]), newLight); //Setting block light level
         }
 
 
@@ -371,14 +366,15 @@ namespace BlockGame.Components.World
         /// <returns></returns>
         public Vector2 posInWorlditionToChunk(Vector3 posInWorld)
         {
-            posInWorld += new Vector3(16 * chunksGenerated / 2, 0, 16 * chunksGenerated / 2);
-            return new Vector2((int)(posInWorld.X / Chunk.chunkLength), (int)(posInWorld.Z / Chunk.chunkWidth));
+            posInWorld += new Vector3(16 * chunksGenerated / 2, 0, 16 * chunksGenerated / 2); //Offsetting posinWorld so that its in array index terms
+            return new Vector2((int)(posInWorld.X / Chunk.chunkLength), (int)(posInWorld.Z / Chunk.chunkWidth)); //Return that chunk
             
         }
 
         //Determines if the given chunkPos is a loaded chunk or not
         public bool IsChunkLoaded(Vector2 chunkPos)
         {
+            //If out of bounds, return false
             if(chunkPos.X > chunksGenerated || chunkPos.Y > chunksGenerated)
             {
                 return false;
@@ -389,25 +385,26 @@ namespace BlockGame.Components.World
                 return false;
             }
             
-            if (chunks[(int)chunkPos.X, (int)chunkPos.Y].chunkLoaded)
+            if (chunks[(int)chunkPos.X, (int)chunkPos.Y].chunkLoaded) //If loaded, return true
             {
                 return true;
             }
-            return false;
+            return false; //Else return false
         }
 
         /// <summary>
-        /// Sets the chunks around a given posiiton in a given radius to be ready to load.
+        /// Sets the chunks around a given positon in a given radius to be ready to load, and will begin loading next frame.
         /// </summary>
-        /// <param name="position"></param>
-        /// <param name="radius"></param>
+        /// <param name="position">INital chunk which will have the chunks aronud it loaded</param>
+        /// <param name="radius">Radius of chunks that will be loaded</param>
         public void LoadChunks(Vector2 position, int radius)
         {
+            //Foreach chunk within the radius... Load if valid
             for(int x = -radius/2; x <= radius/2; x++)
             {
                 for(int z = -radius/2; z <= radius/2; z++)
                 {
-                    //Checking to make sure not out of bounds
+                    //Checking to make sure not out of bounds.
                     if (position.X + x >= chunksGenerated || position.Y + z >= chunksGenerated)
                     {
                         continue;
@@ -419,10 +416,10 @@ namespace BlockGame.Components.World
                         continue;
                     }
 
-                    if (chunks[(int)position.X + x, (int)position.Y+z] != null && chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded == false)
+                    if (chunks[(int)position.X + x, (int)position.Y+z] != null && chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded == false) //If a valid chunk, and is not loaded already, set it to be ready to load
                     {
-                        chunksToLoad.Add(chunks[(int)position.X + x, (int)position.Y + z]);
-                        chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded = true;
+                        chunksToLoad.Add(chunks[(int)position.X + x, (int)position.Y + z]); //Add to chunks to load list
+                        chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded = true; //Tell chunk that iti s loaded
                     }
                 }
             }
@@ -432,10 +429,11 @@ namespace BlockGame.Components.World
         /// Builds/loads the chunks in a radius around a given position instantly.
         /// Meaning that these chunks are not queued to load next frame, but are instead loaded in the current frame.
         /// </summary>
-        /// <param name="position"></param>
-        /// <param name="radius"></param>
+        /// <param name="position">INital chunk which will have the chunks aronud it loaded</param>
+        /// <param name="radius">Radius of chunks that will be loaded</param>
         public void LoadChunksInstantly(Vector2 position, int radius)
         {
+            //For each chunk in the radius.. load if avalid
             for (int x = -radius / 2; x <= radius / 2; x++)
             {
                 for (int z = -radius / 2; z <= radius / 2; z++)
@@ -452,10 +450,10 @@ namespace BlockGame.Components.World
                         continue;
                     }
 
-                    if (chunks[(int)position.X + x, (int)position.Y + z] != null && chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded == false)
+                    if (chunks[(int)position.X + x, (int)position.Y + z] != null && chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded == false) //If a valid chunk that isnt loaded already, then load it
                     {
-                        chunks[(int)position.X + x, (int)position.Y + z].BuildChunk();
-                        chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded = true;
+                        chunks[(int)position.X + x, (int)position.Y + z].BuildChunk(); //Build the chunk
+                        chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded = true; //Turn it to loaded
 
                     }
                 }
@@ -465,15 +463,16 @@ namespace BlockGame.Components.World
         /// <summary>
         /// Gets an array of chunks nearby in a position around a radius. Gives a square array, not a circle as radius may imply.
         /// </summary>
-        /// <param name="position"></param>
-        /// <param name="radius"></param>
+        /// <param name="position">Position which the "chunks nearby" are located for</param>
+        /// <param name="radius"> Square radius around position to get chunks </param>
         /// <returns></returns>
         public Chunk[,] GetChunksNearby(Vector3 position, int radius)
         {
-            Chunk[,] array = new Chunk[1 + radius * 2, 1 + radius * 2];
+            Chunk[,] array = new Chunk[1 + radius * 2, 1 + radius * 2]; //Create 2D array of chunks
 
-            Vector2 chunk = posInWorlditionToChunk(position);
+            Vector2 chunk = posInWorlditionToChunk(position); //Get the current chunk the world position is in
 
+            //For each chunk around that position... Add it to the array if valid
             for (int x = 0; x <= radius * 2; x++)
             {
                 for (int z = 0; z <= radius * 2; z++)
@@ -489,7 +488,7 @@ namespace BlockGame.Components.World
                         continue;
                     }
 
-                    array[x, z] = chunks[(int)chunk.X + x - radius, (int)chunk.Y + z - radius];
+                    array[x, z] = chunks[(int)chunk.X + x - radius, (int)chunk.Y + z - radius]; //Add to 2D array
                 }
             }
 
@@ -614,11 +613,13 @@ namespace BlockGame.Components.World
             }
         }
 
+        //Add an entity to the list of entities
         public void CreateEntity(Entity entity)
         {
             entities.Add(entity);
         }
 
+        //Remove an entity from the list of entities
         public void DestroyEntity(Entity entity)
         {
             entities.Remove(entity);
