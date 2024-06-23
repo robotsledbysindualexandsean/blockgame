@@ -32,6 +32,10 @@ namespace BlockGame.Components.Entities
 
         public float speed = 5f; //Entity's speed
         protected bool enforceGravity = true; //Is the entity affected by gravity?
+        private float gForce = -17f; // Acceleration due to gravity (in blocks/s^2)
+        private float terminalVelocity = -53f; // Terminal velocity of entities (in blocks/s).
+        private float groundFriction = 3f; // Friction acceleration due to sliding across the ground (in blocks/s^2)
+        public float elasticity = 0f; // The % of velocity flipped and retained upon collision.
 
         public BoundingBox hitbox; //Entity's hitbox
         private Ray viewRay; //Ray which points in the entity's facing direction
@@ -42,7 +46,7 @@ namespace BlockGame.Components.Entities
         public Vector3 direction; //Entities direction
         private Vector3 forward = new Vector3(0,0,1); //Forward direction, used for turning rotation into a ray
 
-        private Face standingBlock; //What block the entity is currently standing on
+        public Face standingBlock; //What block the entity is currently standing on
 
         private List<VertexPositionColor> vertexList = new List<VertexPositionColor>(); //Debug list of hitbox verticies
         private VertexBuffer vertexBuffer; //Debug vertex buffer
@@ -97,34 +101,61 @@ namespace BlockGame.Components.Entities
             rotation += rotational_velocity; //Update rotational velocity
 
             //Reduce the all velocities towards 0. This is "friction" so to say.
-            dynamic_velocity.X /= 1.25f;
-            dynamic_velocity.Z /= 1.25f;
             rotational_velocity /= 1.25f;
 
-            if (dynamic_velocity.Y >= -0.1 && enforceGravity) //If the entity shoud have gravity and isn't at terminal velocity
+            if (dynamic_velocity.Y >= terminalVelocity && enforceGravity) //If the entity shoud have gravity and isn't at terminal velocity
             {
-                dynamic_velocity.Y -= 0.2f * deltaTime; //Accelerate Y velocity downwards
+                dynamic_velocity.Y += gForce * deltaTime; //Accelerate Y velocity downwards
             }
 
             velocity = dynamic_velocity + fixed_rotation_based_velocity; //Velocity is made of two components, dynamic (applied forces) and fixed (movement). These are added together once both are calculated.
 
             //Create a temporary hitbox with velocity added to perform future collision calcualtions
-            BoundingBox tempHitbox = new BoundingBox(new Vector3(hitbox.Min.X + velocity.X, hitbox.Min.Y + velocity.Y, hitbox.Min.Z + velocity.Z), new Vector3(hitbox.Max.X + velocity.X, hitbox.Max.Y + velocity.Y, hitbox.Max.Z + velocity.Z)); 
+            BoundingBox tempHitbox = new BoundingBox(new Vector3(hitbox.Min.X + velocity.X * deltaTime, hitbox.Min.Y + velocity.Y * deltaTime, hitbox.Min.Z + velocity.Z * deltaTime), new Vector3(hitbox.Max.X + velocity.X * deltaTime, hitbox.Max.Y + velocity.Y * deltaTime, hitbox.Max.Z + velocity.Z * deltaTime)); 
 
             //Check if the entity is still colliding with their standing block. If so, then just quickly reset Y velocity that to 0 to avoid collision checks.
             if (standingBlock != null && tempHitbox.Intersects(standingBlock.hitbox) && world.GetBlockAtWorldIndex(standingBlock.blockPosition) != 0)
             {
+                Vector3 normalVelocity = new Vector3(dynamic_velocity.X, dynamic_velocity.Y, dynamic_velocity.Z);
+                normalVelocity.Normalize();
+
+                dynamic_velocity.Y = 0;
                 velocity.Y = 0; //Set velocity to 0
+
+                // Sets X velocity to 0 if lower than friction.
+                if (dynamic_velocity.Length() < groundFriction)
+                {
+                    dynamic_velocity = Vector3.Zero;
+                } 
+                else
+                {
+                    dynamic_velocity -= normalVelocity * groundFriction;
+                }
             }
 
             //Only update block collision if there is any velocity (no movement means no collision has changed)
             if (velocity != Vector3.Zero)
             {
+                if (Math.Abs(velocity.X) < 0.1)
+                {
+                    velocity.X = 0;
+                }
+
+                if (Math.Abs(velocity.Y) < 0.1)
+                {
+                    velocity.Y = 0;
+                }
+
+                if (Math.Abs(velocity.Z) < 0.1)
+                {
+                    velocity.Z = 0;
+                }
+
                 standingBlock = null; //Reset the entity's standing block
 
                 CollideBlocks(hitbox, tempHitbox); //Apply the velocity to a temporary hitbox and then check the collisions on that. This will stop movement that goes into a block collider.
 
-                MoveTo(velocity + position, Rotation); //Apply velocity
+                MoveTo((velocity * deltaTime) + position, Rotation); //Apply velocity
 
                 //Remake hitbox
                 hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y / 2, position.Z - dimensions.Z / 2), new Vector3(position.X + dimensions.X / 2, position.Y + dimensions.Y / 2, position.Z + dimensions.Z / 2));
@@ -260,22 +291,24 @@ namespace BlockGame.Components.Entities
                         {
                             if(velocity.Z < 0 && currentHitbox.Min.Z > faces[i].hitbox.Max.Z) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.Z = 0; //Reset velocity
+                                velocity.Z = -velocity.Z * elasticity; // Bounce off the face in relation to the entity's elasticity percentage.
+                                dynamic_velocity.Z = -dynamic_velocity.Z * elasticity;
                             }
                         }
                         if (faces[i].blockNormal.Equals(new Vector3(0, 0, -1))) //Checking what direction this face's normal is
                         {
-                            
                             if (velocity.Z > 0 && currentHitbox.Max.Z < faces[i].hitbox.Min.Z) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.Z = 0; //Reset velocity
+                                velocity.Z = -velocity.Z * elasticity; // Bounce off the face in relation to the entity's elasticity percentage.
+                                dynamic_velocity.Z = -dynamic_velocity.Z * elasticity;
                             }
                         }
                         if (faces[i].blockNormal.Equals(new Vector3(0, 1, 0))) //Checking what direction this face's normal is
                         {
                             if (velocity.Y < 0 && currentHitbox.Min.Y > faces[i].hitbox.Max.Y) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.Y = 0; //Reset velocity
+                                velocity.Y = -velocity.Y * elasticity; // Bounce off the face in relation to the entity's elasticity percentage.
+                                dynamic_velocity.Y = -dynamic_velocity.Y * elasticity;
                                 standingBlock = faces[i]; //Set the entity's standing block
                             }
                         }
@@ -283,21 +316,24 @@ namespace BlockGame.Components.Entities
                         {
                             if (velocity.Y > 0 && currentHitbox.Max.Y < faces[i].hitbox.Min.Y) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.Y = 0; //Reset velocity
+                                velocity.Y = -velocity.Y * elasticity; // Bounce off the face in relation to the entity's elasticity percentage.
+                                dynamic_velocity.Y = -dynamic_velocity.Y * elasticity;
                             }
                         }
                         if (faces[i].blockNormal.Equals(new Vector3(1, 0, 0))) //Checking what direction this face's normal is
                         {
                             if (velocity.X < 0 && currentHitbox.Min.X > faces[i].hitbox.Max.X) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.X = 0; //Reset velocity
+                                velocity.X = -velocity.X * elasticity; // Bounce off the face in relation to the entity's elasticity percentage.
+                                dynamic_velocity.X = -dynamic_velocity.X * elasticity;
                             } 
                         }
                         if(faces[i].blockNormal.Equals(new Vector3(-1, 0, 0))) //Checking what direction this face's normal is
                         {
                             if (velocity.X > 0 && currentHitbox.Max.X < faces[i].hitbox.Min.X) // If the hitbox is within the range of this face(i.e is actually in FRONT of the face, the stop all velocity in that direction)
                             {
-                                velocity.X = 0; //Reset velocity
+                                velocity.X = -velocity.X * elasticity; // Bounce off the face in relation to the entity's elasticity percentage.
+                                dynamic_velocity.X = -dynamic_velocity.X * elasticity;
                             }
                         }
                     }

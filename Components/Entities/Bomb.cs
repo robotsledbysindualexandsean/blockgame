@@ -27,6 +27,7 @@ namespace BlockGame.Components.Entities
         {
             this.rotation = rotation; //Set position
             this.position = position; //Set rotation
+            elasticity = 0.2f;
 
             LoadModel(); //Loads the entities model into the superclass Entity variables
         }

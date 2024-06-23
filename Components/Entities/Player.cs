@@ -36,6 +36,8 @@ namespace BlockGame.Components.Entities
 
         public Inventory Inventory { get { return inventory; } } //Inventory getter
 
+        private float walkSpeed = 5f;
+        private float sprintSpeed = 10f;
 
         //TODO: Entities need view rotation and a physical rotation
         public override Vector3 Rotation
@@ -70,7 +72,7 @@ namespace BlockGame.Components.Entities
             highlightedHotbarSlot = 0; //Set the current hotbar slot to 0
 
             this.rotation = rotation; //Set rotation
-            this.speed = 10f; //Set the players movement speed
+            this.speed = walkSpeed; //Set the players movement speed
 
             int[] chunkPos = WorldManager.posInWorlditionToChunkIndex(position); //Get the players current chunk position
 
@@ -163,6 +165,15 @@ namespace BlockGame.Components.Entities
                 dir.X = -1;
             }
 
+            if (keyboardState.IsKeyDown(Keys.LeftShift))
+            {
+                speed = sprintSpeed;
+            }
+            else
+            {
+                speed = walkSpeed;
+            }
+
             //Turning debug on and off
             if (Keyboard.HasBeenPressed(Keys.F3))
             {
@@ -190,9 +201,12 @@ namespace BlockGame.Components.Entities
             else
             {
                 //If not in debug mode, then jump (add Y velocity)
-                if (Keyboard.HasBeenPressed(Keys.Space))
+                if (Keyboard.IsPressed(Keys.Space))
                 {
-                    dynamic_velocity.Y = 0.1f;
+                    if (standingBlock != null && world.GetBlockAtWorldIndex(standingBlock.blockPosition) != 0)
+                    {
+                        dynamic_velocity.Y = 7f;
+                    }
                 }
             }
 
@@ -203,7 +217,7 @@ namespace BlockGame.Components.Entities
                 dir.Normalize();
 
                 //add smooth and speed
-                dir *= deltaTime * speed;
+                dir *= speed;
             }
 
             fixed_rotation_based_velocity = GetFixedMovementVector(dir); //Set the fixed velocity to the direction
