@@ -184,8 +184,8 @@ namespace BlockGame.Components.World
             //Load the first chunk in the chunkstoload frame (this loads one chunk per frame)
             if(chunksToLoad.Count > 0)
             {
-                chunksToLoad.ElementAt(0).BuildChunk();
-                chunksToLoad.RemoveAt(0);
+                chunksToLoad.ElementAt(0).BuildChunk(); //Build the 0th element chunk
+                chunksToLoad.RemoveAt(0); //Remove that chunk from the list of chunks needed to be loaded (it has been loaded this frame)
             }
 
             //Update the chunks.
@@ -206,6 +206,7 @@ namespace BlockGame.Components.World
         {
             int counter = 0; //Counter for counting how many chunks get rendered
 
+            //For each chunk in the world, call its draw method
             foreach (Chunk chunk in chunks)
             {
                 if(chunk != null && player.Camera.InFrustum(chunk.ChunkBox))
@@ -216,7 +217,7 @@ namespace BlockGame.Components.World
             }
             Game1.ChunksRendered = counter;
 
-            //Draw entities
+            //For each entity in the world, call its draw method
             foreach (Entity entity in entities)
             {
                 entity.Draw(graphics, basicEffect, player.Camera, spriteBatch, skinEffect);
@@ -410,7 +411,7 @@ namespace BlockGame.Components.World
                         continue;
                     }
 
-                    //les than 0
+                    //Checking that chunk is not less than 0 in array index
                     if (position.X + x < 0 || position.Y + z < 0)
                     {
                         continue;
@@ -438,13 +439,13 @@ namespace BlockGame.Components.World
             {
                 for (int z = -radius / 2; z <= radius / 2; z++)
                 {
-                    //Checking to make sure not out of bounds
+                    //Checking to make sure not out of bounds.
                     if (position.X + x >= chunksGenerated || position.Y + z >= chunksGenerated)
                     {
                         continue;
                     }
 
-                    //les than 0
+                    //Checking if the chunk is not less than 0 in the array index.
                     if (position.X + x < 0 || position.Y + z < 0)
                     {
                         continue;
@@ -492,7 +493,7 @@ namespace BlockGame.Components.World
                 }
             }
 
-            return array;
+            return array; //Return 2D array of chunks nearby
         }
 
         /// <summary>
