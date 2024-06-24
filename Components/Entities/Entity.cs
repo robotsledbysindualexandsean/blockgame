@@ -34,7 +34,7 @@ namespace BlockGame.Components.Entities
         protected bool enforceGravity = true; //Is the entity affected by gravity?
         private float gForce = -17f; // Acceleration due to gravity (in blocks/s^2)
         private float terminalVelocity = -53f; // Terminal velocity of entities (in blocks/s).
-        private float groundFriction = 3f; // Friction acceleration due to sliding across the ground (in blocks/s^2)
+        private float groundFriction = 2f; // Friction acceleration due to sliding across the ground (in blocks/s^2)
         public float elasticity = 0f; // The % of velocity flipped and retained upon collision.
 
         public BoundingBox hitbox; //Entity's hitbox

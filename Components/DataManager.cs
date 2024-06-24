@@ -23,24 +23,21 @@ namespace BlockGame.Components
     /// </summary>
     internal class DataManager
     {
-        //Atlases for textures
-        public static Texture2D blockAtlas; //Atlas for block textures
-        public static Texture2D itemAtlas; //Atlas for item sprites
-        public static Texture2D uiAtlas; //Atlas for UI elements
+        //Atlases for textures:
+        public static Texture2D blockAtlas; // Atlas for block textures.
+        public static Texture2D itemAtlas; // Atlas for item sprites.
+        public static Texture2D uiAtlas; // Atlas for UI elements.
 
-        //Hashmaps
-        public Dictionary<ushort, Block> blockData = new Dictionary<ushort, Block>(); //All block objects
-        public Dictionary<ushort, Item> itemData = new Dictionary<ushort, Item>(); //All item objects
-        public Dictionary<string, SkinnedModel> models = new Dictionary<string, SkinnedModel>(); //All models that are laoded
-        public Dictionary<string, Texture2D> modelTextures = new Dictionary<string, Texture2D>(); //All model textures that are loaded
+        //Hashmaps:
+        public Dictionary<ushort, Block> blockData = new Dictionary<ushort, Block>(); // All block objects.
+        public Dictionary<ushort, Item> itemData = new Dictionary<ushort, Item>(); // All item objects.
+        public Dictionary<string, SkinnedModel> models = new Dictionary<string, SkinnedModel>(); // All models that are laoded.
+        public Dictionary<string, Texture2D> modelTextures = new Dictionary<string, Texture2D>(); // All model textures that are loaded.
 
-        public List<ushort> lightEmittingIDs = new List<ushort>(); //List of blocks that emit light
+        public List<ushort> lightEmittingIDs = new List<ushort>(); // List of block IDs that emit light.
+        public static ushort maxLightLevel = 15;
 
-        public static ushort maxLightLevel = 15; //max block light level
-
-        public DataManager() {
-
-        }
+        public DataManager() { }
 
         /// <summary>
         /// Loading all the atlases.
@@ -48,17 +45,10 @@ namespace BlockGame.Components
         /// <param name="content"></param>
         public void LoadContent(ContentManager content)
         {
-            //Load block atlas
-            blockAtlas = content.Load<Texture2D>("atlas");
-
-            //Load item atlas
-            itemAtlas = content.Load<Texture2D>("itematlas");
-
-            //ui atlas
-            uiAtlas = content.Load<Texture2D>("uiatlas");
-
-            //Load models
-            LoadModels(content);
+            blockAtlas = content.Load<Texture2D>("atlas"); // Load block atlas.
+            itemAtlas = content.Load<Texture2D>("itematlas"); // Load item atlas.
+            uiAtlas = content.Load<Texture2D>("uiatlas"); // Load UI atlas.
+            LoadModels(content); // Load models.
         }
 
         /// <summary>
@@ -68,11 +58,11 @@ namespace BlockGame.Components
         {
             //DataManager data, ushort blockID, Vector2 atlasPos, ushort lef, ushort drop, 
             new Block(this, 0, 0); //Air
-            new Block(this, 1, new Vector2(0, 1), 0, 1); //Torn Wood
-            new Block(this, 2, new Vector2(1, 1), 0, 1); //Wood
-            new Block(this, 3, new Vector2(0, 0), 0, 1); //cobblestone
-            new Block(this, 4, new Vector2(1, 0), 0, 1); //stone
-            new Block(this, 5, new Vector2(0, 2), maxLightLevel, 1); //glowstone
+            new Block(this, 1, new Vector2(0, 1), 0, 1); // Torn Wood
+            new Block(this, 2, new Vector2(1, 1), 0, 1); // Wood
+            new Block(this, 3, new Vector2(0, 0), 0, 1); // Cobblestone
+            new Block(this, 4, new Vector2(1, 0), 0, 1); // Stone
+            new Block(this, 5, new Vector2(0, 2), 15, 1); // Glowstone
 
         }
 
@@ -95,7 +85,6 @@ namespace BlockGame.Components
             modelTextures.Add("test", Content.Load<Texture2D>("friend_diffuse"));
             models.Add("bomb", Content.Load<SkinnedModel>("Bomb"));
             modelTextures.Add("bomb", Content.Load<Texture2D>("Bomb_Diffuse"));
-
         }
     }
 }
