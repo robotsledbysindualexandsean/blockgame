@@ -18,7 +18,7 @@ namespace BlockGame.Components.World
     {
         public static float blockSize = 1; //Size of one block on the atlas (this is redudant but just so its not hardcoded)
 
-        private static Vector2 blockCount = new Vector2(2, 3); //Dimensons of the blockatlas by BlockxBlock
+        private static Vector2 blockCount = new Vector2(6, 6); //Dimensons of the blockatlas by BlockxBlock
 
         private static Vector2 sizeOfOneBlock = new Vector2(1, 1) / blockCount; //Calculating the size of one block in terms of UV coorindates
 
