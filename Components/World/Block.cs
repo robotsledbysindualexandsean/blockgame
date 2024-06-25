@@ -24,7 +24,7 @@ namespace BlockGame.Components.World
         //Rectangle of sprite on spritesheet atlas, for all faces
         public Rectangle bounds;
 
-        public Vector2 startCoordinate; //"Start" coordinates of UV
+        public Vector2 startCoordinate; //"Start" coordinates of UV. 
         public Vector2 endCoordinate; //"End" coordinates of UV
 
         public ushort lightEmittingFactor; //How much light this block emits
@@ -46,6 +46,7 @@ namespace BlockGame.Components.World
         {
             data.blockData.Add(blockID, this); //Add to block hashmap
 
+            //These coordinates are used to tell vertricies what pat of the texture they are.
             startCoordinate = new Vector2(bounds.X, bounds.Y) * PixelToUV; //Calculating UV for start coords
             endCoordinate = (new Vector2(bounds.X, bounds.Y) + new Vector2(bounds.Width, bounds.Height)) * PixelToUV;  //Calculating UV for end coords
 

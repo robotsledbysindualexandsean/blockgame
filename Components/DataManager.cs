@@ -59,6 +59,7 @@ namespace BlockGame.Components
         public void LoadBlockData()
         {
             //DataManager data, ushort blockID, Vector2 atlasPos, ushort lef, ushort drop, 
+            //Rectangles are (startPos.X, startPos.Y, Width, Height)
             new Block(this, 0, 0); //Air
             new Block(this, 1, new Rectangle(0,32,32,32), 0, 1); // Torn Wood
             new Block(this, 2, new Rectangle(32, 32, 32, 32), 0, 1); // Wood
