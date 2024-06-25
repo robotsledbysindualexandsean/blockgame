@@ -60,11 +60,11 @@ namespace BlockGame.Components
         {
             //DataManager data, ushort blockID, Vector2 atlasPos, ushort lef, ushort drop, 
             new Block(this, 0, 0); //Air
-            new Block(this, 1, new Vector2(0, 1), 0, 1); // Torn Wood
-            new Block(this, 2, new Vector2(1, 1), 0, 1); // Wood
-            new Block(this, 3, new Vector2(0, 0), 0, 1); // Cobblestone
-            new Block(this, 4, new Vector2(1, 0), 0, 1); // Stone
-            new Block(this, 5, new Vector2(0, 2), 15, 1); // Glowstone
+            new Block(this, 1, new Rectangle(0,32,32,32), 0, 1); // Torn Wood
+            new Block(this, 2, new Rectangle(32, 32, 32, 32), 0, 1); // Wood
+            new Block(this, 3, new Rectangle(0, 0, 32, 32), 0, 1); // Cobblestone
+            new Block(this, 4, new Rectangle(32, 0, 32, 32), 0, 1); // Stone
+            new Block(this, 5, new Rectangle(32, 0, 32, 32), 15, 1); // Glowstone
         }
 
         /// <summary>
