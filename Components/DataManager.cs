@@ -14,6 +14,7 @@ using BlockGame.Components.Items;
 using BlockGame.Components.Entities;
 using Liru3D.Models;
 using System.Reflection.Metadata;
+using System.Diagnostics;
 
 namespace BlockGame.Components
 {
@@ -50,6 +51,7 @@ namespace BlockGame.Components
         {
             //Load block atlas
             blockAtlas = content.Load<Texture2D>("atlas");
+            Block.PixelToUV = Vector2.One / new Vector2(DataManager.blockAtlas.Width, DataManager.blockAtlas.Height); //UVs range from 0-1. Set PixelToUV by dividing 1 by atlas bounds. This data is needed for Block but is set here since blockatlas must be loaded first.
 
             //Load item atlas
             itemAtlas = content.Load<Texture2D>("itematlas");
@@ -68,11 +70,11 @@ namespace BlockGame.Components
         {
             //DataManager data, ushort blockID, Vector2 atlasPos, ushort lef, ushort drop, 
             new Block(this, 0, 0); //Air
-            new Block(this, 1, new Vector2(0, 1), 0, 1); //Torn Wood
-            new Block(this, 2, new Vector2(1, 1), 0, 1); //Wood
-            new Block(this, 3, new Vector2(0, 0), 0, 1); //cobblestone
-            new Block(this, 4, new Vector2(1, 0), 0, 1); //stone
-            new Block(this, 5, new Vector2(0, 2), maxLightLevel, 1); //glowstone
+            new Block(this, 1, new Rectangle(0,32,32,32), 0, 1); //Torn Wood
+            new Block(this, 2, new Rectangle(32,32,32,32), 0, 1); //Wood
+            new Block(this, 3, new Rectangle(32,0,32,32), 0, 1); //cobblestone
+            new Block(this, 4, new Rectangle(0,0,32,32), 0, 1); //stone
+            new Block(this, 5, new Rectangle(0,64,32,32), maxLightLevel, 1); //glowstone
 
         }
 

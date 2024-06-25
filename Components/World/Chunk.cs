@@ -257,7 +257,7 @@ namespace BlockGame.Components.World
                     Color color = new Color(colorValue, colorValue, colorValue);
 
                     //Add the verticies of this face to the vertexBuffer
-                    Block.AddNegZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    dataManager.blockData[blockID].AddNegZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black);
                 }
                 //Z-1
                 if (face.blockNormal.Equals(new Vector3(0, 0, 1)))
@@ -270,7 +270,7 @@ namespace BlockGame.Components.World
                     Color color = new Color(colorValue, colorValue, colorValue);
 
                     //Add the verticies of this face to the vertexBuffer
-                    Block.AddPosZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    dataManager.blockData[blockID].AddPosZVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black);
 
 
                 }
@@ -285,7 +285,7 @@ namespace BlockGame.Components.World
                     Color color = new Color(colorValue, colorValue, colorValue);
 
                     //Add the verticies of this face to the vertexBuffer
-                    Block.AddNegXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    dataManager.blockData[blockID].AddNegXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black);
 
 
                 }
@@ -300,7 +300,7 @@ namespace BlockGame.Components.World
                     Color color = new Color(colorValue, colorValue, colorValue);
 
                     //Add the verticies of this face to the vertexBuffer
-                    Block.AddPosXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    dataManager.blockData[blockID].AddPosXVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black);
 
                 }
                 //y+1
@@ -314,7 +314,7 @@ namespace BlockGame.Components.World
                     Color color = new Color(colorValue, colorValue, colorValue);
 
                     //Add the verticies of this face to the vertexBuffer
-                    Block.AddNegYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    dataManager.blockData[blockID].AddNegYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black);
 
 
                 }
@@ -330,7 +330,7 @@ namespace BlockGame.Components.World
                     Color color = new Color(colorValue, colorValue, colorValue);
 
                     //Add the verticies of this face to the vertexBuffer
-                    Block.AddPosYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black, dataManager.blockData[blockID].atlasPos);
+                    dataManager.blockData[blockID].AddPosYVerticiesPos(face.blockPosition * Block.blockSize, vertexList, lineList, color, Color.Black);
 
                 }
             }
