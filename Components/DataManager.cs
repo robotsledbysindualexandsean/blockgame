@@ -14,6 +14,7 @@ using BlockGame.Components.Items;
 using BlockGame.Components.Entities;
 using Liru3D.Models;
 using System.Reflection.Metadata;
+using System.Diagnostics;
 
 namespace BlockGame.Components
 {
@@ -46,6 +47,7 @@ namespace BlockGame.Components
         public void LoadContent(ContentManager content)
         {
             blockAtlas = content.Load<Texture2D>("atlas"); // Load block atlas.
+            Block.PixelToUV = Vector2.One / new Vector2(DataManager.blockAtlas.Width, DataManager.blockAtlas.Height); //UVs range from 0-1. Set PixelToUV by dividing 1 by atlas bounds. This data is needed for Block but is set here since blockatlas must be loaded first.
             itemAtlas = content.Load<Texture2D>("itematlas"); // Load item atlas.
             uiAtlas = content.Load<Texture2D>("uiatlas"); // Load UI atlas.
             LoadModels(content); // Load models.
@@ -63,7 +65,6 @@ namespace BlockGame.Components
             new Block(this, 3, new Vector2(0, 0), 0, 1); // Cobblestone
             new Block(this, 4, new Vector2(1, 0), 0, 1); // Stone
             new Block(this, 5, new Vector2(0, 2), 15, 1); // Glowstone
-
         }
 
         /// <summary>

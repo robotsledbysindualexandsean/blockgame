@@ -58,8 +58,13 @@ namespace BlockGame
 
         protected override void Initialize()
         {
-            dataManager.LoadBlockData(); // Generate the hashmap for block data.
-            dataManager.LoadItemData(); // Generate the hashmap for item data.
+            //Load all content via datamanager
+            dataManager.LoadContent(Content);
+
+            //Generate the hashmap for block data
+            dataManager.LoadBlockData();
+            dataManager.LoadItemData();
+
 
             world = new WorldManager(_graphics, dataManager); // Create the world and player.
 
@@ -85,7 +90,6 @@ namespace BlockGame
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            dataManager.LoadContent(Content); // Load all content via the DataManager.
         }
 
         protected override void Update(GameTime gameTime)
