@@ -65,7 +65,7 @@ namespace BlockGame.Components
             new Block(this, 2, new Rectangle(32, 32, 32, 32), 0, 1); // Wood
             new Block(this, 3, new Rectangle(0, 0, 32, 32), 0, 1); // Cobblestone
             new Block(this, 4, new Rectangle(32, 0, 32, 32), 0, 1); // Stone
-            new Block(this, 5, new Rectangle(32, 0, 32, 32), 15, 1); // Glowstone
+            new Block(this, 5, new Rectangle(0, 64, 32, 32), 15, 1); // Glowstone
         }
 
         /// <summary>
