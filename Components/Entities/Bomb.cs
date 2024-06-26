@@ -1,6 +1,6 @@
 ﻿using Assimp;
 using BlockGame.Components.Items;
-using BlockGame.Components.World;
+using BlockGame.Components.World.WorldTools;
 using Liru3D.Animations;
 using Liru3D.Models;
 using Microsoft.Xna.Framework;
@@ -23,7 +23,7 @@ namespace BlockGame.Components.Entities
 
         private int countDown = 60 * 3; //Countdown to bomb explosion. Currently stored in frames.
 
-        public Bomb(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager, dimensions)
+        public Bomb(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world) : base(position, rotation, world, dimensions)
         {
             this.rotation = rotation; //Set position
             this.position = position; //Set rotation
@@ -38,8 +38,8 @@ namespace BlockGame.Components.Entities
         /// </summary>
         protected override void LoadModel()
         {
-            model = dataManager.models["bomb"]; //Loads model
-            modelTexture = dataManager.modelTextures["bomb"]; //Loads texture
+            model = DataManager.models["bomb"]; //Loads model
+            modelTexture = DataManager.modelTextures["bomb"]; //Loads texture
 
             modelAnimation = new AnimationPlayer(model); //Creates animation player. This is necessary for all models.
             modelAnimation.Animation = null; //Set to have no animations.
@@ -58,7 +58,7 @@ namespace BlockGame.Components.Entities
             //When the countdown hits 0, create the explosion.
             if(countDown <= 0)
             {
-                world.CreateEntity(new Explosion(Game1._graphics, position, rotation, world, dataManager)); //Create the explpsion entity
+                world.CreateEntity(new Explosion(position, rotation, world)); //Create the explpsion entity
                 world.DestroyEntity(this); //Destroy this (bomb) entity
             }
 

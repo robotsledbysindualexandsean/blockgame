@@ -9,12 +9,10 @@ namespace BlockGame.Components.World.Dungeon
 {
     internal class DungeonManager
     {
-        private Random rnd = new Random();
-
         static int roomsGenereated = 0;
 
         //Generate a dungeon and return it in an int[,] array. Used to cut the dungeon into the world map.
-        public int[,] GenerateDungeon(int width, int height)
+        public static int[,] GenerateDungeon(int width, int height)
         {
             int[,] map = GenerateEmpty(width, height);
 
@@ -25,7 +23,7 @@ namespace BlockGame.Components.World.Dungeon
         }
 
         //Places a room at the given door location
-        public void PlaceRoom(int[,] map, Room room, Vector2 index, Vector2 enteringDirection)
+        public static void PlaceRoom(int[,] map, Room room, Vector2 index, Vector2 enteringDirection)
         {
             roomsGenereated++;
 
@@ -53,25 +51,25 @@ namespace BlockGame.Components.World.Dungeon
             if (room.downDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(0, 1)))
             {
                 //gets a random room which matches this direction
-                Room newRoom = Room.upRooms[rnd.Next(0, Room.upRooms.Length)];
+                Room newRoom = Room.upRooms[Game1.rnd.Next(0, Room.upRooms.Length)];
                 PlaceRoom(map, newRoom, room.downDoor + index - new Vector2(newRoom.upDoor.X, -1), new Vector2(0, -1));
             }
             //To left
             if (room.leftDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(-1, 0)))
             {
-                Room newRoom = Room.rightRooms[rnd.Next(0, Room.rightRooms.Length)];
+                Room newRoom = Room.rightRooms[Game1.rnd.Next(0, Room.rightRooms.Length)];
                 PlaceRoom(map, newRoom, index + room.leftDoor - new Vector2(newRoom.layout.GetLength(1), newRoom.rightDoor.Y), new Vector2(1, 0));
             }
             //To right
             if (room.rightDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(1, 0)))
             {
-                Room newRoom = Room.leftRooms[rnd.Next(0, Room.leftRooms.Length)];
+                Room newRoom = Room.leftRooms[Game1.rnd.Next(0, Room.leftRooms.Length)];
                 PlaceRoom(map, newRoom, index + room.rightDoor - new Vector2(-1, newRoom.leftDoor.Y), new Vector2(-1, 0));
             }
             //To top
             if (room.upDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(0, -1)))
             {
-                Room newRoom = Room.downRooms[rnd.Next(0, Room.downRooms.Length)];
+                Room newRoom = Room.downRooms[Game1.rnd.Next(0, Room.downRooms.Length)];
                 PlaceRoom(map, newRoom, index + room.upDoor - new Vector2(newRoom.downDoor.X, newRoom.layout.GetLength(0)), new Vector2(0, 1));
             }
 
@@ -84,7 +82,7 @@ namespace BlockGame.Components.World.Dungeon
         /// <param name="room"></param>
         /// <param name="index"></param>
         /// <returns></returns>
-        private bool CheckOverlap(int[,] map, int[,] room, Vector2 index)
+        private static bool CheckOverlap(int[,] map, int[,] room, Vector2 index)
         {
             int[,] tempMap = map.Clone() as int[,];
 
@@ -116,19 +114,6 @@ namespace BlockGame.Components.World.Dungeon
                     {
                         return true;
                     }
-
-                    /*                  *//*  Debug.WriteLine(x + (int)index.X);
-                                        Debug.WriteLine(y + (int)index.Y);*//*
-                                        tempMap[ y + (int)index.Y, x + (int)index.X] += room[y, x];
-
-                                        if(tempMap[y + (int)index.Y, x + (int)index.X] == 0 || tempMap[y + (int)index.Y, x + (int)index.X] == 1 || tempMap[y + (int)index.Y, x + (int)index.X] == 3 | tempMap[y + (int)index.Y, x + (int)index.X] == 4)
-                                        {
-                                            continue;
-                                        }
-                                        else
-                                        {
-                                            return true;
-                                        }*/
                 }
             }
             return false;
@@ -140,7 +125,7 @@ namespace BlockGame.Components.World.Dungeon
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <returns></returns>
-        public int[,] GenerateEmpty(int width, int height)
+        public static int[,] GenerateEmpty(int width, int height)
         {
             int[,] map = new int[width, height];
 

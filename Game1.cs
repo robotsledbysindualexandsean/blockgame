@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Security.Principal;
+using BlockGame.Components.World.WorldTools;
 
 namespace BlockGame
 {
@@ -24,7 +25,6 @@ namespace BlockGame
 
         // Important Objects:
         private WorldManager world;
-        private DataManager dataManager = new DataManager();
         public static Random rnd = new Random();
 
         // Debug variables:
@@ -59,14 +59,14 @@ namespace BlockGame
         protected override void Initialize()
         {
             //Load all content via datamanager
-            dataManager.LoadContent(Content);
+            DataManager.LoadContent(Content);
 
             //Generate the hashmap for block data
-            dataManager.LoadBlockData();
-            dataManager.LoadItemData();
+            DataManager.LoadBlockData();
+            DataManager.LoadItemData();
 
 
-            world = new WorldManager(_graphics, dataManager); // Create the world and player.
+            world = new WorldManager(); // Create the world and player.
 
             // 3D animation testing debug:
             characterModel = Content.Load<SkinnedModel>("MrFriendlyKindaFinished3");
@@ -126,6 +126,7 @@ namespace BlockGame
             DrawRectangle(new Rectangle(0, 0, 250, 125), Color.Black); // Draw the debug panel black background.
 
             // Information lines in the debug panel:
+            _spriteBatch.Draw(DataManager.blockAtlas, new Rectangle(150, 150, DataManager.blockAtlas.Width, DataManager.blockAtlas.Height), Color.White);
             _spriteBatch.DrawString(debugFont, "Frames: " + (1 / gameTime.ElapsedGameTime.TotalSeconds).ToString(), new Vector2(0, 0), Color.White);
             _spriteBatch.DrawString(debugFont, "Chunks: " + Game1.ChunkCount, new Vector2(0, 15), Color.White);
             _spriteBatch.DrawString(debugFont, "Rebuilds: " + Game1.RebuildCalls, new Vector2(0, 30), Color.White);

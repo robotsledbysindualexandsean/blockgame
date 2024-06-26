@@ -17,7 +17,6 @@ namespace BlockGame.Components
         private Vector3 cameraPosition; //Cameras position
         private Vector3 cameraRotation; //Cameras rotation
         private Vector3 cameraLookAt; //Cameras look at vector (used for matrix calcs)
-        private GraphicsDeviceManager graphics; //Graphics reference
         private BoundingFrustum boundingFrustum; //Bounding frustum hitbox, used for frustum culling
 
         //Properties
@@ -53,12 +52,10 @@ namespace BlockGame.Components
             }
         }
 
-        public Camera(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation)
+        public Camera(Vector3 position, Vector3 rotation)
         {
-            graphics = _graphics;
-
             //Setup Projection Matrix
-            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, _graphics.GraphicsDevice.Viewport.AspectRatio, 0.05f, 1000f);
+            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, Game1._graphics.GraphicsDevice.Viewport.AspectRatio, 0.05f, 1000f);
 
             //Create the Frustum. This is used for culling.
             boundingFrustum = new BoundingFrustum(Matrix.Multiply(View, Projection));

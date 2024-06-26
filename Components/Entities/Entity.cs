@@ -11,6 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Liru3D.Models;
 using Liru3D.Animations;
+using BlockGame.Components.World.WorldTools;
+using BlockGame.Components.World.ChunkTools;
 
 namespace BlockGame.Components.Entities
 {
@@ -28,7 +30,6 @@ namespace BlockGame.Components.Entities
         private Vector3 dimensions; //Entities dimensions, used for hitbox
 
         public WorldManager world; //World
-        public DataManager dataManager; //DataManager
 
         public float speed = 5f; //Entity's speed
         protected bool enforceGravity = true; //Is the entity affected by gravity?
@@ -78,12 +79,11 @@ namespace BlockGame.Components.Entities
             get { return position; }
         }
 
-        public Entity(Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager, Vector3 dimensions)
+        public Entity(Vector3 position, Vector3 rotation, WorldManager world, Vector3 dimensions)
         {
             this.position = position; //Set position
             this.rotation = rotation; //Set rotation
             this.world = world; //Set world
-            this.dataManager = dataManager; //Set DataManager
             this.dimensions = dimensions; //Set hitbox dimensions
 
             hitbox = new BoundingBox(new Vector3(position.X - dimensions.X / 2, position.Y - dimensions.Y /2, position.Z - dimensions.Z /2), new Vector3(position.X + dimensions.X / 2, position.Y+dimensions.Y / 2, position.Z + dimensions.Z / 2)); //Create the inital hitbox
@@ -240,7 +240,12 @@ namespace BlockGame.Components.Entities
                     continue;
                 }
 
-                List<Face> faces = chunk.visibleFaces; //Get chunk's visible faces
+                List<Face> faces = chunk.GetColliders(); //Get chunk's visible faces
+
+                if(faces == null)
+                {
+                    return; //If null, just stop
+                }
 
                 //Check each visble face, if it collides with ray
                 for(int i = 0; i < faces.Count; i++)
@@ -272,8 +277,7 @@ namespace BlockGame.Components.Entities
                     continue;
                 }
 
-                chunk.drawHitboxes = true; //Draw hitboxes of chunks nearby
-                List<Face> faces = chunk.visibleFaces; //Get visible faces in chunk
+                List<Face> faces = chunk.GetColliders(); //Get visible faces in chunk
 
                 //If the player is in debug mode, skip this
                 if (Game1.debug && this.GetType() == typeof(Player))
@@ -341,12 +345,12 @@ namespace BlockGame.Components.Entities
             }
         }
 
-        public virtual void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
+        public virtual void Draw(BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
             //If the game is in debug mode, then draw the entity's bounding box
             if (Game1.debug)
             {
-                DrawBoundingBox(_graphics, basicEffect, camera); //Draw boudning box
+                DrawBoundingBox(basicEffect, camera); //Draw boudning box
 /*                DrawView(_graphics, basicEffect, camera); //Draw view ray
 */
             }
@@ -414,7 +418,7 @@ namespace BlockGame.Components.Entities
         }
 
         //Draw a bounding box
-        private void DrawBoundingBox(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera)
+        private void DrawBoundingBox(BasicEffect basicEffect, Camera camera)
         {
             if (vertexList.Count > 0)
             {
@@ -427,8 +431,8 @@ namespace BlockGame.Components.Entities
                 foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
                 {
                     pass.Apply();
-                    _graphics.GraphicsDevice.SetVertexBuffer(vertexBuffer);
-                    _graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.LineList, 0, vertexBuffer.VertexCount / 2); //count is vertex / 3 since each triangle has 3 vertices
+                    Game1._graphics.GraphicsDevice.SetVertexBuffer(vertexBuffer);
+                    Game1._graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.LineList, 0, vertexBuffer.VertexCount / 2); //count is vertex / 3 since each triangle has 3 vertices
                 }
             }
 

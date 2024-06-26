@@ -1,4 +1,4 @@
-﻿using BlockGame.Components.World;
+﻿using BlockGame.Components.World.WorldTools;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -21,7 +21,7 @@ namespace BlockGame.Components.Entities
         private ushort itemID; //What item this entity "is", i.e what item is dropped.
         public ushort stack = 0; //How many items is in this entities stack
 
-        public DroppedItem(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager, ushort itemID) : base(position, rotation, world, dataManager, dimensions)
+        public DroppedItem(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, ushort itemID) : base(position, rotation, world, dimensions)
         {
             this.rotation = rotation; //Set rotation
             this.position = position; //Set position
@@ -59,9 +59,9 @@ namespace BlockGame.Components.Entities
         /// <param name="camera">Camera</param>
         /// <param name="spriteBatch">SpriteBatch</param>
         /// <param name="skinEffect">SkinEffect</param>
-        public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
+        public override void Draw(BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
-            base.Draw(_graphics, basicEffect, camera, spriteBatch, skinEffect);
+            base.Draw(basicEffect, camera, spriteBatch, skinEffect);
         }
 
         /// <summary>
@@ -100,7 +100,7 @@ namespace BlockGame.Components.Entities
                 }
             }
 
-            world.CreateEntity(new DroppedItem(Game1._graphics, position, Vector3.UnitY, world, world.dataManager, 1)); //If method hasn't returned yet (no suitable stack to add to), make a new one
+            world.CreateEntity(new DroppedItem(Game1._graphics, position, Vector3.UnitY, world, 1)); //If method hasn't returned yet (no suitable stack to add to), make a new one
         }
     }
 }

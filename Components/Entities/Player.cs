@@ -6,24 +6,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Graphics;
-using BlockGame.Components.World;
 using System.Diagnostics;
 using BlockGame.Components.Items;
 using Microsoft.Xna.Framework.Content;
 using Assimp;
+using BlockGame.Components.World.WorldTools;
 
 namespace BlockGame.Components.Entities
 {
     internal class Player : Entity
     {
-        private GraphicsDeviceManager graphics; //GraphicsDevice
         private Camera camera; //Player camera
 
         private Vector3 cameraOffset = new Vector3(0, 0.75f, 0); //How much the camera is offset from the actual players origin position
 
         private static Vector3 playerDimensions = new Vector3(0.5f, 1.5f, 0.5f); //Hitbox dimensions
 
-        public static int renderDistance = 16; //Chunk render distance, in diameter not radius
+        public static int renderDistance = 10; //Chunk render distance, in diameter not radius
 
         private Vector2 playerChunkPos; //Players current chunk position
         private Vector2 lastPlayerChunk; //Players chunk from last frame
@@ -62,13 +61,11 @@ namespace BlockGame.Components.Entities
 
         int clickTimer = 0; //Timer/cooldown for interacting with things (left/right click)
 
-        public Player(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager, playerDimensions)
+        public Player(Vector3 position, Vector3 rotation, WorldManager world) : base(position, rotation, world, playerDimensions)
         {
-            graphics = _graphics; //Store graphicsdevice
+            camera = new Camera(position + cameraOffset, rotation); //Create the camera
 
-            camera = new Camera(_graphics, position + cameraOffset, rotation); //Create the camera
-
-            inventory = new Inventory(7,2, dataManager); //Make inventory
+            inventory = new Inventory(7,2); //Make inventory
             highlightedHotbarSlot = 0; //Set the current hotbar slot to 0
 
             this.rotation = rotation; //Set rotation
@@ -236,8 +233,8 @@ namespace BlockGame.Components.Entities
             //Building rotation buffer for camera movement
             if (currentMouseState != previousMouseState)
             {
-                deltaX = currentMouseState.X - graphics.GraphicsDevice.Viewport.Width / 2;
-                deltaY = currentMouseState.Y - graphics.GraphicsDevice.Viewport.Height / 2;
+                deltaX = currentMouseState.X - Game1._graphics.GraphicsDevice.Viewport.Width / 2;
+                deltaY = currentMouseState.Y - Game1._graphics.GraphicsDevice.Viewport.Height / 2;
 
                 mouseRotationBuffer.X -= 0.01f * deltaX * deltaTime * sensitivity;
                 mouseRotationBuffer.Y -= 0.01f * deltaY * deltaTime * sensitivity;
@@ -257,7 +254,7 @@ namespace BlockGame.Components.Entities
             Rotation = new Vector3(-MathHelper.Clamp(mouseRotationBuffer.Y, MathHelper.ToRadians(-89.0f), MathHelper.ToRadians(89.0f)), MathHelper.WrapAngle(mouseRotationBuffer.X), 0);
 
             //Reset mouse to middle of screen
-            Mouse.SetPosition(graphics.GraphicsDevice.Viewport.Width / 2, graphics.GraphicsDevice.Viewport.Height / 2);
+            Mouse.SetPosition(Game1._graphics.GraphicsDevice.Viewport.Width / 2, Game1._graphics.GraphicsDevice.Viewport.Height / 2);
 
         }
 
@@ -322,7 +319,7 @@ namespace BlockGame.Components.Entities
             if (Vector3.Distance(position, ClosestFace.hitbox.Max) < 10)
             {
                 //Do whaterver should happen when block is left clicked (usually nothing)
-                dataManager.blockData[world.GetBlockAtWorldIndex(ClosestFace.blockPosition)].OnLeftClick(inventory, world, ClosestFace.blockPosition);
+                DataManager.blockData[world.GetBlockAtWorldIndex(ClosestFace.blockPosition)].OnLeftClick(inventory, world, ClosestFace.blockPosition);
 
             }
 
@@ -339,7 +336,7 @@ namespace BlockGame.Components.Entities
                 clickTimer = 10;
 
                 //Do whaterver should happen when block is right clicked (usually nothing)
-                dataManager.blockData[world.GetBlockAtWorldIndex(ClosestFace.blockPosition)].OnRightClick(inventory, world, ClosestFace.blockPosition);
+                DataManager.blockData[world.GetBlockAtWorldIndex(ClosestFace.blockPosition)].OnRightClick(inventory, world, ClosestFace.blockPosition);
             }
 
             //Do whatever should happen when the item is right clicked
@@ -347,17 +344,17 @@ namespace BlockGame.Components.Entities
 
         }
 
-        public override void Draw(GraphicsDeviceManager _graphics, BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
+        public override void Draw(BasicEffect basicEffect, Camera camera, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
             //Draw inventory
-            inventory.DrawBottomBar(new Vector2(_graphics.PreferredBackBufferWidth / 2, _graphics.PreferredBackBufferHeight - 50), spriteBatch, highlightedHotbarSlot);
+            inventory.DrawBottomBar(new Vector2(Game1._graphics.PreferredBackBufferWidth / 2, Game1._graphics.PreferredBackBufferHeight - 50), spriteBatch, highlightedHotbarSlot);
 
             //Draw crosshair
             int crossHairScale = 3; //Scale for the crosshair size
             Rectangle atlasRect = new Rectangle(47, 28, 7, 7); //Crosshair texture position in UIatlas
-            spriteBatch.Draw(DataManager.uiAtlas, new Rectangle(graphics.GraphicsDevice.Viewport.Width / 2 - atlasRect.Width/2*crossHairScale, graphics.GraphicsDevice.Viewport.Height / 2 - atlasRect.Height / 2 * crossHairScale, atlasRect.Width*crossHairScale,atlasRect.Height*crossHairScale), atlasRect, Color.White);
+            spriteBatch.Draw(DataManager.uiAtlas, new Rectangle(Game1._graphics.GraphicsDevice.Viewport.Width / 2 - atlasRect.Width/2*crossHairScale, Game1._graphics.GraphicsDevice.Viewport.Height / 2 - atlasRect.Height / 2 * crossHairScale, atlasRect.Width*crossHairScale,atlasRect.Height*crossHairScale), atlasRect, Color.White);
 
-            base.Draw(_graphics, basicEffect, camera, spriteBatch, skinEffect);
+            base.Draw(basicEffect, camera, spriteBatch, skinEffect);
         }
 
 

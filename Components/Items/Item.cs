@@ -1,5 +1,5 @@
 ﻿using BlockGame.Components.Entities;
-using BlockGame.Components.World;
+using BlockGame.Components.World.WorldTools;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -15,14 +15,15 @@ namespace BlockGame.Components.Items
     /// </summary>
     internal class Item
     {
-        protected ushort itemID; //Item id
+        public ushort itemID; //Item id
         public Rectangle atlasRect; //Where the items graphic is on the itematlas
         public int maxCount; //Max count of this item
         protected GraphicsDeviceManager graphics; //Graphicsdevice
 
-        public Item(DataManager data, ushort itemID, Rectangle atlasRect, int maxCount, GraphicsDeviceManager graphics)
+        public Item(string nameID, ushort itemID, Rectangle atlasRect, int maxCount, GraphicsDeviceManager graphics)
         {
-            data.itemData.Add(itemID, this); //Add to item hashmap
+            DataManager.itemData.Add(itemID, this); //Add to item hashmap
+            DataManager.itemDataID.Add(nameID, this); //Add to item hashmap with name
 
             //Set variables
             this.atlasRect = atlasRect;
@@ -32,9 +33,9 @@ namespace BlockGame.Components.Items
         }
 
         //Constructor for the 0, nothing item
-        public Item(DataManager data, ushort itemID)
+        public Item(string nameID, ushort itemID)
         {
-            data.itemData.Add(itemID, this);
+            DataManager.itemData.Add(itemID, this);
             this.itemID = itemID;
         }
 
@@ -54,7 +55,7 @@ namespace BlockGame.Components.Items
         /// </summary>
         /// <param name="world"></param>
         /// <param name="player"></param>
-        public virtual void OnRightClick(WorldManager world, DataManager dataManager, Player player, Entity user)
+        public virtual void OnRightClick(WorldManager world, Player player, Entity user)
         {
 
         }
@@ -66,10 +67,10 @@ namespace BlockGame.Components.Items
         /// </summary>
         /// <param name="world"></param>
         /// <param name="player"></param>
-        public virtual void OnLeftClick(WorldManager world, DataManager dataManager, Player player, Entity user)
+        public virtual void OnLeftClick(WorldManager world, Player player, Entity user)
         {
             //Destroy block
-            dataManager.blockData[world.GetBlockAtWorldIndex(user.ClosestFace.blockPosition)].Destroy(world, user.ClosestFace.blockPosition);
+            DataManager.blockData[world.GetBlockAtWorldIndex(user.ClosestFace.blockPosition)].Destroy(world, user.ClosestFace.blockPosition);
 
         }
     }

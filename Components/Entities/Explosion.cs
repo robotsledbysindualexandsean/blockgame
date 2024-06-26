@@ -1,4 +1,4 @@
-﻿using BlockGame.Components.World;
+﻿using BlockGame.Components.World.WorldTools;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ namespace BlockGame.Components.Entities
         private static Vector3 dimensions = new Vector3(5, 5, 5); //Hitbox dimensions
         private int duration = 60 * 1; //How long the explosion is up. In frames.
 
-        public Explosion(GraphicsDeviceManager _graphics, Vector3 position, Vector3 rotation, WorldManager world, DataManager dataManager) : base(position, rotation, world, dataManager, dimensions)
+        public Explosion(Vector3 position, Vector3 rotation, WorldManager world) : base(position, rotation, world, dimensions)
         {
             this.enforceGravity = false; //Turn off gravity for this entity
 
@@ -36,7 +36,7 @@ namespace BlockGame.Components.Entities
                         //Check if there is a block at the targeted block vector, and if it is in the explosions radius. This gives the "circular" explosion
                         if (world.GetBlockAtWorldIndex(targetedBlock) != 0 &&  Vector3.Distance(this.position, targetedBlock) <= Explosion.dimensions.X / 2)
                         {
-                            dataManager.blockData[world.GetBlockAtWorldIndex(targetedBlock)].Destroy(world, targetedBlock); //Destroy the block
+                            DataManager.blockData[world.GetBlockAtWorldIndex(targetedBlock)].Destroy(world, targetedBlock); //Destroy the block
                         }
                     }
                 }

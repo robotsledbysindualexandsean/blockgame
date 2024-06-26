@@ -1,5 +1,8 @@
-﻿using BlockGame.Components.Items;
+﻿using Assimp;
+using BlockGame.Components.Entities;
+using BlockGame.Components.Items;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,11 +24,24 @@ namespace BlockGame.Components.World
 
         public Vector3 blockPosition; //Face's block's position
 
-        public Face(Vector3 blockPosition, BoundingBox hitbox, Vector3 blockNormal )
+        public float distanceToPlayer; //storing distance to player. Used for transperency depth.
+
+        public bool hasCollision;
+
+        public Face(Vector3 blockPosition, BoundingBox hitbox, Vector3 blockNormal)
         {
             this.blockPosition = blockPosition;
             this.hitbox = hitbox;
             this.blockNormal = blockNormal;
         }
+
+        //Constructor for no hitbox (used for rendering
+        public Face(Vector3 blockPosition, Vector3 blockNormal, Player player)
+        {
+            this.blockPosition = blockPosition;
+            this.blockNormal = blockNormal;
+            this.distanceToPlayer = Vector3.Distance(blockPosition + blockNormal, player.position);
+        }
+
     }
 }

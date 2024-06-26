@@ -1,5 +1,5 @@
 ﻿using BlockGame.Components.Entities;
-using BlockGame.Components.World;
+using BlockGame.Components.World.WorldTools;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -18,12 +18,8 @@ namespace BlockGame.Components.Items
     {
         private ushort[,][] slots; //2D array  of 1D arrays storing 2 data points, item type in [0], and item count in [1]
 
-        private DataManager dataManager; //Storing data manager
-
-        public Inventory(int width, int height, DataManager dataManager) 
+        public Inventory(int width, int height) 
         {
-            this.dataManager = dataManager;
-
             slots = new ushort[width, height][]; //Creating 2D array
 
             //Creating 1D array in the 2D array to store data
@@ -57,7 +53,7 @@ namespace BlockGame.Components.Items
                 for(int x = 0; x < slots.GetLength(0); x++)
                 {
                     //If the item is found in the inventory under max count, add another count
-                    if (slots[x, y][0] == itemID && slots[x,y][1] < dataManager.itemData[itemID].maxCount)
+                    if (slots[x, y][0] == itemID && slots[x,y][1] < DataManager.itemData[itemID].maxCount)
                     {
                         slots[x, y][1] += amount;
                         return; //Stop checking
@@ -117,10 +113,10 @@ namespace BlockGame.Components.Items
                 if (slots[x, slots.GetLength(1) - 1][0] != 0)
                 {
                     
-                    int itemTextureWidth = dataManager.itemData[slots[x, slots.GetLength(1) - 1][0]].atlasRect.Width; //Get width of item texture
+                    int itemTextureWidth = DataManager.itemData[slots[x, slots.GetLength(1) - 1][0]].atlasRect.Width; //Get width of item texture
 
                     //Draw at center of slot. Math is used using starting pos and adding what slot this is to get the position needed.
-                    dataManager.itemData[slots[x, slots.GetLength(1) - 1][0]].Draw(spriteBatch, new Vector2(origin.X - atlasRect.Width / 2 * scale + (int)startingPos.X + distanceBetweenSlots* x, origin.Y), scale) ;
+                    DataManager.itemData[slots[x, slots.GetLength(1) - 1][0]].Draw(spriteBatch, new Vector2(origin.X - atlasRect.Width / 2 * scale + (int)startingPos.X + distanceBetweenSlots* x, origin.Y), scale) ;
                     
                     //Write item count string
                     spriteBatch.DrawString(Game1.debugFont, slots[x, slots.GetLength(1) - 1][1].ToString(), new Vector2(origin.X - atlasRect.Width / 2 * scale + (int)startingPos.X + distanceBetweenSlots * x - 5, origin.Y + 30), Color.White);
@@ -140,13 +136,13 @@ namespace BlockGame.Components.Items
         public void RightClickItemSlot(Vector2 itemSlot, WorldManager world, Player player, Entity user)
         {
             //Do item right click
-            dataManager.itemData[slots[(int)itemSlot.X, (int)itemSlot.Y][0]].OnRightClick(world, dataManager,player, user);
+            DataManager.itemData[slots[(int)itemSlot.X, (int)itemSlot.Y][0]].OnRightClick(world,player, user);
         }
 
         public void LeftClickItemSlot(Vector2 itemSlot, WorldManager world, Player player, Entity user)
         {
             //Do item left click
-            dataManager.itemData[slots[(int)itemSlot.X, (int)itemSlot.Y][0]].OnLeftClick(world, dataManager, player, user);
+            DataManager.itemData[slots[(int)itemSlot.X, (int)itemSlot.Y][0]].OnLeftClick(world, player, user);
         }
 
         public int GetHeight()
