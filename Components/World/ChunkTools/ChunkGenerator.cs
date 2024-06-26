@@ -34,6 +34,9 @@ namespace BlockGame.Components.World.ChunkTools
         public ChunkGenerator(Chunk chunk)
         {
             this.chunk = chunk;
+
+            //Creating the chunks hitbox , used in frustum calcs.
+            this.chunkBox = new BoundingBox(new Vector3(chunk.chunkPos.X * ChunkGenerator.chunkLength * Block.blockSize, 0, chunk.chunkPos.Z * ChunkGenerator.chunkWidth * Block.blockSize), new Vector3(chunk.chunkPos.X * ChunkGenerator.chunkLength * Block.blockSize + chunkLength * Block.blockSize, chunkHeight * Block.blockSize, chunk.chunkPos.Z * ChunkGenerator.chunkWidth * Block.blockSize + chunkWidth * Block.blockSize));
         }
 
         /// <summary>
