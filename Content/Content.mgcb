@@ -62,18 +62,6 @@
 /processorParam:TextureFormat=Color
 /build:blocks/grass_side.png
 
-#begin blocks/grass_top.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:blocks/grass_top.png
-
 #begin blocks/grass_top_glow.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -85,6 +73,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:blocks/grass_top_glow.png
+
+#begin blocks/grass_top.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:blocks/grass_top.png
 
 #begin blocks/sparse_cobblestone.png
 /importer:TextureImporter
@@ -98,18 +98,6 @@
 /processorParam:TextureFormat=Color
 /build:blocks/sparse_cobblestone.png
 
-#begin blocks/vines.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:blocks/vines.png
-
 #begin blocks/vines_glow.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -122,7 +110,7 @@
 /processorParam:TextureFormat=Color
 /build:blocks/vines_glow.png
 
-#begin blocks/wood_log_side.png
+#begin blocks/vines.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -132,7 +120,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:blocks/wood_log_side.png
+/build:blocks/vines.png
 
 #begin blocks/wood_log_side_glow_0.png
 /importer:TextureImporter
@@ -422,6 +410,18 @@
 /processorParam:TextureFormat=Color
 /build:blocks/wood_log_side_glow_9.png
 
+#begin blocks/wood_log_side.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:blocks/wood_log_side.png
+
 #begin blocks/wood_log_top.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -434,13 +434,6 @@
 /processorParam:TextureFormat=Color
 /build:blocks/wood_log_top.png
 
-#begin Bomb.fbx
-/importer:SkinnedMeshImporter
-/processor:SkinnedMeshProcessor
-/processorParam:KeyframeDecimalPlaceRounding=5
-/processorParam:SkipUVs=False
-/build:Bomb.fbx
-
 #begin Bomb_Diffuse.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -452,6 +445,13 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Bomb_Diffuse.png
+
+#begin Bomb.fbx
+/importer:SkinnedMeshImporter
+/processor:SkinnedMeshProcessor
+/processorParam:KeyframeDecimalPlaceRounding=5
+/processorParam:SkipUVs=False
+/build:Bomb.fbx
 
 #begin Debug.spritefont
 /importer:FontDescriptionImporter
@@ -509,6 +509,18 @@
 /processorParam:KeyframeDecimalPlaceRounding=5
 /processorParam:SkipUVs=False
 /build:MrFriendlyKindaFinished3.fbx
+
+#begin Shaders/effect2.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Shaders/effect2.fx
+
+#begin Shaders/TransparentShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Shaders/TransparentShader.fx
 
 #begin uiatlas.png
 /importer:TextureImporter

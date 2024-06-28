@@ -26,8 +26,6 @@ namespace BlockGame.Components.World
 
         public float distanceToPlayer; //storing distance to player. Used for transperency depth.
 
-        public bool hasCollision;
-
         public Face(Vector3 blockPosition, BoundingBox hitbox, Vector3 blockNormal)
         {
             this.blockPosition = blockPosition;

@@ -39,10 +39,8 @@ namespace BlockGame
         static public bool debug = false;
         public static int LightingPasses = 0;
 
-        // 3D mesh testing:
-        SkinnedModel characterModel;
-        AnimationPlayer anim;
-        Texture2D characterText;
+        //Shaders
+        public static Effect _transparentShader; //shader for rendering in transparent blocks (this is the main shader used right now)
 
         public Game1()
         {
@@ -68,21 +66,12 @@ namespace BlockGame
 
             world = new WorldManager(); // Create the world and player.
 
-            // 3D animation testing debug:
-            characterModel = Content.Load<SkinnedModel>("MrFriendlyKindaFinished3");
-            characterText = Content.Load<Texture2D>("friend_diffuse");
-
             basicEffect = new BasicEffect(_graphics.GraphicsDevice);
             skinEffect = new SkinnedEffect(_graphics.GraphicsDevice);
-            anim = new AnimationPlayer(characterModel);
-            anim.Animation = characterModel.Animations[0];
-
-            anim.IsLooping = true;
-            anim.IsPlaying = true;
-            anim.CurrentTime = 1.0f;
-            anim.CurrentTick = 5;
 
             debugFont = Content.Load<SpriteFont>("Debug");
+
+            _transparentShader = Content.Load<Effect>("Shaders\\TransparentShader"); //load shader
 
             base.Initialize();
         }
@@ -96,9 +85,6 @@ namespace BlockGame
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Microsoft.Xna.Framework.Input.Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-
-            //Animation debug update
-            anim.Update(gameTime);
 
             //Update the World
             world.Update(gameTime);
@@ -119,7 +105,7 @@ namespace BlockGame
             RasterizerState rs = new RasterizerState();
             rs.CullMode = CullMode.None;
             _graphics.GraphicsDevice.RasterizerState = rs;
-            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            GraphicsDevice.DepthStencilState = new DepthStencilState() { DepthBufferEnable = true, DepthBufferWriteEnable = true};
 
             world.Draw(basicEffect, _spriteBatch, skinEffect); // Render the world (chunks and blocks).
 
@@ -127,7 +113,13 @@ namespace BlockGame
 
             // Information lines in the debug panel:
             _spriteBatch.Draw(DataManager.blockAtlas, new Rectangle(150, 150, DataManager.blockAtlas.Width, DataManager.blockAtlas.Height), Color.White);
-            _spriteBatch.DrawString(debugFont, "Frames: " + (1 / gameTime.ElapsedGameTime.TotalSeconds).ToString(), new Vector2(0, 0), Color.White);
+            _spriteBatch.DrawString(debugFont, "Frames: " + Math.Round((1 / gameTime.ElapsedGameTime.TotalSeconds)).ToString(), new Vector2(0, 0), Color.White);
+
+            if(Math.Round((1 / gameTime.ElapsedGameTime.TotalSeconds)) < 55)
+            {
+                Debug.WriteLine("Frame drop: " + Math.Round((1 / gameTime.ElapsedGameTime.TotalSeconds)).ToString());
+            }
+
             _spriteBatch.DrawString(debugFont, "Chunks: " + Game1.ChunkCount, new Vector2(0, 15), Color.White);
             _spriteBatch.DrawString(debugFont, "Rebuilds: " + Game1.RebuildCalls, new Vector2(0, 30), Color.White);
             _spriteBatch.DrawString(debugFont, "Triangles Drawn: " + Game1.TriangleCount, new Vector2(0, 45), Color.White);

@@ -112,7 +112,41 @@ namespace BlockGame.Components.World
 
         }
 
-
+        /// <summary>
+        /// Method which calls the appropriate AddVerticies method with the given direction
+        /// </summary>
+        /// <param name="position">position of block</param>
+        /// <param name="faceDirection">what face is being drawn</param>
+        /// <param name="vertexList">vertex list to add to</param>
+        /// <param name="color">color to tint</param>
+        public void AddFaceToVertexList(Vector3 position, Vector3 faceDirection, List<VertexPositionColorTexture> vertexList, Color color)
+        {
+            //Check which direction is being added. Then call that function
+            if(faceDirection.Equals(Vector3.UnitX)) //Pos X
+            {
+                AddPosXVerticiesPos(position, vertexList, color);
+            }
+            if (faceDirection.Equals(-Vector3.UnitX)) //Neg X
+            {
+                AddNegXVerticiesPos(position, vertexList, color);
+            }
+            if (faceDirection.Equals(Vector3.UnitY)) //Pos Y
+            {
+                AddPosYVerticiesPos(position, vertexList, color);
+            }
+            if (faceDirection.Equals(-Vector3.UnitY)) //Neg Y
+            {
+                AddNegYVerticiesPos(position, vertexList, color);
+            }
+            if (faceDirection.Equals(Vector3.UnitZ)) //Pos Z
+            {
+                AddPosZVerticiesPos(position, vertexList, color);
+            }
+            if (faceDirection.Equals(-Vector3.UnitZ)) //Neg Z
+            {
+                AddNegZVerticiesPos(position, vertexList, color);
+            }
+        }
 
         /// <summary>
         /// Below are static methods for adding face verticies to the vertex list

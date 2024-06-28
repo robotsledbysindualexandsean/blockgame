@@ -108,11 +108,11 @@ namespace BlockGame.Components
 
             new Block(nameID: "glowstone",
                 blockID: 5,
-                texture: "grass_top",
+                texture: "vines",
                 lef: 15,
                 drop: 1,
                 dimensions: new Vector3(1f, 1, 1f),
-                transparent: false,
+                transparent: true,
                 collide: false);
         }
 

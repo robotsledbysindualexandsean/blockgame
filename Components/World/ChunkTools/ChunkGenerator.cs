@@ -11,12 +11,13 @@ namespace BlockGame.Components.World.ChunkTools
 {
     /// <summary>
     /// In charge of generating chunks, as well as generating their colliders.
+    /// TO DO:
+    /// make a hitbox class which entities have, and then just add/remove htiboxes for blocks  on setblock  
     /// </summary>
     internal class ChunkGenerator
     {
         private Chunk chunk; //Reference to the chunk this is for
         public List<Face> facesWithColliders = new List<Face>(); //List of all faces with colliders
-        static int counter = 0;
 
         //Chunk size
         public static int chunkLength = 16;

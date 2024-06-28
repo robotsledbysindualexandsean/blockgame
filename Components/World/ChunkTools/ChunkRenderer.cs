@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BlockGame.Components.World.WorldTools;
+using System.Threading.Tasks.Dataflow;
+using System.Diagnostics;
 
 namespace BlockGame.Components.World.ChunkTools
 {
@@ -18,6 +20,7 @@ namespace BlockGame.Components.World.ChunkTools
         public VertexBuffer vertexBuffer; //Main vertexbuffer
         public VertexBuffer debugBuffer; //for rendering hitbox debug
         public static int defaultLightHue = 50; //default lighting value for blocks
+
         private List<Face> facesToRender = new List<Face>(); //Faces which need to be rendered by the chunk
 
         public ChunkRenderer(Chunk chunk)
@@ -41,19 +44,37 @@ namespace BlockGame.Components.World.ChunkTools
                 basicEffect.World = Matrix.Identity; //No world matrix (no transformations needed)
                 basicEffect.TextureEnabled = true; //Turn on texturing
                 basicEffect.GraphicsDevice.SamplerStates[0] = SamplerState.PointWrap; //Pixel perfect rendering
+                Game1._graphics.GraphicsDevice.BlendState = BlendState.Opaque; //Dont do anything to alpha pixels (this is donw in shader)
+                basicEffect.Texture = DataManager.blockAtlas; //Setting the texture to be the block atlas.
+
+               //Use the shader to render in the blocks (the shader is used to remove alpha values on textures)
+
+               Game1._transparentShader.Parameters["WorldViewProjection"].SetValue(basicEffect.World * basicEffect.View * basicEffect.Projection); //give shader matrix
+               Game1._transparentShader.Parameters["Texture"].SetValue(basicEffect.Texture); //give shader texture
 
                 //Loop through and draw each vertex
-                foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
+                foreach (EffectPass pass in Game1._transparentShader.CurrentTechnique.Passes)
                 {
                     Game1._graphics.GraphicsDevice.SetVertexBuffer(vertexBuffer); //Set vertex buffer to the chunk data
 
                     //Setting the texture to be the block atlas.
-                    basicEffect.Texture = DataManager.blockAtlas;
                     pass.Apply();
 
-                    Game1._graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, vertexBuffer.VertexCount / 3); //draw solid blocks
+                    Game1._graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, vertexBuffer.VertexCount / 3); //draw solid blocks up to transparent index
 
                 }
+
+                //OLD REGULAR BASIC EFFECT RENDERING (deprecated) (keeping since idk abotu shaders so backup)
+                /*                foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
+                {
+                    Game1._graphics.GraphicsDevice.SetVertexBuffer(vertexBuffer); //Set vertex buffer to the chunk data
+
+
+                    pass.Apply();
+
+                    Game1._graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, vertexBuffer.VertexCount / 3); //draw all blocks
+                }*/
+
             }
             //Debug rendering of face hitboxes
             if (Game1.debug && debugBuffer != null)
@@ -71,122 +92,31 @@ namespace BlockGame.Components.World.ChunkTools
         //Builds the vertex buffer for the chunk, which displays all the blocks in the chunk.
         public void BuildVertexBuffer(ushort[,,][] blockIDs, WorldManager world)
         {
-
             List<VertexPositionColorTexture> vertexList = new List<VertexPositionColorTexture>(); //List of verticies which will be loaded into the vertexbuffer
 
-            //Generate a list of all the blocks that are empty. Visible blocks are the blocks around "empty" blocks
-            List<Vector3> transparentBlocks = new List<Vector3>();
-
-            for (int y = 0; y < ChunkGenerator.chunkHeight; y++)
-            {
-                for (int x = 0; x < ChunkGenerator.chunkLength; x++)
-                {
-                    for (int z = 0; z < ChunkGenerator.chunkWidth; z++)
-                    {
-                        if (DataManager.blockData[blockIDs[x, y, z][0]].transparent) //If the block is empty or is transparent, then add it to the list
-                        {
-                            transparentBlocks.Add(new Vector3(chunk.chunkPos.X * 16 + x, y, chunk.chunkPos.Z * 16 + z)); //x,y,z must be x16xchunkPos to convert to world coordinates
-                        }
-                    }
-                }
-            }
+            List<Vector3> transparentBlocks = GetTransparentBlocks();
 
             facesToRender = new List<Face>(); //Reset visible face list
+
+            Vector3[] directions = { Vector3.UnitX, -Vector3.UnitX, Vector3.UnitY, -Vector3.UnitY, Vector3.UnitZ, -Vector3.UnitZ }; //Array of all directions to check
 
             //Add all the faces around the empty blocks, as these are all visible blocks.
             foreach (Vector3 block in transparentBlocks)
             {
-                Vector3 targetBlock; //Variable for target block which is changed as faces are checked
-                ushort blockID; //Variable for blockID whic his changed as faces are checked
-
-                //Z+1
-                targetBlock = new Vector3(block.X, block.Y, block.Z + 1); //Reference to direction
-                blockID = world.GetBlockAtWorldIndex(targetBlock); //Get block ID
-
-                if (blockID != 0) //If this block is not air...
+                foreach(Vector3 direction in directions) //Check all directions and add faces if needed
                 {
-                    //Get the air block, and set the color value to be dependant on that.
-                    Vector3 adjacentBlock = block;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
-                    Color color = new Color(colorValue, colorValue, colorValue);
+                    Vector3 targetBlock = block + direction; //Reference to direction
+                    ushort blockID = world.GetBlockAtWorldIndex(targetBlock); //Get block ID
 
+                    if(blockID != 0) //If the block is not air
+                    {
+                        //Get the air block, and set the color value to be dependant on that.
+                        Vector3 adjacentBlock = block;
+                        int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
+                        Color color = new Color(colorValue, colorValue, colorValue);
 
-                    //Add the verticies of this face to the vertexBuffer
-                    DataManager.blockData[blockID].AddNegZVerticiesPos(targetBlock, vertexList, color);
-                }
-                //Z-1
-                targetBlock = new Vector3(block.X, block.Y, block.Z - 1); //Reference to direction
-                blockID = world.GetBlockAtWorldIndex(targetBlock); //Get block ID
-
-                if (blockID != 0) //If this block is not air...
-                {
-                    //Get the air block, and set the color value to be dependant on that.
-                    Vector3 adjacentBlock = block;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
-                    Color color = new Color(colorValue, colorValue, colorValue);
-
-                    //Add the verticies of this face to the vertexBuffer
-                    DataManager.blockData[blockID].AddPosZVerticiesPos(targetBlock, vertexList, color);
-
-                }
-
-                //x+1
-                targetBlock = new Vector3(block.X+1, block.Y, block.Z); //Reference to direction
-                blockID = world.GetBlockAtWorldIndex(targetBlock); //Get block ID
-
-                if (blockID != 0) //If this block is not air...
-                {
-                    //Get the air block in front of it, and set the color value to be dependant on that.
-                    Vector3 adjacentBlock = block;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
-                    Color color = new Color(colorValue, colorValue, colorValue);
-
-                    //Add the verticies of this face to the vertexBuffer
-                    DataManager.blockData[blockID].AddNegXVerticiesPos(targetBlock, vertexList, color);
-                }
-
-                //x-1
-                targetBlock = new Vector3(block.X - 1, block.Y, block.Z); //Reference to direction
-                blockID = world.GetBlockAtWorldIndex(targetBlock); //Get block ID
-
-                if (blockID != 0) //If this block is not air...
-                {
-                    //Get the air block in front of it, and set the color value to be dependant on that.
-                    Vector3 adjacentBlock = block;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
-                    Color color = new Color(colorValue, colorValue, colorValue);
-
-                    //Add the verticies of this face to the vertexBuffer
-                    DataManager.blockData[blockID].AddPosXVerticiesPos(targetBlock, vertexList, color);
-                }
-                //y+1
-                targetBlock = new Vector3(block.X, block.Y+1, block.Z); //Reference to direction
-                blockID = world.GetBlockAtWorldIndex(targetBlock); //Get block ID
-
-                if (blockID != 0) //If this block is not air...
-                {
-                    //Get the air block in front of it, and set the color value to be dependant on that.
-                    Vector3 adjacentBlock = block;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
-                    Color color = new Color(colorValue, colorValue, colorValue);
-
-                    //Add the verticies of this face to the vertexBuffer
-                    DataManager.blockData[blockID].AddNegYVerticiesPos(targetBlock, vertexList, color);
-
-                }
-                //y-1
-                targetBlock = new Vector3(block.X, block.Y - 1, block.Z); //Reference to direction
-                blockID = world.GetBlockAtWorldIndex(targetBlock); //Get block ID
-
-                if (blockID != 0) //If this block is not air...
-                {
-                    //Get the air block in front of it, and set the color value to be dependant on that.
-                    Vector3 adjacentBlock = block;
-                    int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
-                    Color color = new Color(colorValue, colorValue, colorValue);
-
-                    //Add the verticies of this face to the vertexBuffer
-                    DataManager.blockData[blockID].AddPosYVerticiesPos(targetBlock, vertexList, color);
+                        DataManager.blockData[blockID].AddFaceToVertexList(targetBlock, -direction, vertexList, color); //Add to vertex list.
+                    }
                 }
             }
 
@@ -199,6 +129,31 @@ namespace BlockGame.Components.World.ChunkTools
 
             facesToRender.Clear(); //Clear list to free up memory
 
+        }
+
+        /// <summary>
+        /// Returns a list of transparent blocks in the chunk. Not to be confused with transparent faces, which are to be rendered.
+        /// </summary>
+        /// <returns>List of transparent blocks</returns>
+        private List<Vector3> GetTransparentBlocks()
+        {
+            //Generate a list of all the blocks that are empty. Visible blocks are the blocks around "empty" blocks
+            List<Vector3> transparentBlocks = new List<Vector3>();
+
+            for (int y = 0; y < ChunkGenerator.chunkHeight; y++)
+            {
+                for (int x = 0; x < ChunkGenerator.chunkLength; x++)
+                {
+                    for (int z = 0; z < ChunkGenerator.chunkWidth; z++)
+                    {
+                        if (DataManager.blockData[chunk.blockIDs[x, y, z][0]].transparent) //If the block is empty or is transparent, then add it to the list
+                        {
+                            transparentBlocks.Add(new Vector3(chunk.chunkPos.X * 16 + x, y, chunk.chunkPos.Z * 16 + z)); //x,y,z must be x16xchunkPos to convert to world coordinates
+                        }
+                    }
+                }
+            }
+            return transparentBlocks;
         }
 
         /// <summary>

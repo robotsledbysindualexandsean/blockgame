@@ -90,8 +90,6 @@ namespace BlockGame.Components.World.Dungeon
             int roomRows = room.GetLength(0);
             int roomColumns = room.GetLength(1);
 
-            bool overlap = false;
-
             for (int y = 0; y < roomRows; y++)
             {
                 for (int x = 0; x < roomColumns; x++)

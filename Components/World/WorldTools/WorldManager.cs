@@ -62,18 +62,24 @@ namespace BlockGame.Components.World.WorldTools
 
         public void Draw(BasicEffect basicEffect, SpriteBatch spriteBatch, SkinnedEffect skinEffect)
         {
-            int counter = 0; //Counter for counting how many chunks get rendered
+            List<Chunk> chunksToRender = new List<Chunk>(); //List of chunks that need to be loaded
 
-            //For each chunk in the world, call its draw method
+            //For each chunk in the world, add it to the chunk to render list
             foreach (Chunk chunk in chunks)
             {
-                if (chunk != null && player.Camera.InFrustum(chunk.generator.ChunkBox))
+                if (chunk != null && player.Camera.InFrustum(chunk.generator.ChunkBox)) //Check if chunk is within the players camera frustrum
                 {
-                    chunk.Draw(player.Camera, basicEffect); //Draw chunk
-                    counter++;
+                    chunksToRender.Add(chunk);
                 }
             }
-            Game1.ChunksRendered = counter;
+
+            chunksToRender = chunksToRender.OrderBy(x => Vector3.Distance(x.chunkPos, player.position)).ToList(); //Sort by ascending distance to player. Chunks will be drawn from front to back for depth purposes (transparency)
+
+            //Draw all chunks, once sorted
+            foreach(Chunk chunk in chunksToRender)
+            {
+                chunk.Draw(player.Camera, basicEffect); //Draw chunk
+            }
 
             //For each entity in the world, call its draw method
             foreach (Entity entity in entities)
