@@ -22,7 +22,7 @@ namespace BlockGame.Components.Entities
 
         private static Vector3 playerDimensions = new Vector3(0.5f, 1.5f, 0.5f); //Hitbox dimensions
 
-        public static int renderDistance = 6; //Chunk render distance, in diameter not radius
+        public static int renderDistance = 10; //Chunk render distance, in diameter not radius
 
         private Vector2 playerChunkPos; //Players current chunk position
         private Vector2 lastPlayerChunk; //Players chunk from last frame
