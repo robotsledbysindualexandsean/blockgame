@@ -24,7 +24,7 @@ namespace BlockGame.Components.Items
             //Is the player in range to the closest block to place something down? If so, place a block
             if (Vector3.Distance(user.position, user.ClosestFace.blockPosition) < 10)
             {
-                world.SetBlockAtWorldIndex(player.ClosestFace.blockPosition + player.ClosestFace.blockNormal, 5); //Place block
+                world.SetBlockAtWorldIndex(player.ClosestFace.blockPosition + player.ClosestFace.blockNormal, 4); //Place block
 
                 //TO DO: turn this to remove from "entity" inventory not the player.
                 player.Inventory.RemoveItem(new Vector2(player.highlightedHotbarSlot, player.Inventory.GetHeight() - 1), itemID); //Remove from players inventory

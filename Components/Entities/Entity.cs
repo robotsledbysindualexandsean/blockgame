@@ -50,7 +50,7 @@ namespace BlockGame.Components.Entities
         public Face standingBlock; //What block the entity is currently standing on
 
         private List<VertexPositionColor> vertexList = new List<VertexPositionColor>(); //Debug list of hitbox verticies
-        private VertexBuffer vertexBuffer; //Debug vertex buffer
+        private DynamicVertexBuffer vertexBuffer; //Debug vertex buffer
 
         protected SkinnedModel model; //Entity's model
         protected Texture2D modelTexture; //Entity's model's texture
@@ -211,7 +211,7 @@ namespace BlockGame.Components.Entities
             //Check all faces, find the closest
             for (int i = 0; i < rayFaces.Count; i++)
             {
-                if (Vector3.Distance(position, rayFaces[i].blockPosition + rayFaces[i].blockNormal) < Vector3.Distance(position, closestFace.blockPosition + closestFace.blockNormal)) //Check if distance of current iteration 'i' is closer than the currnet "closest"
+                if (Vector3.Distance(rayOriginPosition, rayFaces[i].blockPosition + rayFaces[i].blockNormal) < Vector3.Distance(rayOriginPosition, closestFace.blockPosition + closestFace.blockNormal)) //Check if distance of current iteration 'i' is closer than the currnet "closest"
                 {
                     closestFace = rayFaces[i]; //Set as closest
                 }
@@ -395,11 +395,11 @@ namespace BlockGame.Components.Entities
             List<VertexPositionColor> line = new List<VertexPositionColor>();
             line.Add(new VertexPositionColor(position + new Vector3(0,-1,0), Color.Blue));
             line.Add(new VertexPositionColor(position + new Vector3(0, -1, 0) + direction * 100, Color.Blue));
-            VertexBuffer vertexBuffer;
+            DynamicVertexBuffer vertexBuffer;
 
             if (line.Count > 0)
             {
-                vertexBuffer = new VertexBuffer(_graphics.GraphicsDevice, typeof(VertexPositionColor), line.Count, BufferUsage.WriteOnly);
+                vertexBuffer = new DynamicVertexBuffer(_graphics.GraphicsDevice, typeof(VertexPositionColor), line.Count, BufferUsage.WriteOnly);
                 vertexBuffer.SetData(line.ToArray());
 
                 basicEffect.VertexColorEnabled = true;
@@ -472,7 +472,7 @@ namespace BlockGame.Components.Entities
                     new VertexPositionColor(new Vector3(hitbox.Max.X, hitbox.Max.Y, hitbox.Min.Z), Color.Red)
                 };
 
-            vertexBuffer = new VertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColor), vertexList.Count, BufferUsage.WriteOnly);
+            vertexBuffer = new DynamicVertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColor), vertexList.Count, BufferUsage.WriteOnly);
             vertexBuffer.SetData(vertexList.ToArray());
         }
 

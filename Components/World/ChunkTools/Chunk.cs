@@ -31,7 +31,7 @@ namespace BlockGame.Components.World.ChunkTools
 
         /// Chunks that need to be rebuilt are rebuilt in grouped time based batches to avoid lag
         /// These variables are used to code that in.
-        private bool rebuildNextFrame = false;
+        public bool rebuildNextFrame = false;
         private int framesSinceLastRebuild = 10000; //Counter for how long since last rebuild
 
         public Vector3 chunkPos; //Chunk position, relative to chunks (not world position)

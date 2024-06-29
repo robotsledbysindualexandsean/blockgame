@@ -74,14 +74,18 @@ namespace BlockGame.Components.World.ChunkTools
             foreach (Vector3 block in emptyBlocks)
             {
                 //Z+1
-                if (world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z + 1)) != 0)
+                ushort blockID; //reference to blockID so code is cleaner
+
+                blockID = world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z + 1));
+                if (blockID != 0 && DataManager.blockData[blockID].collide)
                 {
                     facesWithColliders.Add(new Face(new Vector3(block.X, block.Y, block.Z + 1),
                         new BoundingBox(new Vector3(block.X - Block.blockSize / 2, block.Y - Block.blockSize / 2, block.Z + 1 - Block.blockSize / 2), new Vector3(block.X + Block.blockSize / 2, block.Y + Block.blockSize / 2, block.Z + 1 + Block.blockSize / 2)),
                         new Vector3(0, 0, -1)));
                 }
                 //Z-1
-                if (world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z - 1)) != 0)
+                blockID = world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y, block.Z - 1));
+                if (blockID != 0 && DataManager.blockData[blockID].collide)
                 {
                     facesWithColliders.Add(new Face(new Vector3(block.X, block.Y, block.Z - 1),
                          new BoundingBox(new Vector3(block.X - Block.blockSize / 2, block.Y - Block.blockSize / 2, block.Z - 1 - Block.blockSize / 2), new Vector3(block.X + Block.blockSize / 2, block.Y + Block.blockSize / 2, block.Z - 1 + Block.blockSize / 2)),
@@ -89,21 +93,24 @@ namespace BlockGame.Components.World.ChunkTools
 
                 }
                 //x+1
-                if (world.GetBlockAtWorldIndex(new Vector3(block.X + 1, block.Y, block.Z)) != 0)
+                blockID = world.GetBlockAtWorldIndex(new Vector3(block.X + 1, block.Y, block.Z));
+                if (blockID != 0 && DataManager.blockData[blockID].collide)
                 {
                     facesWithColliders.Add(new Face(new Vector3(block.X + 1, block.Y, block.Z),
                         new BoundingBox(new Vector3(block.X - Block.blockSize / 2 + 1, block.Y - Block.blockSize / 2, block.Z - Block.blockSize / 2), new Vector3(block.X + 1 + Block.blockSize / 2, block.Y + Block.blockSize / 2, block.Z + Block.blockSize / 2)),
                         new Vector3(-1, 0, 0)));
                 }
                 //x-1
-                if (world.GetBlockAtWorldIndex(new Vector3(block.X - 1, block.Y, block.Z)) != 0)
+                blockID = world.GetBlockAtWorldIndex(new Vector3(block.X - 1, block.Y, block.Z));
+                if (blockID != 0 && DataManager.blockData[blockID].collide)
                 {
                     facesWithColliders.Add(new Face(new Vector3(block.X - 1, block.Y, block.Z),
                         new BoundingBox(new Vector3(block.X - 1 - Block.blockSize / 2, block.Y - Block.blockSize / 2, block.Z - Block.blockSize / 2), new Vector3(block.X - 1 + Block.blockSize / 2, block.Y + Block.blockSize / 2, block.Z + Block.blockSize / 2)),
                         new Vector3(1, 0, 0)));
                 }
                 //y+1
-                if (world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y + 1, block.Z)) != 0)
+                blockID = world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y+1, block.Z));
+                if (blockID != 0 && DataManager.blockData[blockID].collide)
                 {
                     facesWithColliders.Add(new Face(new Vector3(block.X, block.Y + 1, block.Z),
                         new BoundingBox(new Vector3(block.X - Block.blockSize / 2, block.Y - Block.blockSize / 2 + 1, block.Z - Block.blockSize / 2), new Vector3(block.X + Block.blockSize / 2, block.Y + Block.blockSize / 2 + 1, block.Z + Block.blockSize / 2)),
@@ -111,8 +118,8 @@ namespace BlockGame.Components.World.ChunkTools
 
                 }
                 //y-1
-
-                if (world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y - 1, block.Z)) != 0)
+                blockID = world.GetBlockAtWorldIndex(new Vector3(block.X, block.Y-1, block.Z));
+                if (blockID != 0 && DataManager.blockData[blockID].collide)
                 {
                     facesWithColliders.Add(new Face(new Vector3(block.X, block.Y - 1, block.Z),
                         new BoundingBox(new Vector3(block.X - Block.blockSize / 2, block.Y - 1 - Block.blockSize / 2, block.Z - Block.blockSize / 2), new Vector3(block.X + Block.blockSize / 2, block.Y - 1 + Block.blockSize / 2, block.Z + Block.blockSize / 2)),

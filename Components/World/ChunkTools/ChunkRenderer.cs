@@ -17,11 +17,12 @@ namespace BlockGame.Components.World.ChunkTools
     internal class ChunkRenderer
     {
         Chunk chunk; //Refernece to chunk this is for
-        public VertexBuffer vertexBuffer; //Main vertexbuffer
-        public VertexBuffer debugBuffer; //for rendering hitbox debug
+        public DynamicVertexBuffer vertexBuffer; //Main vertexbuffer
+        public DynamicVertexBuffer debugBuffer; //for rendering hitbox debug
         public static int defaultLightHue = 50; //default lighting value for blocks
 
-        private List<Face> facesToRender = new List<Face>(); //Faces which need to be rendered by the chunk
+        public DynamicVertexBuffer animationBuffer; //vertex buffer used for animated blocks
+        public List<Vector3[]> animationFaces = new List<Vector3[]>(); //List of animation block positions [0] and their facing direction [1]
 
         public ChunkRenderer(Chunk chunk)
         {
@@ -35,18 +36,18 @@ namespace BlockGame.Components.World.ChunkTools
         /// <param name="basicEffect"></param>
         public void Draw(Camera camera, BasicEffect basicEffect)
         {
+            //Setting up basic effect
+            basicEffect.VertexColorEnabled = true; //Turn on colors
+            basicEffect.View = camera.View; //Set view matrix
+            basicEffect.Projection = camera.Projection; //Set projection matrix
+            basicEffect.World = Matrix.Identity; //No world matrix (no transformations needed)
+            basicEffect.TextureEnabled = true; //Turn on texturing
+            basicEffect.GraphicsDevice.SamplerStates[0] = SamplerState.PointWrap; //Pixel perfect rendering
+            Game1._graphics.GraphicsDevice.BlendState = BlendState.Opaque; //Dont do anything to alpha pixels (this is donw in shader)
+            basicEffect.Texture = DataManager.blockAtlas; //Setting the texture to be the block atlas.
+
             if (vertexBuffer != null)
             {
-                //Setting up basic effect
-                basicEffect.VertexColorEnabled = true; //Turn on colors
-                basicEffect.View = camera.View; //Set view matrix
-                basicEffect.Projection = camera.Projection; //Set projection matrix
-                basicEffect.World = Matrix.Identity; //No world matrix (no transformations needed)
-                basicEffect.TextureEnabled = true; //Turn on texturing
-                basicEffect.GraphicsDevice.SamplerStates[0] = SamplerState.PointWrap; //Pixel perfect rendering
-                Game1._graphics.GraphicsDevice.BlendState = BlendState.Opaque; //Dont do anything to alpha pixels (this is donw in shader)
-                basicEffect.Texture = DataManager.blockAtlas; //Setting the texture to be the block atlas.
-
                //Use the shader to render in the blocks (the shader is used to remove alpha values on textures)
 
                Game1._transparentShader.Parameters["WorldViewProjection"].SetValue(basicEffect.World * basicEffect.View * basicEffect.Projection); //give shader matrix
@@ -64,16 +65,25 @@ namespace BlockGame.Components.World.ChunkTools
 
                 }
 
-                //OLD REGULAR BASIC EFFECT RENDERING (deprecated) (keeping since idk abotu shaders so backup)
-                /*                foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
+            }
+            if (animationBuffer != null)
+            {
+                //Use the shader to render in the blocks (the shader is used to remove alpha values on textures)
+
+                Game1._transparentShader.Parameters["WorldViewProjection"].SetValue(basicEffect.World * basicEffect.View * basicEffect.Projection); //give shader matrix
+                Game1._transparentShader.Parameters["Texture"].SetValue(basicEffect.Texture); //give shader texture
+
+                //Loop through and draw each vertex
+                foreach (EffectPass pass in Game1._transparentShader.CurrentTechnique.Passes)
                 {
-                    Game1._graphics.GraphicsDevice.SetVertexBuffer(vertexBuffer); //Set vertex buffer to the chunk data
+                    Game1._graphics.GraphicsDevice.SetVertexBuffer(animationBuffer); //Set vertex buffer to the chunk data
 
-
+                    //Setting the texture to be the block atlas.
                     pass.Apply();
 
-                    Game1._graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, vertexBuffer.VertexCount / 3); //draw all blocks
-                }*/
+                    Game1._graphics.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, animationBuffer.VertexCount / 3); //draw solid blocks up to transparent index
+
+                }
 
             }
             //Debug rendering of face hitboxes
@@ -89,14 +99,45 @@ namespace BlockGame.Components.World.ChunkTools
             }
         }
 
+        /// <summary>
+        /// Builds only the animation vertex buffer again
+        /// </summary>
+        /// <param name="blockIDs"></param>
+        /// <param name="world"></param>
+        public void BuildAnimationBuffer(ushort[,,][] blockIDs, WorldManager world)
+        {
+            List<VertexPositionColorTexture> animationList = new List<VertexPositionColorTexture>(); //List of verticies which will be loaded into the animationBuffer
+
+            //remeber [0] is pos, [1] is direction
+            foreach (Vector3[] face in animationFaces)
+            {
+
+                //Get the air block, and set the color value to be dependant on that.
+                Vector3 adjacentBlock = face[0] + face[1]; //Get air block in front of it
+                int colorValue = world.GetBlockLightLevelAtWorldIndex(adjacentBlock) * 17 + defaultLightHue;
+                Color color = new Color(colorValue, colorValue, colorValue);
+
+                ushort blockID = world.GetBlockAtWorldIndex(face[0]); //get blocks iD
+
+                DataManager.blockData[blockID].AddFaceToVertexList(face[0], face[1], animationList, color); //Add to vertex list.
+            }
+
+            //Build animation vertex buffer
+            if (animationList.Count > 0)
+            {
+                animationBuffer = new DynamicVertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColorTexture), animationList.Count, BufferUsage.WriteOnly);
+                animationBuffer.SetData(animationList.ToArray());
+            }
+
+        }
+
         //Builds the vertex buffer for the chunk, which displays all the blocks in the chunk.
         public void BuildVertexBuffer(ushort[,,][] blockIDs, WorldManager world)
         {
             List<VertexPositionColorTexture> vertexList = new List<VertexPositionColorTexture>(); //List of verticies which will be loaded into the vertexbuffer
+            animationFaces.Clear(); //clear animated face list
 
             List<Vector3> transparentBlocks = GetTransparentBlocks();
-
-            facesToRender = new List<Face>(); //Reset visible face list
 
             Vector3[] directions = { Vector3.UnitX, -Vector3.UnitX, Vector3.UnitY, -Vector3.UnitY, Vector3.UnitZ, -Vector3.UnitZ }; //Array of all directions to check
 
@@ -108,6 +149,14 @@ namespace BlockGame.Components.World.ChunkTools
                     Vector3 targetBlock = block + direction; //Reference to direction
                     ushort blockID = world.GetBlockAtWorldIndex(targetBlock); //Get block ID
 
+                    //If the face has animation, then add it to animation buffer
+                    if (blockID != 0 && DataManager.blockData[blockID].HasAnimationInDirection(-direction)) //Face is facing the opposite direction
+                    {
+                        animationFaces.Add(new Vector3[] { targetBlock, -direction }); //Add this face to the lsit of faces which are animated
+                        continue; //dont render this face yet
+                    } 
+
+                    //If the block is not animated, add it to regualr buffer
                     if(blockID != 0) //If the block is not air
                     {
                         //Get the air block, and set the color value to be dependant on that.
@@ -123,12 +172,23 @@ namespace BlockGame.Components.World.ChunkTools
             //If the vertexList has any verticies, build it.
             if (vertexList.Count > 0)
             {
-                vertexBuffer = new VertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColorTexture), vertexList.Count, BufferUsage.WriteOnly);
+                vertexBuffer = new DynamicVertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColorTexture), vertexList.Count, BufferUsage.WriteOnly);
                 vertexBuffer.SetData(vertexList.ToArray());
             }
 
-            facesToRender.Clear(); //Clear list to free up memory
+            BuildAnimationBuffer(blockIDs, world); //Build animation vertex buffer
+            BuildHitboxes();
 
+        }
+        
+        //Returns if the chunk has animated blocks
+        public bool ContainsAnimatedBlocks()
+        {
+            if(animationFaces.Count > 0)
+            {
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -213,7 +273,7 @@ namespace BlockGame.Components.World.ChunkTools
 
             if (debugList.Count > 0)
             {
-                debugBuffer = new VertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColor), debugList.Count, BufferUsage.WriteOnly);
+                debugBuffer = new DynamicVertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColor), debugList.Count, BufferUsage.WriteOnly);
                 debugBuffer.SetData(debugList.ToArray());
             }
         }

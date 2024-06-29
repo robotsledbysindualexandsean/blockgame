@@ -18,12 +18,15 @@ namespace BlockGame.Components.World.WorldTools
     {
         private Chunk[,] chunks = new Chunk[WorldGenerator.chunksGenerated, WorldGenerator.chunksGenerated]; //Array which stores all chunks in the world. 0 -> chunksGenerated
 
-        /// List of all chunks that need to be loaded.
-        /// Chunks are loaded on an interval (one at a time, one per frame) to prevent lag.
-        private List<Chunk> chunksToLoad = new List<Chunk>();
+        //Chunks have their hitbox and vertex buffer made on frame at a time. All hitboxes are made first before rendering.
+        private List<Chunk> chunksToGenHitbox = new List<Chunk>(); //Chunks that need their hitbox gneerated
+        private List<Chunk> chunksToRender = new List<Chunk> (); //chunks that need to be rendered
+        private List<Chunk> chunksToBuildAnim = new List<Chunk>(); //chunks that need its animation rebuilt
 
         public List<Entity> entities = new List<Entity>(); //List of all entities in this world
         public List<Vector3> toPropagate = new List<Vector3>(); //List of blocks that need to be propogated
+
+        private int animationCounter = 0; //Animation counter, used to update all block animations
 
         public Player player; //Reference to the player
 
@@ -39,12 +42,18 @@ namespace BlockGame.Components.World.WorldTools
 
         public void Update(GameTime gameTime)
         {
-            //Load the first chunk in the chunkstoload frame (this loads one chunk per frame)
-            if (chunksToLoad.Count > 0)
+            //Generate one chunks hitbox per frame
+            if (chunksToGenHitbox.Count > 0)
             {
-                chunksToLoad.ElementAt(0).BuildChunk(); //Build the 0th element chunk
-                chunksToLoad.RemoveAt(0); //Remove that chunk from the list of chunks needed to be loaded (it has been loaded this frame)
+                chunksToGenHitbox.ElementAt(0).generator.BuildFacesWithColliders(chunksToGenHitbox.ElementAt(0).blockIDs, this); //Build the 0th element chunk hitbox
+                chunksToGenHitbox.RemoveAt(0); //Remove that chunk from the list of chunks needed to be loaded (it has been loaded this frame)
             }
+            else if (chunksToRender.Count > 0) //IF all hitboxes have been made, start rendering
+            {
+                chunksToRender.ElementAt(0).renderer.BuildVertexBuffer(chunksToRender.ElementAt(0).blockIDs, this); //Build the 0th element chunk hitbox
+                chunksToRender.RemoveAt(0); //Remove that chunk from the list of chunks needed to be loaded (it has been loaded this frame)
+            }
+
 
             //Update the chunks.
             foreach (Chunk chunk in chunks)
@@ -56,6 +65,29 @@ namespace BlockGame.Components.World.WorldTools
             foreach (Entity entity in entities.ToList())
             {
                 entity.Update(gameTime);
+            }
+
+            //update animations
+            animationCounter++;
+            if (animationCounter > 5)
+            {
+                animationCounter = 0; //reset counter
+
+                //Update block animations
+                foreach (Block block in DataManager.blockData.Values)
+                {
+                    block.UpdateAnimations();
+                }
+
+                Game1.AnimatedBlocks = 0;
+                foreach (Chunk chunk in GetChunksNearby(player.position, 3))
+                {
+                    if (player.Camera.InFrustum(chunk.generator.ChunkBox) && !chunk.rebuildNextFrame)
+                    {
+                        chunk.renderer.BuildAnimationBuffer(chunk.blockIDs, this); //Build animation buffer again
+                        Game1.AnimatedBlocks += chunk.renderer.animationFaces.Count;
+                    }
+                }
             }
         }
 
@@ -283,7 +315,8 @@ namespace BlockGame.Components.World.WorldTools
 
                     if (chunks[(int)position.X + x, (int)position.Y + z] != null && chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded == false) //If a valid chunk, and is not loaded already, set it to be ready to load
                     {
-                        chunksToLoad.Add(chunks[(int)position.X + x, (int)position.Y + z]); //Add to chunks to load list
+                        chunksToGenHitbox.Add(chunks[(int)position.X + x, (int)position.Y + z]); //Add to chunks to hitbox load list
+                        chunksToRender.Add(chunks[(int)position.X + x, (int)position.Y + z]); //Add to chunks to render load list
                         chunks[(int)position.X + x, (int)position.Y + z].chunkLoaded = true; //Tell chunk that iti s loaded
                     }
                 }

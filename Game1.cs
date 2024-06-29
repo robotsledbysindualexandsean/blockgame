@@ -32,7 +32,7 @@ namespace BlockGame
 
         // Counters mostly used in early development to determine if features were working. Mostly able to be deprecated now.
         public static int TriangleCount = 0;
-        public static int ChunkCount = 0;
+        public static int AnimatedBlocks = 0;
         public static int ChunksRendered = 0;
         public static int RebuildCalls = 0;
         static Texture2D rect;
@@ -120,7 +120,7 @@ namespace BlockGame
                 Debug.WriteLine("Frame drop: " + Math.Round((1 / gameTime.ElapsedGameTime.TotalSeconds)).ToString());
             }
 
-            _spriteBatch.DrawString(debugFont, "Chunks: " + Game1.ChunkCount, new Vector2(0, 15), Color.White);
+            _spriteBatch.DrawString(debugFont, "Animated Faces: " + Game1.AnimatedBlocks, new Vector2(0, 15), Color.White);
             _spriteBatch.DrawString(debugFont, "Rebuilds: " + Game1.RebuildCalls, new Vector2(0, 30), Color.White);
             _spriteBatch.DrawString(debugFont, "Triangles Drawn: " + Game1.TriangleCount, new Vector2(0, 45), Color.White);
             _spriteBatch.DrawString(debugFont, "Lighting Passes: " + Game1.LightingPasses, new Vector2(0, 60), Color.White);

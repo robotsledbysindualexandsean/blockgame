@@ -69,51 +69,43 @@ namespace BlockGame.Components
                 transparent: true,
                 collide: false);
 
-            new Block(nameID: "torn_wood",
+            new Block(nameID: "log",
                 blockID: 1,
-                texture: "wood_log_side",
-                lef: 0,
+                textureID: "wood_log_side",
+                POSYTextureID: "wood_log_top",
+                NEGYTextureID: "wood_log_top",
+                POSXGlowAnimationTextureID: "wood_log_side_glow",
+                POSZGlowAnimationTextureID: "wood_log_side_glow",
+                NEGXGlowAnimationTextureID: "wood_log_side_glow",
+                NEGZGlowAnimationTextureID: "wood_log_side_glow",
+                glowLightLevel: 5,
                 drop: 1,
-                dimensions: new Vector3(1, 1, 1),
-                transparent: false,
-                collide: true);
-
-            new Block(nameID: "wood",
-                blockID: 2,
-                texture: "wood_log_top",
-                lef: 0,
-                drop: 1,
-                dimensions: new Vector3(1, 1, 1),
-                transparent: false,
-                collide: true);
+                dimensions: new Vector3(1, 1, 1)
+                );
 
             new Block(nameID: "cobblestone",
+                blockID: 2,
+                textureID: "cobblestone",
+                drop: 1,
+                dimensions: new Vector3(1, 1, 1)
+                );
+
+            new Block(nameID: "sparse_cobblestone",
                 blockID: 3,
-                texture: "cobblestone",
-                lef: 0,
+                textureID: "sparse_cobblestone",
                 drop: 1,
-                dimensions: new Vector3(1, 1, 1),
-                transparent: false,
-                collide: true);
+                dimensions: new Vector3(1, 1, 1)
+                ) ;
 
-
-            new Block(nameID: "stone",
+            new Block(nameID: "vines",
                 blockID: 4,
-                texture: "sparse_cobblestone",
-                lef: 0,
+                textureID: "vines",
+                glowTextureID: "vines_glow",
+                glowLightLevel: 3,
                 drop: 1,
                 dimensions: new Vector3(1, 1, 1),
-                transparent: false,
-                collide: true);
-
-            new Block(nameID: "glowstone",
-                blockID: 5,
-                texture: "vines",
-                lef: 15,
-                drop: 1,
-                dimensions: new Vector3(1f, 1, 1f),
-                transparent: true,
-                collide: false);
+                transparent: true
+                );
         }
 
         /// <summary>
@@ -140,8 +132,9 @@ namespace BlockGame.Components
         /// <summary>
         /// Method to create the block atlas using textures in the block folders. Stores the positions of each block in a reference dictionary.
         /// </summary>
-        private static void GenerateBlockAtlas(ContentManager content)
+        public static void GenerateBlockAtlas(ContentManager content)
         {
+            blockTexturePositions.Clear();
             DirectoryInfo dir = new DirectoryInfo(content.RootDirectory + "\\" + "blocks"); //Reference content folder
             if (!dir.Exists)
             {
