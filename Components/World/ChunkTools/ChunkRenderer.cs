@@ -22,7 +22,7 @@ namespace BlockGame.Components.World.ChunkTools
         public static int defaultLightHue = 50; //default lighting value for blocks
 
         public DynamicVertexBuffer animationBuffer; //vertex buffer used for animated blocks
-        public List<Vector3[]> animationFaces = new List<Vector3[]>(); //List of animation block positions [0] and their facing direction [1]
+        public List<Vector3[]> animatedFaces = new List<Vector3[]>(); //List of animation block positions [0] and their facing direction [1]
 
         public ChunkRenderer(Chunk chunk)
         {
@@ -66,10 +66,9 @@ namespace BlockGame.Components.World.ChunkTools
                 }
 
             }
-            if (animationBuffer != null)
+            if (animationBuffer != null) //Build animation buffer
             {
                 //Use the shader to render in the blocks (the shader is used to remove alpha values on textures)
-
                 Game1._transparentShader.Parameters["WorldViewProjection"].SetValue(basicEffect.World * basicEffect.View * basicEffect.Projection); //give shader matrix
                 Game1._transparentShader.Parameters["Texture"].SetValue(basicEffect.Texture); //give shader texture
 
@@ -100,7 +99,7 @@ namespace BlockGame.Components.World.ChunkTools
         }
 
         /// <summary>
-        /// Builds only the animation vertex buffer again
+        /// Builds only the animation vertex buffer
         /// </summary>
         /// <param name="blockIDs"></param>
         /// <param name="world"></param>
@@ -108,8 +107,8 @@ namespace BlockGame.Components.World.ChunkTools
         {
             List<VertexPositionColorTexture> animationList = new List<VertexPositionColorTexture>(); //List of verticies which will be loaded into the animationBuffer
 
-            //remeber [0] is pos, [1] is direction
-            foreach (Vector3[] face in animationFaces)
+            //animationFaces holds all the faces in the chunk that are animated. Remember [0] holds the position, and [1] holds the faces normal.
+            foreach (Vector3[] face in animatedFaces) //For each fae, render it
             {
 
                 //Get the air block, and set the color value to be dependant on that.
@@ -135,7 +134,7 @@ namespace BlockGame.Components.World.ChunkTools
         public void BuildVertexBuffer(ushort[,,][] blockIDs, WorldManager world)
         {
             List<VertexPositionColorTexture> vertexList = new List<VertexPositionColorTexture>(); //List of verticies which will be loaded into the vertexbuffer
-            animationFaces.Clear(); //clear animated face list
+            animatedFaces.Clear(); //clear animated face list
 
             List<Vector3> transparentBlocks = GetTransparentBlocks();
 
@@ -152,7 +151,7 @@ namespace BlockGame.Components.World.ChunkTools
                     //If the face has animation, then add it to animation buffer
                     if (blockID != 0 && DataManager.blockData[blockID].HasAnimationInDirection(-direction)) //Face is facing the opposite direction
                     {
-                        animationFaces.Add(new Vector3[] { targetBlock, -direction }); //Add this face to the lsit of faces which are animated
+                        animatedFaces.Add(new Vector3[] { targetBlock, -direction }); //Add this face to the lsit of faces which are animated
                         continue; //dont render this face yet
                     } 
 
@@ -184,7 +183,7 @@ namespace BlockGame.Components.World.ChunkTools
         //Returns if the chunk has animated blocks
         public bool ContainsAnimatedBlocks()
         {
-            if(animationFaces.Count > 0)
+            if(animatedFaces.Count > 0)
             {
                 return true;
             }

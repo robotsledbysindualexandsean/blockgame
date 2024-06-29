@@ -67,8 +67,17 @@ namespace BlockGame.Components.World.WorldTools
                 entity.Update(gameTime);
             }
 
-            //update animations
-            animationCounter++;
+            UpdateAnimations(); //update animations
+
+        }
+
+        /// <summary>
+        /// Methods which updates every blocks animation data and then rebuilds nearby chunks animated blocks.
+        /// </summary>
+        private void UpdateAnimations()
+        {
+            animationCounter++; //Increment the counter
+
             if (animationCounter > 5)
             {
                 animationCounter = 0; //reset counter
@@ -76,16 +85,17 @@ namespace BlockGame.Components.World.WorldTools
                 //Update block animations
                 foreach (Block block in DataManager.blockData.Values)
                 {
-                    block.UpdateAnimations();
+                    block.UpdateAnimations(); //Update the animations for each block in the blockData hashmap
                 }
 
-                Game1.AnimatedBlocks = 0;
-                foreach (Chunk chunk in GetChunksNearby(player.position, 3))
+                Game1.AnimatedBlocks = 0; //Counter for debug purposes
+
+                foreach (Chunk chunk in GetChunksNearby(player.position, 2)) //Get the nearby chunks
                 {
-                    if (player.Camera.InFrustum(chunk.generator.ChunkBox) && !chunk.rebuildNextFrame)
+                    if (player.Camera.InFrustum(chunk.generator.ChunkBox) && !chunk.rebuildNextFrame) //If the chunk is in the players view AND isnt being rebuilt already...
                     {
                         chunk.renderer.BuildAnimationBuffer(chunk.blockIDs, this); //Build animation buffer again
-                        Game1.AnimatedBlocks += chunk.renderer.animationFaces.Count;
+                        Game1.AnimatedBlocks += chunk.renderer.animatedFaces.Count;
                     }
                 }
             }
