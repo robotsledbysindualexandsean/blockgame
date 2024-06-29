@@ -73,6 +73,9 @@ namespace BlockGame.Components.World
         The rest are all textures:
         textureID, glowTextureID, animationTextureID, glowAnimationTextureID = all generic textures that are applied to all faces. These can be overwritten by specifying face textures as well.
         Directional textures = these are the textures/animatiosn for a specific face. They do not need to be specified.
+
+        TLDR: base "textureIDs" are applied first to all sides of the block. You can overrwrite these by specifying a directional texture ID. You can overwrite THOSE by adding an animationID (you dont need a textureID or directionalID to have animationID)
+        This goes for glows too. This is just for flexibiliy so you can add any block orietnation combo and the game will render it.
          */
         public Block(
             string nameID, 
