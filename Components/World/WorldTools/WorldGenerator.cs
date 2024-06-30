@@ -12,79 +12,16 @@ namespace BlockGame.Components.World.WorldTools
     /// <summary>
     /// In charge of world geneartion. Static class, not instanced per world.
     /// </summary>
-    static class WorldGenerator
+    class WorldGenerator
     {
-        public static int chunksGenerated = 20; //How many chunks should be generated? Must be even and greater than 2.
-        public static int roomHeight = 10; //Height of rooms
+        private DungeonManager dungeonManager = new ForestDungeonManager();
+        public static int chunksGenerated = 50; //How many chunks should be generated? Must be even and greater than 2.
 
-
-        /// <summary>
-        /// Generates a 2D map, and then applies to the 3D world which is given
-        /// </summary>
-        public static void GenerateDungeon(int chunksGenerated, int roomHeight, WorldManager world)
+        public void GenerateDungeon(WorldManager world)
         {
-            //Getting 2D map
-            int[,] dungeonMap = DungeonManager.GenerateDungeon((chunksGenerated - 2) * 16, (chunksGenerated - 2) * 16);
-
-            //Offset for dungeon map array and the actual world block pos
-            Vector3 arrayOffset = new Vector3(chunksGenerated * ChunkGenerator.chunkLength / 2, 0, chunksGenerated * ChunkGenerator.chunkWidth / 2);
-
-            //Looping through each index in the 2D map, then depending on what it is, changing that column in the world
-            for (int x = 0; x < (chunksGenerated - 2) * ChunkGenerator.chunkLength; x++)
-            {
-                for (int z = 0; z < (chunksGenerated - 2) * ChunkGenerator.chunkWidth; z++)
-                {
-                    //If this column has a 1, then cut a floor.
-                    if (dungeonMap[x, z] == 1)
-                    {
-                        //Starting from the middle of the chunk, set roomHeight/2 upwards and downwards to air
-                        for (int y = ChunkGenerator.chunkHeight / 2 - roomHeight / 2; y < ChunkGenerator.chunkHeight / 2 + roomHeight / 2; y++)
-                        {
-                            //Set block to empty
-                            world.SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, 0);
-                        }
-
-                        //Generate random stone texture for floor
-                        world.SetBlockAtWorldIndex(new Vector3(x, ChunkGenerator.chunkHeight / 2 - roomHeight / 2 - 1, z) - arrayOffset, (ushort)Game1.rnd.Next(3, 5));
-                    }
-
-                    //If the index is a wall, then set the blocks in the room to be the wall block (wood)
-                    if (dungeonMap[x, z] == 2)
-                    {
-                        for (int y = ChunkGenerator.chunkHeight / 2 - roomHeight / 2; y < ChunkGenerator.chunkHeight / 2 + roomHeight / 2; y++)
-                        {
-                            //Set block to be wall (wood)
-                            world.SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, (ushort)Game1.rnd.Next(1, 3));
-                        }
-                    }
-                    //If index is a door, then cut 3 blocks upwards from the floor.
-                    else if (dungeonMap[x, z] == 3)
-                    {
-                        for (int y = ChunkGenerator.chunkHeight / 2 - roomHeight / 2; y < ChunkGenerator.chunkHeight / 2 - roomHeight / 2 + 5; y++)
-                        {
-                            //Set block to empty
-                            world.SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, 0);
-                        }
-
-                        //Set the blocks ABOVE the door to be the wall block (wood)
-                        for (int y = ChunkGenerator.chunkHeight / 2 - roomHeight / 2 + 5; y < ChunkGenerator.chunkHeight / 2 + roomHeight / 2; y++)
-                        {
-                            //Set block to wall block (wood)
-                            world.SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, 2);
-                        }
-                    }
-                    //If the index is VOID, then from the rooms floor to the bottom of the chunk, make empty.
-                    else if (dungeonMap[x, z] == 4)
-                    {
-                        for (int y = 0; y < ChunkGenerator.chunkHeight / 2 + roomHeight / 2; y++)
-                        {
-                            //Set block to empty
-                            world.SetBlockAtWorldIndex(new Vector3(x, y, z) - arrayOffset, 0);
-                        }
-                    }
-                }
-            }
+            dungeonManager.CreateDungeon(world);
         }
+
 
         /// <summary>
         /// Generates all the chunks in the world, and stores it in the 2D array. 

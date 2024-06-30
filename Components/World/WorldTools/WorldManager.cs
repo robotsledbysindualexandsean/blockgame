@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using BlockGame.Components.Entities;
-using BlockGame.Components.World.Dungeon;
 using BlockGame.Components.World.PerlinNoise;
 using System;
 using System.Collections.Generic;
@@ -16,6 +15,8 @@ namespace BlockGame.Components.World.WorldTools
 {
     internal class WorldManager
     {
+        private WorldGenerator generator = new WorldGenerator();
+
         private Chunk[,] chunks = new Chunk[WorldGenerator.chunksGenerated, WorldGenerator.chunksGenerated]; //Array which stores all chunks in the world. 0 -> chunksGenerated
 
         //Chunks have their hitbox and vertex buffer made on frame at a time. All hitboxes are made first before rendering.
@@ -32,12 +33,11 @@ namespace BlockGame.Components.World.WorldTools
 
         public WorldManager()
         {
-            player = new Player(new Vector3(0f, 25, 0f), Vector3.Zero, this); //Create player entity
+            player = new Player(new Vector3(0f, ChunkGenerator.chunkHeight/2+5, 0f), Vector3.Zero, this); //Create player entity
             entities.Add(player); //Add it to the list of entities
 
-            chunks = WorldGenerator.GenerateChunks(WorldGenerator.chunksGenerated, this); 
-
-            WorldGenerator.GenerateDungeon(WorldGenerator.chunksGenerated, WorldGenerator.roomHeight, this); //"Cut" the dungeon into the chunks
+            chunks = WorldGenerator.GenerateChunks(WorldGenerator.chunksGenerated, this); //Generate all the chunks in the world
+            generator.GenerateDungeon(this); //Generate the dungeon
         }
 
         public void Update(GameTime gameTime)
@@ -45,7 +45,7 @@ namespace BlockGame.Components.World.WorldTools
             //Generate one chunks hitbox per frame
             if (chunksToGenHitbox.Count > 0)
             {
-                chunksToGenHitbox.ElementAt(0).generator.BuildFacesWithColliders(chunksToGenHitbox.ElementAt(0).blockIDs, this); //Build the 0th element chunk hitbox
+                chunksToGenHitbox.ElementAt(0).generator.BuildFacesWithColliders(chunksToGenHitbox.ElementAt(0).blockIDs); //Build the 0th element chunk hitbox
                 chunksToGenHitbox.RemoveAt(0); //Remove that chunk from the list of chunks needed to be loaded (it has been loaded this frame)
             }
             else if (chunksToRender.Count > 0) //IF all hitboxes have been made, start rendering
@@ -216,11 +216,12 @@ namespace BlockGame.Components.World.WorldTools
         }
 
         /// <summary>
-        /// Sets the block to the given ID when given a world position
+        /// Sets the given position to the given blockID or nameID. If none is specified a null block is placed
         /// </summary>
-        /// <param name="posInWorld">World position to change block to</param>
-        /// <param name="blockId">Block to be changed to</param>
-        public void SetBlockAtWorldIndex(Vector3 posInWorld, ushort blockId)
+        /// <param name="posInWorld"></param>
+        /// <param name="blockId"></param>
+        /// <param name="blockNameID"></param>
+        public void SetBlockAtWorldIndex(Vector3 posInWorld, ushort blockId = 1, string blockNameID = "null")
         {
             int[] chunkIndex = posInWorlditionToChunkIndex(posInWorld); //Get block data
 
@@ -238,7 +239,7 @@ namespace BlockGame.Components.World.WorldTools
 
             Vector3 posInChunk = new Vector3(chunkIndex[2], chunkIndex[3], chunkIndex[4]); //Turn array data into vector so it can be passed into method
 
-            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(posInChunk, blockId); //Setting block
+            chunks[chunkIndex[0], chunkIndex[1]].SetBlock(posInChunk, blockId, blockNameID); //Setting block
         }
 
         /// <summary>

@@ -1,142 +1,93 @@
-﻿using Microsoft.Xna.Framework;
+﻿using BlockGame.Components.World.ChunkTools;
+using BlockGame.Components.World.PerlinNoise;
+using BlockGame.Components.World.WorldTools;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace BlockGame.Components.World.Dungeon
 {
+    //Base dungeon manager class. Other classes inherit it based on the biome type.
+
     internal class DungeonManager
     {
-        static int roomsGenereated = 0;
+        public static Dictionary<Vector3, List<Room>> skeletonRooms = new Dictionary<Vector3, List<Room>>(); //Hashmap of all the room skeletons. They are organized by what direction they can open up, indicated by their vector3 key. Loaded in DataManager LoadRooms()
+        protected WorldManager world; //Reference to world
 
-        //Generate a dungeon and return it in an int[,] array. Used to cut the dungeon into the world map.
-        public static int[,] GenerateDungeon(int width, int height)
+        public void CreateDungeon(WorldManager world)
         {
-            int[,] map = GenerateEmpty(width, height);
-
-            PlaceRoom(map, Room.roomObjs[0], new Vector2(width / 2, height / 2), Vector2.Zero);
-
-            return map;
-
+            this.world = world; //Storing world reference
+            PlaceRoom(skeletonRooms.Values.ToArray()[0][0], new Vector3(0, ChunkGenerator.chunkHeight / 2, 0)
+                - new Vector3(skeletonRooms.Values.ToArray()[0][0].map.GetLength(0) / 2, 0, skeletonRooms.Values.ToArray()[0][0].map.GetLength(2) / 2)); //Calculations for centering map
         }
 
-        //Places a room at the given door location
-        public static void PlaceRoom(int[,] map, Room room, Vector2 index, Vector2 enteringDirection)
+        ///Places a room in the world. Rooms are placed from most postivie XYZ position downwards. They are not cenetered.
+        private void PlaceRoom(Room room, Vector3 worldPosition)
         {
-            roomsGenereated++;
-
-            int roomColumns = room.layout.GetLength(1);
-            int roomRows = room.layout.GetLength(0);
-
-            //Checks if the room it's trying to place overlaps any of the old rooms. If so, end this call.
-            if (CheckOverlap(map, room.layout, index))
+            //Loop over ever block in the room and place it
+            for (int x = 0; x < room.map.GetLength(0); x++)
             {
-                return;
-            }
-
-            //Add the new room to the map
-            for (int row = 0; row < roomRows; row++)
-            {
-                for (int column = 0; column < roomColumns; column++)
+                for (int y = 0; y < room.map.GetLength(1); y++)
                 {
-                    map[row + (int)index.Y, column + (int)index.X] = room.layout[row, column];
-                }
-            }
-
-            //Now, the method will recursively keep placing rooms based on the doors of this room, until all rooms are placed.
-
-            //To bottom
-            if (room.downDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(0, 1)))
-            {
-                //gets a random room which matches this direction
-                Room newRoom = Room.upRooms[Game1.rnd.Next(0, Room.upRooms.Length)];
-                PlaceRoom(map, newRoom, room.downDoor + index - new Vector2(newRoom.upDoor.X, -1), new Vector2(0, -1));
-            }
-            //To left
-            if (room.leftDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(-1, 0)))
-            {
-                Room newRoom = Room.rightRooms[Game1.rnd.Next(0, Room.rightRooms.Length)];
-                PlaceRoom(map, newRoom, index + room.leftDoor - new Vector2(newRoom.layout.GetLength(1), newRoom.rightDoor.Y), new Vector2(1, 0));
-            }
-            //To right
-            if (room.rightDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(1, 0)))
-            {
-                Room newRoom = Room.leftRooms[Game1.rnd.Next(0, Room.leftRooms.Length)];
-                PlaceRoom(map, newRoom, index + room.rightDoor - new Vector2(-1, newRoom.leftDoor.Y), new Vector2(-1, 0));
-            }
-            //To top
-            if (room.upDoor != Vector2.Zero && !enteringDirection.Equals(new Vector2(0, -1)))
-            {
-                Room newRoom = Room.downRooms[Game1.rnd.Next(0, Room.downRooms.Length)];
-                PlaceRoom(map, newRoom, index + room.upDoor - new Vector2(newRoom.downDoor.X, newRoom.layout.GetLength(0)), new Vector2(0, 1));
-            }
-
-
-        }
-        /// <summary>
-        /// Function which checks the overlap between a placeable room and the current map
-        /// </summary>
-        /// <param name="map"></param>
-        /// <param name="room"></param>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        private static bool CheckOverlap(int[,] map, int[,] room, Vector2 index)
-        {
-            int[,] tempMap = map.Clone() as int[,];
-
-            //Place room
-            int roomRows = room.GetLength(0);
-            int roomColumns = room.GetLength(1);
-
-            for (int y = 0; y < roomRows; y++)
-            {
-                for (int x = 0; x < roomColumns; x++)
-                {
-                    //Checking if there is already a placed block here
-                    if (x < 0 || y + (int)index.Y >= tempMap.GetLength(0) || x + (int)index.X < 0)
+                    for (int z = 0; z < room.map.GetLength(2); z++)
                     {
-                        return true;
-                    }
-                    if (y < 0 || x + (int)index.X >= tempMap.GetLength(1) || y + (int)index.Y < 0)
-                    {
-                        return true;
-                    }
-                    if (tempMap == null || room == null)
-                    {
-                        return true;
-                    }
+                        Vector3 block = worldPosition + new Vector3(x, y, z); //Getting block position
 
-                    if (tempMap[y + (int)index.Y, x + (int)index.X] != 0 && room[y, x] != 0)
-                    {
-                        return true;
+                        if (room.map[x, y, z] == 1) //If floor, then build floor
+                        {
+                            PlaceFloorBlock(block);
+                        }
+                        else if (room.map[x, y, z] == 2) //If wall, then build wall
+                        {
+                            PlaceWallBlock(block);
+                        }
+                        else if (room.map[x, y, z] == 3) //If roof, then build roof
+                        {
+                            PlaceRoofBlock(block);
+                        }
+                        else if (room.map[x, y, z] == 0 && world.GetBlockAtWorldIndex(block) == 1) //If air and the world has null, set the block to air
+                        {
+                            world.SetBlockAtWorldIndex(block, 0);
+                        }
+                        else if(room.map[x, y, z] != 0)
+                        {
+                            PlaceFloorBlock(block);
+                        }
                     }
                 }
             }
-            return false;
         }
 
         /// <summary>
-        /// Generates base empty map
+        /// Method for what to do when a floor block is present. This is virtual and code isnt run here, more in the subclasses like forest dungeon manager
         /// </summary>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <returns></returns>
-        public static int[,] GenerateEmpty(int width, int height)
+        /// <param name="block"></param>
+        protected virtual void PlaceFloorBlock(Vector3 block)
         {
-            int[,] map = new int[width, height];
 
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    map[x, y] = 0;
-                }
-            }
-
-            return map;
         }
+
+        /// <summary>
+        /// Method for what to do when a wall block is present. This is virtual and code isnt run here, more in the subclasses like forest dungeon manager
+        /// </summary>
+        /// <param name="block"></param>
+        protected virtual void PlaceWallBlock(Vector3 block)
+        {
+
+        }
+
+        /// <summary>
+        /// Method for what to do when a roof block is present. This is virtual and code isnt run here, more in the subclasses like forest dungeon manager
+        /// </summary>
+        /// <param name="block"></param>
+        protected virtual void PlaceRoofBlock(Vector3 block)
+        {
+
+        }
+
     }
 }
-

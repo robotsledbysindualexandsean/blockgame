@@ -51,7 +51,7 @@ namespace BlockGame.Components.World
         public Block(string nameID, ushort blockID, ushort lef, bool transparent, bool collide)
         {
             DataManager.blockData.Add(blockID, this); //Add to the block hashmap
-            DataManager.blockDataID.Add(nameID, this); //Add to block hashmap, with name keys
+            DataManager.blockNameID.Add(nameID, blockID); //Add to block hashmap, with name keys
 
             //Set variables
             this.blockID = blockID;
@@ -117,6 +117,7 @@ namespace BlockGame.Components.World
             )
         {
             DataManager.blockData.Add(blockID, this); //Add to block hashmap
+            DataManager.blockNameID.Add(nameID, blockID); //Add to block hashmap, with name keys
 
             InitializeDictionary(); //Initalize dictionary
 
@@ -321,11 +322,15 @@ namespace BlockGame.Components.World
 
         }
 
-        //Method which compares the glow light level to the block color and returns which should be used
+        //Method which adds the block light level and the glows light level, so that the glow is always brighter than the actual block
         private Color ChooseGlowLightLevel(Color blockColor)
         {
             int colorValue = glowLightLevel * 17 + ChunkRenderer.defaultLightHue; //Get the actual color value from the blocks light level
-            Color glowColor = new Color(colorValue, colorValue, colorValue);
+            int newColorValue = Math.Clamp(colorValue + blockColor.R, 0, 15 * 17 + ChunkRenderer.defaultLightHue); //Add the two light levels together, but max at lightt level 15
+
+            return new Color(newColorValue, newColorValue, newColorValue); //Return this color
+
+/*            Color glowColor = new Color(colorValue, colorValue, colorValue);
 
             if(blockColor.R > glowColor.R) //Compare colors. Only one (R) has to be checked since RGB are all the same.
             {
@@ -334,7 +339,7 @@ namespace BlockGame.Components.World
             else
             {
                 return glowColor;
-            }
+            }*/
         }
 
         /// <summary>
@@ -447,60 +452,60 @@ namespace BlockGame.Components.World
         {
             //XY Plane Z+1
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
         }
 
         public void AddNegZVerticiesPos(Vector3 position, List<VertexPositionColorTexture> vertexList, Color color, Vector2 startCoordinate)
         {
             //XY Z-1 Plane
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
         }
 
         public void AddPosXVerticiesPos(Vector3 position, List<VertexPositionColorTexture> vertexList, Color color, Vector2 startCoordinate)
         {
             //ZY X+1 Plane
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y + 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y - 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y + 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2, position.Y - 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
         }
 
         public void AddNegXVerticiesPos(Vector3 position, List<VertexPositionColorTexture> vertexList, Color color, Vector2 startCoordinate)
         {
             //ZY X-1 Planed
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y + 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y - 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y + 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2, position.Y - 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
         }
 
         public void AddPosYVerticiesPos(Vector3 position, List<VertexPositionColorTexture> vertexList, Color color, Vector2 startCoordinate)
         {
             //ZX Y+1
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
         }
 
         public void AddNegYVerticiesPos(Vector3 position, List<VertexPositionColorTexture> vertexList, Color color, Vector2 startCoordinate)
@@ -539,12 +544,12 @@ namespace BlockGame.Components.World
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
             Color color = ChooseGlowLightLevel(blockColor); //get which color to use (actual light or glow?)
 
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z + dimensions.Z / 2 + glowDistance), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
 
         }
 
@@ -554,12 +559,12 @@ namespace BlockGame.Components.World
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
             Color color = ChooseGlowLightLevel(blockColor); //get which color to use (actual light or glow?)
 
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - 0.5f, position.Z - dimensions.Z / 2 - glowDistance), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
 
         }
 
@@ -569,12 +574,12 @@ namespace BlockGame.Components.World
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
             Color color = ChooseGlowLightLevel(blockColor); //get which color to use (actual light or glow?)
 
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y + 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y - 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y + 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + dimensions.X / 2 + glowDistance, position.Y - 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
         }
 
         public void AddNegXVerticiesPosGlow(Vector3 position, List<VertexPositionColorTexture> vertexList, Color blockColor, Vector2 startCoordinate)
@@ -583,12 +588,12 @@ namespace BlockGame.Components.World
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
             Color color = ChooseGlowLightLevel(blockColor); //get which color to use (actual light or glow?)
 
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y + 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y - 0.5f, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y + 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y - 0.5f, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y + 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - dimensions.X / 2 - glowDistance, position.Y - 0.5f, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
         }
 
         public void AddPosYVerticiesPosGlow(Vector3 position, List<VertexPositionColorTexture> vertexList, Color blockColor, Vector2 startCoordinate)
@@ -597,12 +602,12 @@ namespace BlockGame.Components.World
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
             Color color = ChooseGlowLightLevel(blockColor); //get which color to use (actual light or glow?)
 
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y + dimensions.Y / 2 + glowDistance, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
 
         }
 
@@ -612,12 +617,12 @@ namespace BlockGame.Components.World
             Vector2 endCoordinate = startCoordinate + BlockToUV;  //Calculating UV for end coords
             Color color = ChooseGlowLightLevel(blockColor); //get which color to use (actual light or glow?)
 
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z + 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z - 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z - 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
-            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z + 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z + 0.5f), color, new Vector2(endCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z - 0.5f), color, new Vector2(startCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X - 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z - 0.5f), color, new Vector2(endCoordinate.X, endCoordinate.Y)));
+            vertexList.Add(new VertexPositionColorTexture(new Vector3(position.X + 0.5f, position.Y - dimensions.Y / 2 - glowDistance, position.Z + 0.5f), color, new Vector2(startCoordinate.X, startCoordinate.Y)));
         }
     }
 }

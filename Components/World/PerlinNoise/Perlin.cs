@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Microsoft.Xna.Framework;
 
 
 //A lot of this code is from: https://rtouti.github.io/graphics/perlin-noise-algorithm
@@ -145,6 +145,30 @@ namespace BlockGame.Components.World.PerlinNoise
             }
 
             return noise;
+        }
+
+        /// <summary>
+        /// Returns the perlin noise output at one specific coordinate
+        /// </summary>
+        /// <param name="numOctaves"></param>
+        /// <returns></returns>
+        public static float GeneratePerlinValueAtPoint(Vector2 coordinate, int numOctaves)
+        {
+            //octaves (freq, amp ,etc)
+            float result = 0.0f;
+            float amplitude = 1.0f;
+            float frequency = 0.005f;
+
+            for (int octave = 0; octave < numOctaves; octave++)
+            {
+                float n = amplitude * Perlin.noise(coordinate * frequency);
+                result += n;
+
+                amplitude *= 0.5f;
+                frequency *= 2.0f;
+            }
+
+            return Math.Abs(result);
         }
 
         ///returns random noise array

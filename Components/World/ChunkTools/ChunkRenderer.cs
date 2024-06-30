@@ -174,6 +174,7 @@ namespace BlockGame.Components.World.ChunkTools
                 vertexBuffer = new DynamicVertexBuffer(Game1._graphics.GraphicsDevice, typeof(VertexPositionColorTexture), vertexList.Count, BufferUsage.WriteOnly);
                 vertexBuffer.SetData(vertexList.ToArray());
             }
+            vertexList.Clear(); //free up memory
 
             BuildAnimationBuffer(blockIDs, world); //Build animation vertex buffer
             BuildHitboxes();

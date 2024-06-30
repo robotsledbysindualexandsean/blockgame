@@ -17,6 +17,11 @@ using System.Reflection.Metadata;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
+using System.Text.Json.Nodes;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
+using Newtonsoft.Json;
+using BlockGame.Components.World.Dungeon;
 
 namespace BlockGame.Components
 {
@@ -33,7 +38,7 @@ namespace BlockGame.Components
 
         //Hashmaps:
         public static Dictionary<string, Vector2> blockTexturePositions = new Dictionary<string, Vector2>(); //Vector2 positions of all blocks in the atlas by name
-        public static Dictionary<string, Block> blockDataID = new Dictionary<string, Block>(); //All block objects by keyed by a string, not id number
+        public static Dictionary<string, ushort> blockNameID = new Dictionary<string, ushort>(); //hashmap that turns nameID to mainID
         public static Dictionary<ushort, Block> blockData = new Dictionary<ushort, Block>(); // All block objects.
 
         public static Dictionary<string, Item> itemDataID = new Dictionary<string, Item>(); //All block objects keyed by a string, not id number
@@ -55,6 +60,7 @@ namespace BlockGame.Components
             itemAtlas = content.Load<Texture2D>("itematlas"); // Load item atlas.
             uiAtlas = content.Load<Texture2D>("uiatlas"); // Load UI atlas.
             LoadModels(content); // Load models.
+            LoadRooms(content); //load room JSONs
         }
 
         /// <summary>
@@ -69,8 +75,14 @@ namespace BlockGame.Components
                 transparent: true,
                 collide: false);
 
-            new Block(nameID: "log",
+            new Block(nameID: "null",
                 blockID: 1,
+                textureID: "null",
+                dimensions: new Vector3(1, 1, 1)
+                );
+
+            new Block(nameID: "log",
+                blockID: 2,
                 textureID: "wood_log_side",
                 POSYTextureID: "wood_log_top",
                 NEGYTextureID: "wood_log_top",
@@ -84,27 +96,64 @@ namespace BlockGame.Components
                 );
 
             new Block(nameID: "cobblestone",
-                blockID: 2,
+                blockID: 3,
                 textureID: "cobblestone",
                 drop: 1,
                 dimensions: new Vector3(1, 1, 1)
                 );
 
             new Block(nameID: "sparse_cobblestone",
-                blockID: 3,
+                blockID: 4,
                 textureID: "sparse_cobblestone",
                 drop: 1,
                 dimensions: new Vector3(1, 1, 1)
                 ) ;
 
             new Block(nameID: "vines",
-                blockID: 4,
+                blockID: 5,
                 textureID: "vines",
-                glowTextureID: "vines_glow",
-                glowLightLevel: 3,
                 drop: 1,
                 dimensions: new Vector3(1, 1, 1),
                 transparent: true
+                );
+
+            new Block(nameID: "glowing_vines",
+                blockID: 6,
+                textureID: "vines",
+                glowTextureID: "vines_glow",
+                glowLightLevel: 3,
+                lef: 5,
+                drop: 1,
+                dimensions: new Vector3(1, 1, 1),
+                transparent: true
+                ); ;
+
+            new Block(nameID: "grass_block",
+                blockID: 7,
+                POSYTextureID: "grass_top",
+                NEGYTextureID: "dirt",
+                textureID: "grass_side",
+                drop: 1,
+                dimensions: new Vector3(1, 1, 1)
+                );
+
+            new Block(nameID: "dirt",
+                blockID: 8,
+                textureID: "dirt",
+                drop: 1,
+                dimensions: new Vector3(1, 1, 1)
+                );
+
+            new Block(nameID: "glowing_grass_block",
+                blockID: 9,
+                POSYGlowTextureID: "grass_top_glow",
+                POSYTextureID: "grass_top",
+                NEGYTextureID: "dirt",
+                textureID: "grass_side",
+                drop: 1,
+                glowLightLevel: 3,
+                lef: 5,
+                dimensions: new Vector3(1, 1, 1)
                 );
         }
 
@@ -134,7 +183,6 @@ namespace BlockGame.Components
         /// </summary>
         public static void GenerateBlockAtlas(ContentManager content)
         {
-            blockTexturePositions.Clear();
             DirectoryInfo dir = new DirectoryInfo(content.RootDirectory + "\\" + "blocks"); //Reference content folder
             if (!dir.Exists)
             {
@@ -173,9 +221,43 @@ namespace BlockGame.Components
 
                     fileCounter++; //increment counter
                 }
+
+                Block.BlockToUV = Vector2.One / new Vector2(w, h); //UVs range from 0-1. Set PixelToUV by dividing 1 by block count X,Y.
             }
 
-            Block.BlockToUV = Vector2.One / new Vector2(w, h); //UVs range from 0-1. Set PixelToUV by dividing 1 by block count X,Y.
+           
         }
+
+        //Load all room JSONs
+        public static void LoadRooms(ContentManager content)
+        {
+            DirectoryInfo dir = new DirectoryInfo(content.RootDirectory + "\\" + "rooms"); //Reference json folder
+            if (!dir.Exists)
+            {
+                throw new DirectoryNotFoundException(); //If no directory exists, error
+            }
+
+            FileInfo[] fileInfo = dir.GetFiles("*.*"); //Get all the file data in the blocks folder
+
+            foreach(FileInfo file in fileInfo)
+            {
+                string name = Path.GetFileName(file.Name); //get json name with extension
+                string json = File.ReadAllText("Content\\rooms\\" + name); //Parse json text
+                Room room = JsonConvert.DeserializeObject<Room>(json); //Deseralize json text into room object
+
+                //Push the new room to the list of rooms for each direction the door it has
+                foreach(int[] door in room.doors) //For each door in the room
+                {
+                    if(!DungeonManager.skeletonRooms.ContainsKey(new Vector3(door[3], door[4], door[5]))) //If the room hashmap doesnt have a key already, then make the list
+                    {
+                        DungeonManager.skeletonRooms.Add(new Vector3(door[3], door[4], door[5]), new List<Room>()); //Create the list at that key
+                    }
+
+                    //Index 3,4,5 in door int[] is the doors direction
+                    DungeonManager.skeletonRooms[new Vector3(door[3], door[4], door[5])].Add(room); //Add the room to the list
+                }
+            }
+        }
+           
     }
 }

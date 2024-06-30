@@ -43,7 +43,7 @@ namespace BlockGame.Components.World.ChunkTools
             this.chunkPos = chunkPos;
 
             this.renderer = new ChunkRenderer(this);
-            this.generator = new ChunkGenerator(this);
+            this.generator = new ChunkGenerator(this, world);
 
             blockIDs = ChunkGenerator.SetupBlockIDArray(); //Initalize 3D array
         }
@@ -97,18 +97,26 @@ namespace BlockGame.Components.World.ChunkTools
         }
 
         //Rebuild the chunk (used for when the chunk is updated)
+        public void RebuildChunk()
+        {
+            generator.UpdateHitboxes(); //First, rebuild all the visible faces in the chunk
+            renderer.BuildVertexBuffer(blockIDs, world); //Build vertex buffer using renderer
+        }
+
+        //Build the chunk (hitbox and rendering) immediately
         public void BuildChunk()
         {
-            generator.BuildFacesWithColliders(blockIDs, world); //First, rebuild all the visible faces in the chunk
+            generator.BuildFacesWithColliders(blockIDs); //First, rebuild all the visible faces in the chunk
             renderer.BuildVertexBuffer(blockIDs, world); //Build vertex buffer using renderer
         }
 
         /// <summary>
-        /// Places a block in the chunk at a given position with a given block ID.
+        /// Places a block in the chunk at a given position with a given block ID. Can also be given blockNameID. Default null block if none is specified.
         /// </summary>
-        /// <param name="posInChunk">The position of the block in relation to the chunk.</param>
-        /// <param name="blockID">The block ID to set to.</param>
-        public void SetBlock(Vector3 posInChunk, ushort blockID)
+        /// <param name="posInChunk"></param>
+        /// <param name="blockID"></param>
+        /// <param name="blockNameID"></param>
+        public void SetBlock(Vector3 posInChunk, ushort blockID = 0, string blockNameID = "null")
         {
             Vector3 posInWorld = PosInChunkToPosInWorld(posInChunk); //Gets this blocks position in the world
 
@@ -133,7 +141,17 @@ namespace BlockGame.Components.World.ChunkTools
                 return;
             }
 
+            if (!blockNameID.Equals("null")) //If a name was provided, then set that to the blockID
+            {
+                blockID = DataManager.blockNameID[blockNameID];
+            }
+
             blockIDs[(int)posInChunk.X, (int)posInChunk.Y, (int)posInChunk.Z][0] = blockID; // Sets the block at posInChunk to blockID.
+
+            if(blockID == 0)
+            {
+                generator.blocksBroken.Add(posInWorld);
+            }
 
             rebuildNextFrame = true; //Sets this chunk to be rebuilt next frame, so that its vertexbuffer is rebuilt.
 
